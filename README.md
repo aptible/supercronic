@@ -60,13 +60,13 @@ Predefined cron expressions
     @weekly     Run once a week at midnight in the morning of Sunday                    0 0 0 * * 0 *
     @daily      Run once a day at midnight                                              0 0 0 * * * *
     @hourly     Run once an hour at the beginning of the hour                           0 0 * * * * *
+    @reboot     Not supported
 
 Other details
 -------------
-* If five fields are present, a wildcard year field is appended
-* If six field are present, `0` is prepended as second field, that is, `* * * * * *` internally become `0 * * * * * *`.
-* Domain for day-of-week field is [0-7] instead of [0-6], 7 being Sunday (like 0).
-* `@reboot` is not supported
+* If only five fields are present, a wildcard year field is appended,  that is, `* * * * *` internally become `0 * * * * * *`.
+* If only six field are present, `0` is prepended as second field, that is, `* * * * * 2013` internally become `0 * * * * * 2013`.
+* Domain for day-of-week field is [0-7] instead of [0-6], 7 being Sunday (like 0). This to comply with http://linux.die.net/man/5/crontab#.
 * As of now, the behavior of the code is undetermined if a malformed cron expression is supplied
 
 Install
