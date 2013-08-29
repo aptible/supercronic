@@ -16,9 +16,9 @@ https://en.wikipedia.org/wiki/Cron#CRON_expression, which I copy/pasted here (la
     Seconds        No           0-59              * / , -
     Minutes        Yes          0-59              * / , -
     Hours          Yes          0-23              * / , -
-    Day of month   Yes          1-31              * / , - ? L W
+    Day of month   Yes          1-31              * / , - L W
     Month          Yes          1-12 or JAN-DEC   * / , -
-    Day of week    Yes          0-6 or SUN-SAT    * / , - ? L #
+    Day of week    Yes          0-6 or SUN-SAT    * / , - L #
     Year           No           1970–2099         * / , -
 
 Asterisk ( * )
@@ -49,13 +49,20 @@ Hash ( # )
 ----------
 `#` is allowed for the day-of-week field, and must be followed by a number between one and five. It allows you to specify constructs such as "the second Friday" of a given month.
 
-Question mark ( ? )
--------------------
-Note: Question mark is a non-standard character and exists only in some cron implementations. It is used instead of `*` for leaving either day-of-month or day-of-week blank.
+Predefined cron expressions
+---------------------------
+(Copied from https://en.wikipedia.org/wiki/Cron#Predefined_scheduling_definitions, with text modified according to this implementation) 
 
-With the following differences:
+    Entry       Description                                                             Equivalent to
+    @annually   Run once a year at midnight in the morning of January 1                 0 0 0 1 1 * *
+    @yearly     Run once a year at midnight in the morning of January 1                 0 0 0 1 1 * *
+    @monthly    Run once a month at midnight in the morning of the first of the month   0 0 0 1 * * *
+    @weekly     Run once a week at midnight in the morning of Sunday                    0 0 0 * * 0 *
+    @daily      Run once a day at midnight                                              0 0 0 * * * *
+    @hourly     Run once an hour at the beginning of the hour                           0 0 * * * * *
 
-* Supports optional second field (before minute field)
+Other details
+-------------
 * If five fields are present, a wildcard year field is appended
 * If six field are present, `0` is prepended as second field, that is, `* * * * * *` internally become `0 * * * * * *`.
 * Domain for day-of-week field is [0-7] instead of [0-6], 7 being Sunday (like 0).
