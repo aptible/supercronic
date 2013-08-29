@@ -13,6 +13,7 @@ https://en.wikipedia.org/wiki/Cron#CRON_expression, which I copy/pasted here (la
 
     Field name     Mandatory?   Allowed values    Allowed special characters
     ----------     ----------   --------------    --------------------------
+    Seconds        No           0-59              * / , -
     Minutes        Yes          0-59              * / , -
     Hours          Yes          0-23              * / , -
     Day of month   Yes          1-31              * / , - ? L W
