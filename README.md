@@ -4,6 +4,8 @@ Cron expression parser in Go language (golang).
 
 Given a cron expression and a time stamp, you can get the next time stamp which satisfy the cron expression.
 
+In another project, I decided to use Cron syntax to encode scheduling information. Thus this standalone library to parse and execute cron expressions.
+
 Implementation
 --------------
 The reference documentation for this implementation is found at
