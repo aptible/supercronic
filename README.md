@@ -5,7 +5,7 @@ Go language (golang) cron expression parser. Given a cron expression and a time 
 
 The reference documentation for this implementation is found at
 https://en.wikipedia.org/wiki/Cron#CRON_expression, with the following
-difference:
+differences:
 
 * Supports the second field (before minute field)
 * If five fields are present, a wildcard year field is appended
