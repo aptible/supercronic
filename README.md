@@ -64,8 +64,8 @@ Predefined cron expressions
 
 Other details
 -------------
-* If only five fields are present, a wildcard year field is appended,  that is, `* * * * *` internally become `0 * * * * * *`.
-* If only six field are present, `0` is prepended as second field, that is, `* * * * * 2013` internally become `0 * * * * * 2013`.
+* If only six field are present, a `0` second field is prepended, that is, `* * * * * 2013` internally become `0 * * * * * 2013`.
+* If only five fields are present, a `0` second field is prepended and a wildcard year field is appended, that is, `* * * * *` internally become `0 * * * * * *`.
 * Domain for day-of-week field is [0-7] instead of [0-6], 7 being Sunday (like 0). This to comply with http://linux.die.net/man/5/crontab#.
 * As of now, the behavior of the code is undetermined if a malformed cron expression is supplied
 
