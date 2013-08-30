@@ -11,7 +11,7 @@ The time-matching algorithm in this implementation is efficient, it avoids as mu
 Implementation
 --------------
 The reference documentation for this implementation is found at
-https://en.wikipedia.org/wiki/Cron#CRON_expression, which I copy/pasted here (laziness!) with modifications where this implementation differs:
+<https://en.wikipedia.org/wiki/Cron#CRON_expression>, which I copy/pasted here (laziness!) with modifications where this implementation differs:
 
     Field name     Mandatory?   Allowed values    Allowed special characters
     ----------     ----------   --------------    --------------------------
@@ -46,7 +46,7 @@ The `W` character is allowed for the day-of-month field. This character is used 
 
 Predefined cron expressions
 ---------------------------
-(Copied from https://en.wikipedia.org/wiki/Cron#Predefined_scheduling_definitions, with text modified according to this implementation) 
+(Copied from <https://en.wikipedia.org/wiki/Cron#Predefined_scheduling_definitions>, with text modified according to this implementation) 
 
     Entry       Description                                                             Equivalent to
     @annually   Run once a year at midnight in the morning of January 1                 0 0 0 1 1 * *
@@ -101,27 +101,27 @@ will return `false` (as of 2013-08-29...)
 API
 ---
 
-### func NextTime(cronLine string, fromTime time.Time) time.Time
+#### func NextTime(cronLine string, fromTime time.Time) time.Time
 
 Given a time stamp `fromTime`, return the closest following time stamp which matches the cron expression string `cronLine`.
 
-### func NextTimeN(cronLine string, fromTime time.Time, n int) []time.Time
+#### func NextTimeN(cronLine string, fromTime time.Time, n int) []time.Time
 
 Given a time stamp `fromTime`, return a slice of `n` closest following time stamps which match the cron expression string `cronLine`. The time stamps in the returned slice are in chronological ascending order.
 
-### func NewCronExpression(cronLine string) *CronExpression
+#### func NewCronExpression(cronLine string) *CronExpression
 
 Return a new `CronExpression` pointer which will interpret the cron expression string `cronLine`.
 
-### func (cronexpr *CronExpression) NextTime(fromTime time.Time) time.Time
+#### func (cronexpr *CronExpression) NextTime(fromTime time.Time) time.Time
 
 Given a time stamp `fromTime`, return the closest following time stamp which matches the cron expression `cronexpr`.
 
-### func (cronexpr *CronExpression) NextTimeN(fromTime time.Time, n int) []time.Time
+#### func (cronexpr *CronExpression) NextTimeN(fromTime time.Time, n int) []time.Time
 
 Given a time stamp `fromTime`, return a slice of `n` closest following time stamps which match the cron expression `cronexpr`. The time stamps in the returned slice are in chronological ascending order.
 
-### func NoMatch(t time.Time) bool
+#### func NoMatch(t time.Time) bool
 
 Returns `true` if time stamp `t` is not a valid time stamp from `CronExpression` point of view. An invalid time stamp is returned by this library whenever no matching time stamp is found given a specific cron expression.
 
