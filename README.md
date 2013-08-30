@@ -101,11 +101,15 @@ will return `false` (as of 2013-08-29...)
 API
 ---
 
-#### func NextTime(cronLine string, fromTime time.Time) time.Time
+#### func NextTime
+
+    func NextTime(cronLine string, fromTime time.Time) time.Time
 
 Given a time stamp `fromTime`, return the closest following time stamp which matches the cron expression string `cronLine`. The `time.Location` of the returned time stamp is the same as `fromTime`.
 
-#### func NextTimeN(cronLine string, fromTime time.Time, n int) []time.Time
+#### func NextTimeN
+
+    func NextTimeN(cronLine string, fromTime time.Time, n int) []time.Time
 
 Given a time stamp `fromTime`, return a slice of `n` closest following time stamps which match the cron expression string `cronLine`. The time stamps in the returned slice are in chronological ascending order. The `time.Location` of the returned time stamps is the same as `fromTime`.
 
@@ -121,19 +125,27 @@ will result in the following time stamps being returned (as of 2013-08-30):
     2028-02-29 00:00:00
     2032-02-29 00:00:00
 
-#### func NewCronExpression(cronLine string) *CronExpression
+#### func NewCronExpression
+
+    func NewCronExpression(cronLine string) *CronExpression
 
 Return a new `CronExpression` pointer which will interpret the cron expression string `cronLine`.
 
-#### func (cronexpr *CronExpression) NextTime(fromTime time.Time) time.Time
+#### func (*CronExpression) NextTime
+
+    func (cronexpr *CronExpression) NextTime(fromTime time.Time) time.Time
 
 Given a time stamp `fromTime`, return the closest following time stamp which matches the cron expression `cronexpr`. The `time.Location` of the returned time stamp is the same as `fromTime`.
 
-#### func (cronexpr *CronExpression) NextTimeN(fromTime time.Time, n int) []time.Time
+#### func (*CronExpression) NextTimeN
+
+    func (cronexpr *CronExpression) NextTimeN(fromTime time.Time, n int) []time.Time
 
 Given a time stamp `fromTime`, return a slice of `n` closest following time stamps which match the cron expression `cronexpr`. The time stamps in the returned slice are in chronological ascending order. The `time.Location` of the returned time stamps is the same as `fromTime`.
 
-#### func NoMatch(t time.Time) bool
+#### func NoMatch
+
+    func NoMatch(t time.Time) bool
 
 Returns `true` if time stamp `t` is not a valid time stamp from `CronExpression` point of view. An invalid time stamp is returned by this library whenever no matching time stamp is found given a specific cron expression.
 
