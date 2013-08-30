@@ -2,9 +2,9 @@ cronexpression for Go
 =====================
 Cron expression parser in Go language (golang).
 
-Given a cron expression and a time stamp, you can get the next time stamp which satisfy the cron expression.
+Given a cron expression and a time stamp, you can get the next time stamp which satisfies the cron expression.
 
-In another project, I decided to use Cron syntax to encode scheduling information. Thus this standalone library to parse and apply time stamps to cron expressions.
+In another project, I decided to use cron expression syntax to encode scheduling information. Thus this standalone library to parse and apply time stamps to cron expressions.
 
 The time-matching algorithm in this implementation is efficient, it avoids as much as possible to guess the next matching time stamp, a common technique seen in a number of implementations out there.
 
@@ -108,6 +108,18 @@ Given a time stamp `fromTime`, return the closest following time stamp which mat
 #### func NextTimeN(cronLine string, fromTime time.Time, n int) []time.Time
 
 Given a time stamp `fromTime`, return a slice of `n` closest following time stamps which match the cron expression string `cronLine`. The time stamps in the returned slice are in chronological ascending order.
+
+Example:
+
+    cronexpression.NextTimeN("0 0 0 29 2 ? *", time.Now(), 5)
+
+will result in the following time stamps being returned (as of 2013-08-30):
+
+    2016-02-29 00:00:00
+    2020-02-29 00:00:00
+    2024-02-29 00:00:00
+    2028-02-29 00:00:00
+    2032-02-29 00:00:00
 
 #### func NewCronExpression(cronLine string) *CronExpression
 
