@@ -93,9 +93,12 @@ to create a `CronExpression` object once and keep a copy of it for reuse:
     nextTime := cronexpr.NextTime(time.Now())
 
 `Use cronexpression.NoMatch(nextTime)` to find out whether a valid time was returned. For exemple,
+
     cronexpression.NoMatch(cronexpression.NextTimeFromCronString("* * * * * 1980", time.Now()))
+
 will return `true`, whereas
+
     cronexpression.NoMatch(cronexpression.NextTimeFromCronString("* * * * * 2050", time.Now()))
+
 will return false (as of 2013-08-29...)
-    
 
