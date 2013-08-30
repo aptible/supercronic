@@ -100,26 +100,26 @@ func NewCronExpression(cronLine string) *CronExpression {
 
 /******************************************************************************/
 
-// NextTimeFromCronString() returns the time stamp following fromTime which
+// NextTimeFromString() returns the time stamp following fromTime which
 // satisfies the cron expression cronLine. If no matching time stamp is found,
 // using NoMatch() with the returned time stamp as argument will return true.
 //
 // If the same cron expression must be used repeatedly, it is better to use
 // NewCronExpression() in order to avoid overhead of cron expression parsing.
-func NextTimeFromCronString(cronLine string, fromTime time.Time) time.Time {
+func NextTimeFromString(cronLine string, fromTime time.Time) time.Time {
     cronexpr := NewCronExpression(cronLine)
     return cronexpr.NextTime(fromTime)
 }
 
 /******************************************************************************/
 
-// NextTimeNFromCronString() returns the n time stamps following fromTime which
+// NextTimeNFromString() returns the n time stamps following fromTime which
 // satisfy the cron expression cronLine. An empty list is returned if
 // there is no matching time stamp.
 //
 // If the same cron expression must be used repeatedly, it is better to use
 // NewCronExpression() in order to avoid overhead of cron expression parsing.
-func NextTimeNFromCronString(cronLine string, fromTime time.Time, n int) []time.Time {
+func NextTimeNFromString(cronLine string, fromTime time.Time, n int) []time.Time {
     cronexpr := NewCronExpression(cronLine)
     return cronexpr.NextTimeN(fromTime, n)
 }

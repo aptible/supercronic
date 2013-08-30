@@ -82,7 +82,7 @@ Import the library:
 
 Simplest way:
 
-    nextTime := cronexpression.NextTimeFromCronString("0 0 29 2 *", time.Now())
+    nextTime := cronexpression.NextTimeFromString("0 0 29 2 *", time.Now())
 
 Assuming `time.Now()` is "2013-08-29 09:28:00", then `nextTime` will be "2016-02-29 00:00:00".
 
@@ -95,11 +95,11 @@ to create a `CronExpression` object once and keep a copy of it for reuse:
 
 Use `cronexpression.NoMatch()` to find out whether a valid time was returned. For example,
 
-    cronexpression.NoMatch(cronexpression.NextTimeFromCronString("* * * * * 1980", time.Now()))
+    cronexpression.NoMatch(cronexpression.NextTimeFromString("* * * * * 1980", time.Now()))
 
 will return `true`, whereas
 
-    cronexpression.NoMatch(cronexpression.NextTimeFromCronString("* * * * * 2050", time.Now()))
+    cronexpression.NoMatch(cronexpression.NextTimeFromString("* * * * * 2050", time.Now()))
 
 will return `false` (as of 2013-08-29...)
 
