@@ -135,10 +135,15 @@ func (cronexpr *CronExpression) NextTime(fromTime time.Time) time.Time {
         return fromTime
     }
 
-    // First we need to ensure supplied time stamp matches
+    // Since cronexpr.nextSecond()-cronexpr.nextMonth() expects that the
+    // supplied time stamp is a perfect match to the underlying cron
+    // expression, and since this function is an entry point where `fromTime`
+    // does not necessarily matches the underlying cron expression,
+    // we first need to ensure supplied time stamp matches
     // the cron expression. If not, this means the supplied time
-    // stamp might be between matching time stamps, thus we move
-    // to closest matching time stamp without changing time stamp
+    // stamp falls in between matching time stamps, thus we move
+    // to closest future matching time stamp without changing time
+    // stamp
 
     // year
     v := fromTime.Year()
@@ -359,7 +364,7 @@ func (cronexpr *CronExpression) calculateActualDaysOfMonth(year, month int) []in
         offset := 7 - int(timeOrigin.Weekday())
         // days of week
         //  offset : (7 - day_of_week_of_1st_day_of_month)
-        //  target : (7 * week_of_month) + (offset + day_of_week) % 7 + 1
+        //  target : 1 + (7 * week_of_month) + (offset + day_of_week) % 7
         for w := 0; w <= 4; w += 1 {
             for v, _ := range cronexpr.daysOfWeek {
                 v := 1 + w*7 + (offset+v)%7
@@ -370,7 +375,7 @@ func (cronexpr *CronExpression) calculateActualDaysOfMonth(year, month int) []in
         }
         // days of week of specific week in the month
         //  offset : (7 - day_of_week_of_1st_day_of_month)
-        //  target : (7 * week_of_month) + (offset + day_of_week) % 7 + 1
+        //  target : 1 + (7 * week_of_month) + (offset + day_of_week) % 7
         for v, _ := range cronexpr.specificWeekDaysOfWeek {
             v := 1 + 7*(v/7) + (offset+v)%7
             if v <= lastDayOfMonth {
