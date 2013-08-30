@@ -604,7 +604,7 @@ func (cronexpr *CronExpression) dayofmonthFieldParse(cronField string) error {
     cronexpr.daysOfMonth = make(map[int]bool)     // days of month map
     cronexpr.workdaysOfMonth = make(map[int]bool) // work day of month map
 
-    // "You can also mix all of the above, as in: 1-5,10,12,20-30/5"
+    // Comma separator is used to mix different allowed syntax
     cronList := strings.Split(cronField, ",")
     for _, s := range cronList {
         // "/"
@@ -651,7 +651,7 @@ func genericFieldParse(cronField string, min, max int) []int {
     // Defaults
     values := make(map[int]bool)
 
-    // "You can also mix all of the above, as in: 1-5,10,12,20-30/5"
+    // Comma separator is used to mix different allowed syntax
     cronList := strings.Split(cronField, ",")
     for _, s := range cronList {
         // "/"
