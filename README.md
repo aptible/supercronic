@@ -4,12 +4,12 @@ Cron expression parser in Go language (golang).
 
 Given a cron expression and a time stamp, you can get the next time stamp which satisfy the cron expression.
 
-In another project, I decided to use Cron syntax to encode scheduling information. Thus this standalone library to parse and execute cron expressions.
+In another project, I decided to use Cron syntax to encode scheduling information. Thus this standalone library to parse and apply time stamps to cron expressions.
 
 Implementation
 --------------
 The reference documentation for this implementation is found at
-https://en.wikipedia.org/wiki/Cron#CRON_expression, which I copy/pasted here (laziness) with modifications where this implementation differs:
+https://en.wikipedia.org/wiki/Cron#CRON_expression, which I copy/pasted here (laziness!) with modifications where this implementation differs:
 
     Field name     Mandatory?   Allowed values    Allowed special characters
     ----------     ----------   --------------    --------------------------
@@ -64,7 +64,7 @@ Predefined cron expressions
 
 Other details
 -------------
-* If only six field are present, a `0` second field is prepended, that is, `* * * * * 2013` internally become `0 * * * * * 2013`.
+* If only six fields are present, a `0` second field is prepended, that is, `* * * * * 2013` internally become `0 * * * * * 2013`.
 * If only five fields are present, a `0` second field is prepended and a wildcard year field is appended, that is, `* * * * *` internally become `0 * * * * * *`.
 * Domain for day-of-week field is [0-7] instead of [0-6], 7 being Sunday (like 0). This to comply with http://linux.die.net/man/5/crontab#.
 * As of now, the behavior of the code is undetermined if a malformed cron expression is supplied
@@ -91,8 +91,9 @@ to create a `CronExpression` object once and keep a copy of it for reuse:
 
     cronexpr := cronexpression.NewCronExpression("0 0 29 2 *")
     nextTime := cronexpr.NextTime(time.Now())
+    ...
 
-Use `cronexpression.NoMatch()` to find out whether a valid time was returned. For exemple,
+Use `cronexpression.NoMatch()` to find out whether a valid time was returned. For example,
 
     cronexpression.NoMatch(cronexpression.NextTimeFromCronString("* * * * * 1980", time.Now()))
 
