@@ -6,6 +6,8 @@ Given a cron expression and a time stamp, you can get the next time stamp which 
 
 In another project, I decided to use Cron syntax to encode scheduling information. Thus this standalone library to parse and apply time stamps to cron expressions.
 
+The time-matching algorithm in this implementation is efficient, it avoids as much as possible to guess the next matching time stamp, a common technique seen in a number of implementations out there.
+
 Implementation
 --------------
 The reference documentation for this implementation is found at
@@ -21,32 +23,25 @@ https://en.wikipedia.org/wiki/Cron#CRON_expression, which I copy/pasted here (la
     Day of week    Yes          0-6 or SUN-SAT    * / , - L #
     Year           No           1970–2099         * / , -
 
-Asterisk ( * )
---------------
+### Asterisk ( * )
 The asterisk indicates that the cron expression matches for all values of the field. E.g., using an asterisk in the 4th field (month) indicates every month. 
 
-Slash ( / )
------------
+### Slash ( / )
 Slashes describe increments of ranges. For example `3-59/15` in the minute field indicate the third minute of the hour and every 15 minutes thereafter. The form `*/...` is equivalent to the form "first-last/...", that is, an increment over the largest possible range of the field.
 
-Comma ( , )
------------
+### Comma ( , )
 Commas are used to separate items of a list. For example, using `MON,WED,FRI` in the 5th field (day of week) means Mondays, Wednesdays and Fridays.
 
-Hyphen ( - )
-------------
+### Hyphen ( - )
 Hyphens define ranges. For example, 2000-2010 indicates every year between 2000 and 2010 AD, inclusive.
 
-L
--
+### L
 `L` stands for "last". When used in the day-of-week field, it allows you to specify constructs such as "the last Friday" (`5L`) of a given month. In the day-of-month field, it specifies the last day of the month.
 
-W
--
+### W
 The `W` character is allowed for the day-of-month field. This character is used to specify the weekday (Monday-Friday) nearest the given day. As an example, if you were to specify `15W` as the value for the day-of-month field, the meaning is: "the nearest weekday to the 15th of the month." So, if the 15th is a Saturday, the trigger fires on Friday the 14th. If the 15th is a Sunday, the trigger fires on Monday the 16th. If the 15th is a Tuesday, then it fires on Tuesday the 15th. However if you specify `1W` as the value for day-of-month, and the 1st is a Saturday, the trigger fires on Monday the 3rd, as it does not 'jump' over the boundary of a month's days. The `W` character can be specified only when the day-of-month is a single day, not a range or list of days.
 
-Hash ( # )
-----------
+### Hash ( # )
 `#` is allowed for the day-of-week field, and must be followed by a number between one and five. It allows you to specify constructs such as "the second Friday" of a given month.
 
 Predefined cron expressions
@@ -102,4 +97,31 @@ will return `true`, whereas
     cronexpression.NoMatch(cronexpression.NextTime("* * * * * 2050", time.Now()))
 
 will return `false` (as of 2013-08-29...)
+
+API
+---
+
+### func NextTime(cronLine string, fromTime time.Time) time.Time
+
+Given a time stamp `fromTime`, return the closest following time stamp which matches the cron expression string `cronLine`.
+
+### func NextTimeN(cronLine string, fromTime time.Time, n int) []time.Time
+
+Given a time stamp `fromTime`, return a slice of `n` closest following time stamps which match the cron expression string `cronLine`. The time stamps in the returned slice are in chronological ascending order.
+
+### func NewCronExpression(cronLine string) *CronExpression
+
+Return a new `CronExpression` pointer which will interpret the cron expression string `cronLine`.
+
+### func (cronexpr *CronExpression) NextTime(fromTime time.Time) time.Time
+
+Given a time stamp `fromTime`, return the closest following time stamp which matches the cron expression `cronexpr`.
+
+### func (cronexpr *CronExpression) NextTimeN(fromTime time.Time, n int) []time.Time
+
+Given a time stamp `fromTime`, return a slice of `n` closest following time stamps which match the cron expression `cronexpr`. The time stamps in the returned slice are in chronological ascending order.
+
+### func NoMatch(t time.Time) bool
+
+Returns `true` if time stamp `t` is not a valid time stamp from `CronExpression` point of view. An invalid time stamp is returned by this library whenever no matching time stamp is found given a specific cron expression.
 
