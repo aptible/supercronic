@@ -39,6 +39,7 @@ var crontests = []crontest{
         []crontimes{
             {"2013-01-01 00:00:00", "2013-01-01 00:00:01"},
             {"2013-01-01 00:00:59", "2013-01-01 00:01:00"},
+            {"2013-01-01 00:59:59", "2013-01-01 01:00:00"},
             {"2013-01-01 23:59:59", "2013-01-02 00:00:00"},
             {"2013-02-28 23:59:59", "2013-03-01 00:00:00"},
             {"2016-02-28 23:59:59", "2016-02-29 00:00:00"},
@@ -61,7 +62,7 @@ var crontests = []crontest{
         },
     },
 
-    // Minutes with intervals
+    // Minutes with interval
     {
         "17-43/5 * * * *",
         "2006-01-02 15:04:05",
@@ -89,7 +90,19 @@ var crontests = []crontest{
             {"2013-01-01 23:55:00", "2013-01-02 00:15:00"},
             {"2013-02-28 23:55:00", "2013-03-01 00:15:00"},
             {"2016-02-28 23:55:00", "2016-02-29 00:15:00"},
+            {"2012-12-31 23:54:00", "2012-12-31 23:55:00"},
             {"2012-12-31 23:55:00", "2013-01-01 00:15:00"},
+        },
+    },
+
+    // Days of week
+    {
+        "0 0 * * MON",
+        "MON 2006-01-02 15:04",
+        []crontimes{
+            {"2013-01-01 00:00:00", "MON 2013-01-07 00:00"},
+            {"2013-01-28 00:00:00", "MON 2013-02-04 00:00"},
+            {"2013-12-30 00:30:00", "MON 2014-01-06 00:00"},
         },
     },
 
@@ -101,8 +114,9 @@ func TestCronExpressions(t *testing.T) {
         for _, times := range test.times {
 		    from, _ := time.Parse("2006-01-02 15:04:05", times.from)
 		    next := cronexpression.NextTimeFromCronString(test.expr, from)
-		    if next.Format(test.layout) != times.next {
-			    t.Errorf("(\"%s\").NextTime(\"%s\") = \"%s\", got \"%s\"", test.expr, times.from, times.next, next.Format(test.layout))
+            nextstr := next.Format(test.layout)
+		    if nextstr != times.next {
+			    t.Errorf("(\"%s\").NextTime(\"%s\") = \"%s\", got \"%s\"", test.expr, times.from, times.next, nextstr)
             }
 		}
 	}
