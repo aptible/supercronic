@@ -88,13 +88,13 @@ to create a `CronExpression` object once and keep a copy of it for reuse:
     nextTime := cronexpr.NextTime(time.Now())
     ...
 
-Use `cronexpression.NoMatch()` to find out whether a valid time was returned. For example,
+Use `nextTime.IsZero()` to find out whether a valid time was returned. For example,
 
-    cronexpression.NoMatch(cronexpression.NextTime("* * * * * 1980", time.Now()))
+    cronexpression.NextTime("* * * * * 1980", time.Now()).IsZero()
 
 will return `true`, whereas
 
-    cronexpression.NoMatch(cronexpression.NextTime("* * * * * 2050", time.Now()))
+    cronexpression.NextTime("* * * * * 2050", time.Now()).IsZero()
 
 will return `false` (as of 2013-08-29...)
 
@@ -142,10 +142,4 @@ Given a time stamp `fromTime`, return the closest following time stamp which mat
     func (cronexpr *CronExpression) NextTimeN(fromTime time.Time, n int) []time.Time
 
 Given a time stamp `fromTime`, return a slice of `n` closest following time stamps which match the cron expression `cronexpr`. The time stamps in the returned slice are in chronological ascending order. The `time.Location` of the returned time stamps is the same as `fromTime`.
-
-#### func NoMatch
-
-    func NoMatch(t time.Time) bool
-
-Returns `true` if time stamp `t` is not a valid time stamp from `CronExpression` point of view. An invalid time stamp is returned by this library whenever no matching time stamp is found given a specific cron expression.
 

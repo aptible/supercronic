@@ -45,10 +45,6 @@ type CronExpression struct {
 
 /******************************************************************************/
 
-var noMatchTime = time.Date(2100, 7, 1, 0, 0, 0, 0, time.UTC)
-
-/******************************************************************************/
-
 // NewCronExpression() returns a new CronExpression pointer. It expects
 // a well-formed cron expression. If a malformed cron expression is
 // supplied, the result is undefined.
@@ -127,7 +123,7 @@ func NextTimeN(cronLine string, fromTime time.Time, n int) []time.Time {
 // time stamp is the same as `fromTime`.
 func (cronexpr *CronExpression) NextTime(fromTime time.Time) time.Time {
 	// Special case
-	if NoMatch(fromTime) {
+	if fromTime.IsZero() {
 		return fromTime
 	}
 
@@ -145,7 +141,7 @@ func (cronexpr *CronExpression) NextTime(fromTime time.Time) time.Time {
 	v := fromTime.Year()
 	i := sort.SearchInts(cronexpr.yearList, v)
 	if i == len(cronexpr.yearList) {
-		return noMatchTime
+		return time.Time{}
 	}
 	if v != cronexpr.yearList[i] {
 		return cronexpr.nextYear(fromTime)
@@ -218,7 +214,7 @@ func (cronexpr *CronExpression) NextTimeN(fromTime time.Time, n int) []time.Time
 	nextTimes := make([]time.Time, 0)
 	fromTime = cronexpr.NextTime(fromTime)
 	for {
-		if NoMatch(fromTime) {
+		if fromTime.IsZero() {
 			break
 		}
 		nextTimes = append(nextTimes, fromTime)
@@ -233,23 +229,12 @@ func (cronexpr *CronExpression) NextTimeN(fromTime time.Time, n int) []time.Time
 
 /******************************************************************************/
 
-// Returns `true` if time stamp `t` is not a valid time stamp from
-// `CronExpression` point of view. An invalid time stamp is returned by this
-// library whenever no matching time stamp is found given a specific cron
-// expression.
-func NoMatch(t time.Time) bool {
-	// https://en.wikipedia.org/wiki/Cron#CRON_expression: 1970–2099
-	return t.Year() >= 2100
-}
-
-/******************************************************************************/
-
 func (cronexpr *CronExpression) nextYear(t time.Time) time.Time {
 	// Find index at which item in list is greater or equal to
 	// candidate year
 	i := sort.SearchInts(cronexpr.yearList, t.Year()+1)
 	if i == len(cronexpr.yearList) {
-		return noMatchTime
+		return time.Time{}
 	}
 	// Year changed, need to recalculate actual days of month
 	cronexpr.actualDaysOfMonthList = cronexpr.calculateActualDaysOfMonth(cronexpr.yearList[i], cronexpr.monthList[0])
