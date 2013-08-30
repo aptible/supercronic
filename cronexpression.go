@@ -100,7 +100,7 @@ func NewCronExpression(cronLine string) *CronExpression {
 
 /******************************************************************************/
 
-// NextTimeFromString() returns the time stamp following fromTime which
+// NextTime() returns the time stamp following fromTime which
 // satisfies the cron expression cronLine. If no matching time stamp is found,
 // using NoMatch() with the returned time stamp as argument will return true.
 //
@@ -113,7 +113,7 @@ func NextTime(cronLine string, fromTime time.Time) time.Time {
 
 /******************************************************************************/
 
-// NextTimeNFromString() returns the n time stamps following fromTime which
+// NextTimeN() returns the n time stamps following fromTime which
 // satisfy the cron expression cronLine. An empty list is returned if
 // there is no matching time stamp.
 //
