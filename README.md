@@ -103,11 +103,11 @@ API
 
 #### func NextTime(cronLine string, fromTime time.Time) time.Time
 
-Given a time stamp `fromTime`, return the closest following time stamp which matches the cron expression string `cronLine`.
+Given a time stamp `fromTime`, return the closest following time stamp which matches the cron expression string `cronLine`. The `time.Location` of the returned time stamp is the same as `fromTime`.
 
 #### func NextTimeN(cronLine string, fromTime time.Time, n int) []time.Time
 
-Given a time stamp `fromTime`, return a slice of `n` closest following time stamps which match the cron expression string `cronLine`. The time stamps in the returned slice are in chronological ascending order.
+Given a time stamp `fromTime`, return a slice of `n` closest following time stamps which match the cron expression string `cronLine`. The time stamps in the returned slice are in chronological ascending order. The `time.Location` of the returned time stamps is the same as `fromTime`.
 
 Example:
 
@@ -127,11 +127,11 @@ Return a new `CronExpression` pointer which will interpret the cron expression s
 
 #### func (cronexpr *CronExpression) NextTime(fromTime time.Time) time.Time
 
-Given a time stamp `fromTime`, return the closest following time stamp which matches the cron expression `cronexpr`.
+Given a time stamp `fromTime`, return the closest following time stamp which matches the cron expression `cronexpr`. The `time.Location` of the returned time stamp is the same as `fromTime`.
 
 #### func (cronexpr *CronExpression) NextTimeN(fromTime time.Time, n int) []time.Time
 
-Given a time stamp `fromTime`, return a slice of `n` closest following time stamps which match the cron expression `cronexpr`. The time stamps in the returned slice are in chronological ascending order.
+Given a time stamp `fromTime`, return a slice of `n` closest following time stamps which match the cron expression `cronexpr`. The time stamps in the returned slice are in chronological ascending order. The `time.Location` of the returned time stamps is the same as `fromTime`.
 
 #### func NoMatch(t time.Time) bool
 
