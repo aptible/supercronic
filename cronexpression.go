@@ -23,11 +23,10 @@ import (
 
 /******************************************************************************/
 
-// A CronExpression represents a specific cron expression as defined on
+// A CronExpression represents a specific cron time expression as defined on
 // Wikipedia: https://en.wikipedia.org/wiki/Cron#CRON_expression
-//
 type CronExpression struct {
-	Expression             string
+	expression             string
 	secondList             []int
 	minuteList             []int
 	hourList               []int
@@ -74,14 +73,15 @@ func NewCronExpression(cronLine string) *CronExpression {
 		copy(cronFields[1:], cronFields[0:])
 		cronFields[0] = "0"
 	}
-	// We should have 7 fields at this point
-	if len(cronFields) != 7 {
+	// At this point, we should have at least 7 fields. Fields beyond the
+	// seventh one, if any, are ignored.
+	if len(cronFields) < 7 {
 		panic("Malformed cron expression\n")
 	}
 
 	// Generic parser can be used for most fields
 	cronExpr := &CronExpression{
-		Expression: cronLine,
+		expression: cronLine,
 		secondList: genericFieldParse(cronFields[0], 0, 59),
 		minuteList: genericFieldParse(cronFields[1], 0, 59),
 		hourList:   genericFieldParse(cronFields[2], 0, 23),
@@ -101,12 +101,9 @@ func NewCronExpression(cronLine string) *CronExpression {
 
 /******************************************************************************/
 
-// NextTime() returns the time stamp following fromTime which
-// satisfies the cron expression cronLine. If no matching time stamp is found,
-// using NoMatch() with the returned time stamp as argument will return true.
-//
-// If the same cron expression must be used repeatedly, it is better to use
-// NewCronExpression() in order to avoid overhead of cron expression parsing.
+// Given a time stamp `fromTime`, return the closest following time stamp
+// which matches the cron expression string .. `cronLine`. The `time.Location`
+// of the returned time stamp is the same as `fromTime`.
 func NextTime(cronLine string, fromTime time.Time) time.Time {
 	cronexpr := NewCronExpression(cronLine)
 	return cronexpr.NextTime(fromTime)
@@ -114,12 +111,10 @@ func NextTime(cronLine string, fromTime time.Time) time.Time {
 
 /******************************************************************************/
 
-// NextTimeN() returns the n time stamps following fromTime which
-// satisfy the cron expression cronLine. An empty list is returned if
-// there is no matching time stamp.
-//
-// If the same cron expression must be used repeatedly, it is better to use
-// NewCronExpression() in order to avoid overhead of cron expression parsing.
+// Given a time stamp `fromTime`, return a slice of `n` closest following time
+// stamps which match the cron expression string `cronLine`. The time stamps in
+// the returned slice are in chronological ascending order. The `time.Location`
+// of the returned time stamps is the same as `fromTime`.
 func NextTimeN(cronLine string, fromTime time.Time, n int) []time.Time {
 	cronexpr := NewCronExpression(cronLine)
 	return cronexpr.NextTimeN(fromTime, n)
@@ -127,9 +122,9 @@ func NextTimeN(cronLine string, fromTime time.Time, n int) []time.Time {
 
 /******************************************************************************/
 
-// CronExpression.NextTime() returns the time stamp following fromTime which
-// satisfies the cron expression. If no matching time stamp is found,
-// using NoMatch() with the returned time stamp as argument will return true.
+// Given a time stamp `fromTime`, return the closest following time stamp which
+// matches the cron expression `cronexpr`. The `time.Location` of the returned
+// time stamp is the same as `fromTime`.
 func (cronexpr *CronExpression) NextTime(fromTime time.Time) time.Time {
 	// Special case
 	if NoMatch(fromTime) {
@@ -212,9 +207,10 @@ func (cronexpr *CronExpression) NextTime(fromTime time.Time) time.Time {
 
 /******************************************************************************/
 
-// CronExpression.NextTimeN() returns an array of n time stamps following
-// fromTime which satisfy the cron expression. An empty list is returned if
-// there is no matching time stamp.
+// Given a time stamp `fromTime`, return a slice of `n` closest following time
+// stamps which match the cron expression `cronexpr`. The time stamps in the
+// returned slice are in chronological ascending order. The `time.Location` of
+// the returned time stamps is the same as `fromTime`.
 func (cronexpr *CronExpression) NextTimeN(fromTime time.Time, n int) []time.Time {
 	if n <= 0 {
 		panic("CronExpression.NextTimeN(): invalid count")
@@ -237,8 +233,10 @@ func (cronexpr *CronExpression) NextTimeN(fromTime time.Time, n int) []time.Time
 
 /******************************************************************************/
 
-// NoMatch() returns whether t is a valid time stamp, from CronExpression point
-// of view.
+// Returns `true` if time stamp `t` is not a valid time stamp from
+// `CronExpression` point of view. An invalid time stamp is returned by this
+// library whenever no matching time stamp is found given a specific cron
+// expression.
 func NoMatch(t time.Time) bool {
 	// https://en.wikipedia.org/wiki/Cron#CRON_expression: 1970–2099
 	return t.Year() >= 2100
