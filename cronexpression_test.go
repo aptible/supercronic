@@ -113,7 +113,7 @@ func TestCronExpressions(t *testing.T) {
 	for _, test := range crontests {
         for _, times := range test.times {
 		    from, _ := time.Parse("2006-01-02 15:04:05", times.from)
-		    next := cronexpression.NextTimeFromString(test.expr, from)
+		    next := cronexpression.NextTime(test.expr, from)
             nextstr := next.Format(test.layout)
 		    if nextstr != times.next {
 			    t.Errorf("(\"%s\").NextTime(\"%s\") = \"%s\", got \"%s\"", test.expr, times.from, times.next, nextstr)

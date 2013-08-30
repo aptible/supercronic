@@ -106,7 +106,7 @@ func NewCronExpression(cronLine string) *CronExpression {
 //
 // If the same cron expression must be used repeatedly, it is better to use
 // NewCronExpression() in order to avoid overhead of cron expression parsing.
-func NextTimeFromString(cronLine string, fromTime time.Time) time.Time {
+func NextTime(cronLine string, fromTime time.Time) time.Time {
     cronexpr := NewCronExpression(cronLine)
     return cronexpr.NextTime(fromTime)
 }
@@ -119,7 +119,7 @@ func NextTimeFromString(cronLine string, fromTime time.Time) time.Time {
 //
 // If the same cron expression must be used repeatedly, it is better to use
 // NewCronExpression() in order to avoid overhead of cron expression parsing.
-func NextTimeNFromString(cronLine string, fromTime time.Time, n int) []time.Time {
+func NextTimeN(cronLine string, fromTime time.Time, n int) []time.Time {
     cronexpr := NewCronExpression(cronLine)
     return cronexpr.NextTimeN(fromTime, n)
 }
