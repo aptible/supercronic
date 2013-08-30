@@ -23,25 +23,25 @@ The reference documentation for this implementation is found at
     Day of week    Yes          0-6 or SUN-SAT    * / , - L #
     Year           No           1970–2099         * / , -
 
-### Asterisk ( * )
+#### Asterisk ( * )
 The asterisk indicates that the cron expression matches for all values of the field. E.g., using an asterisk in the 4th field (month) indicates every month. 
 
-### Slash ( / )
+#### Slash ( / )
 Slashes describe increments of ranges. For example `3-59/15` in the minute field indicate the third minute of the hour and every 15 minutes thereafter. The form `*/...` is equivalent to the form "first-last/...", that is, an increment over the largest possible range of the field.
 
-### Comma ( , )
+#### Comma ( , )
 Commas are used to separate items of a list. For example, using `MON,WED,FRI` in the 5th field (day of week) means Mondays, Wednesdays and Fridays.
 
-### Hyphen ( - )
+#### Hyphen ( - )
 Hyphens define ranges. For example, 2000-2010 indicates every year between 2000 and 2010 AD, inclusive.
 
-### L
+#### L
 `L` stands for "last". When used in the day-of-week field, it allows you to specify constructs such as "the last Friday" (`5L`) of a given month. In the day-of-month field, it specifies the last day of the month.
 
-### W
+#### W
 The `W` character is allowed for the day-of-month field. This character is used to specify the weekday (Monday-Friday) nearest the given day. As an example, if you were to specify `15W` as the value for the day-of-month field, the meaning is: "the nearest weekday to the 15th of the month." So, if the 15th is a Saturday, the trigger fires on Friday the 14th. If the 15th is a Sunday, the trigger fires on Monday the 16th. If the 15th is a Tuesday, then it fires on Tuesday the 15th. However if you specify `1W` as the value for day-of-month, and the 1st is a Saturday, the trigger fires on Monday the 3rd, as it does not 'jump' over the boundary of a month's days. The `W` character can be specified only when the day-of-month is a single day, not a range or list of days.
 
-### Hash ( # )
+#### Hash ( # )
 `#` is allowed for the day-of-week field, and must be followed by a number between one and five. It allows you to specify constructs such as "the second Friday" of a given month.
 
 Predefined cron expressions
