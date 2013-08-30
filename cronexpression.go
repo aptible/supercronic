@@ -8,6 +8,7 @@
  *
  */
 
+// Package cronexpression parses cron time expressions.
 package cronexpression
 
 /******************************************************************************/
