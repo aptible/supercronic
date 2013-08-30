@@ -100,5 +100,5 @@ will return `true`, whereas
 
     cronexpression.NoMatch(cronexpression.NextTimeFromCronString("* * * * * 2050", time.Now()))
 
-will return false (as of 2013-08-29...)
+will return `false` (as of 2013-08-29...)
 
