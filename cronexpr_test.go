@@ -116,8 +116,21 @@ func TestExpressions(t *testing.T) {
 			next := cronexpr.Parse(test.expr).Next(from)
 			nextstr := next.Format(test.layout)
 			if nextstr != times.next {
-				t.Errorf("(\"%s\").Next(\"%s\") = \"%s\", got \"%s\"", test.expr, times.from, times.next, nextstr)
+				t.Errorf(`("%s").Next("%s") = "%s", got "%s"`, test.expr, times.from, times.next, nextstr)
 			}
 		}
+	}
+}
+
+func TestZero(t *testing.T) {
+	from, _ := time.Parse("2006-01-02", "2013-08-31")
+	next := cronexpr.Parse("* * * * * 1980").Next(from)
+	if next.IsZero() == false {
+		t.Error(`("* * * * * 1980").Next("2013-08-31") returned 'false', expected 'true'`)
+	}
+
+	next = cronexpr.Parse("* * * * * 2050").Next(from)
+	if next.IsZero() == true {
+		t.Error(`("* * * * * 2050").Next("2013-08-31") returned 'true', expected 'false'`)
 	}
 }
