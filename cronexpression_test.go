@@ -109,14 +109,14 @@ var crontests = []crontest{
 	// TODO: more tests
 }
 
-func TestCronExpressions(t *testing.T) {
+func TestExpressions(t *testing.T) {
 	for _, test := range crontests {
 		for _, times := range test.times {
 			from, _ := time.Parse("2006-01-02 15:04:05", times.from)
-			next := cronexpression.NextTime(test.expr, from)
+			next := cronexpression.Parse(test.expr).Next(from)
 			nextstr := next.Format(test.layout)
 			if nextstr != times.next {
-				t.Errorf("(\"%s\").NextTime(\"%s\") = \"%s\", got \"%s\"", test.expr, times.from, times.next, nextstr)
+				t.Errorf("(\"%s\").Next(\"%s\") = \"%s\", got \"%s\"", test.expr, times.from, times.next, nextstr)
 			}
 		}
 	}

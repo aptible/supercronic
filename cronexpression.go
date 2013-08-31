@@ -23,9 +23,9 @@ import (
 
 /******************************************************************************/
 
-// A CronExpression represents a specific cron time expression as defined on
+// A Expression represents a specific cron time expression as defined on
 // Wikipedia: https://en.wikipedia.org/wiki/Cron#CRON_expression
-type CronExpression struct {
+type Expression struct {
 	expression             string
 	secondList             []int
 	minuteList             []int
@@ -45,10 +45,22 @@ type CronExpression struct {
 
 /******************************************************************************/
 
-// NewCronExpression() returns a new CronExpression pointer. It expects
+// Check whether the cron expression `cronLine` is valid. If not valid, the
+// index in the `cronLine` string at which there is an error is returned.
+func Check(cronLine string) int {
+
+	// Split into fields
+	_ = regexp.MustCompile(`\s+`).Split(cronLine, -1)
+
+	return -1
+}
+
+/******************************************************************************/
+
+// Parse() returns a new Expression pointer. It expects
 // a well-formed cron expression. If a malformed cron expression is
 // supplied, the result is undefined.
-func NewCronExpression(cronLine string) *CronExpression {
+func Parse(cronLine string) *Expression {
 	cronLineNormalized := cronNormalize(cronLine)
 
 	// Split into fields
@@ -76,7 +88,7 @@ func NewCronExpression(cronLine string) *CronExpression {
 	}
 
 	// Generic parser can be used for most fields
-	cronExpr := &CronExpression{
+	cronExpr := &Expression{
 		expression: cronLine,
 		secondList: genericFieldParse(cronFields[0], 0, 59),
 		minuteList: genericFieldParse(cronFields[1], 0, 59),
@@ -97,31 +109,10 @@ func NewCronExpression(cronLine string) *CronExpression {
 
 /******************************************************************************/
 
-// Given a time stamp `fromTime`, return the closest following time stamp
-// which matches the cron expression string .. `cronLine`. The `time.Location`
-// of the returned time stamp is the same as `fromTime`.
-func NextTime(cronLine string, fromTime time.Time) time.Time {
-	cronexpr := NewCronExpression(cronLine)
-	return cronexpr.NextTime(fromTime)
-}
-
-/******************************************************************************/
-
-// Given a time stamp `fromTime`, return a slice of `n` closest following time
-// stamps which match the cron expression string `cronLine`. The time stamps in
-// the returned slice are in chronological ascending order. The `time.Location`
-// of the returned time stamps is the same as `fromTime`.
-func NextTimeN(cronLine string, fromTime time.Time, n int) []time.Time {
-	cronexpr := NewCronExpression(cronLine)
-	return cronexpr.NextTimeN(fromTime, n)
-}
-
-/******************************************************************************/
-
 // Given a time stamp `fromTime`, return the closest following time stamp which
 // matches the cron expression `cronexpr`. The `time.Location` of the returned
 // time stamp is the same as `fromTime`.
-func (cronexpr *CronExpression) NextTime(fromTime time.Time) time.Time {
+func (cronexpr *Expression) Next(fromTime time.Time) time.Time {
 	// Special case
 	if fromTime.IsZero() {
 		return fromTime
@@ -207,12 +198,12 @@ func (cronexpr *CronExpression) NextTime(fromTime time.Time) time.Time {
 // stamps which match the cron expression `cronexpr`. The time stamps in the
 // returned slice are in chronological ascending order. The `time.Location` of
 // the returned time stamps is the same as `fromTime`.
-func (cronexpr *CronExpression) NextTimeN(fromTime time.Time, n int) []time.Time {
+func (cronexpr *Expression) NextN(fromTime time.Time, n int) []time.Time {
 	if n <= 0 {
-		panic("CronExpression.NextTimeN(): invalid count")
+		panic("Expression.NextN(): invalid count")
 	}
 	nextTimes := make([]time.Time, 0)
-	fromTime = cronexpr.NextTime(fromTime)
+	fromTime = cronexpr.Next(fromTime)
 	for {
 		if fromTime.IsZero() {
 			break
@@ -229,7 +220,7 @@ func (cronexpr *CronExpression) NextTimeN(fromTime time.Time, n int) []time.Time
 
 /******************************************************************************/
 
-func (cronexpr *CronExpression) nextYear(t time.Time) time.Time {
+func (cronexpr *Expression) nextYear(t time.Time) time.Time {
 	// Find index at which item in list is greater or equal to
 	// candidate year
 	i := sort.SearchInts(cronexpr.yearList, t.Year()+1)
@@ -262,7 +253,7 @@ func (cronexpr *CronExpression) nextYear(t time.Time) time.Time {
 
 /******************************************************************************/
 
-func (cronexpr *CronExpression) nextMonth(t time.Time) time.Time {
+func (cronexpr *Expression) nextMonth(t time.Time) time.Time {
 	// Find index at which item in list is greater or equal to
 	// candidate month
 	i := sort.SearchInts(cronexpr.monthList, int(t.Month())+1)
@@ -296,7 +287,7 @@ func (cronexpr *CronExpression) nextMonth(t time.Time) time.Time {
 
 /******************************************************************************/
 
-func (cronexpr *CronExpression) calculateActualDaysOfMonth(year, month int) []int {
+func (cronexpr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 	actualDaysOfMonthMap := make(map[int]bool)
 	timeOrigin := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
 	lastDayOfMonth := timeOrigin.AddDate(0, 1, -1).Day()
@@ -382,7 +373,7 @@ func (cronexpr *CronExpression) calculateActualDaysOfMonth(year, month int) []in
 
 /******************************************************************************/
 
-func (cronexpr *CronExpression) nextDayOfMonth(t time.Time) time.Time {
+func (cronexpr *Expression) nextDayOfMonth(t time.Time) time.Time {
 	// Find index at which item in list is greater or equal to
 	// candidate day of month
 	i := sort.SearchInts(cronexpr.actualDaysOfMonthList, t.Day()+1)
@@ -403,7 +394,7 @@ func (cronexpr *CronExpression) nextDayOfMonth(t time.Time) time.Time {
 
 /******************************************************************************/
 
-func (cronexpr *CronExpression) nextHour(t time.Time) time.Time {
+func (cronexpr *Expression) nextHour(t time.Time) time.Time {
 	// Find index at which item in list is greater or equal to
 	// candidate hour
 	i := sort.SearchInts(cronexpr.hourList, t.Hour()+1)
@@ -424,7 +415,7 @@ func (cronexpr *CronExpression) nextHour(t time.Time) time.Time {
 
 /******************************************************************************/
 
-func (cronexpr *CronExpression) nextMinute(t time.Time) time.Time {
+func (cronexpr *Expression) nextMinute(t time.Time) time.Time {
 	// Find index at which item in list is greater or equal to
 	// candidate minute
 	i := sort.SearchInts(cronexpr.minuteList, t.Minute()+1)
@@ -445,7 +436,7 @@ func (cronexpr *CronExpression) nextMinute(t time.Time) time.Time {
 
 /******************************************************************************/
 
-func (cronexpr *CronExpression) nextSecond(t time.Time) time.Time {
+func (cronexpr *Expression) nextSecond(t time.Time) time.Time {
 	// nextSecond() assumes all other fields are exactly matched
 	// to the cron expression
 
@@ -525,7 +516,7 @@ func cronNormalize(cronLine string) string {
 
 /******************************************************************************/
 
-func (cronexpr *CronExpression) dayofweekFieldParse(cronField string) error {
+func (cronexpr *Expression) dayofweekFieldParse(cronField string) error {
 	// Defaults
 	cronexpr.daysOfWeekRestricted = true
 	cronexpr.lastWeekDaysOfWeek = make(map[int]bool)
@@ -585,7 +576,7 @@ func (cronexpr *CronExpression) dayofweekFieldParse(cronField string) error {
 
 /******************************************************************************/
 
-func (cronexpr *CronExpression) dayofmonthFieldParse(cronField string) error {
+func (cronexpr *Expression) dayofmonthFieldParse(cronField string) error {
 	// Defaults
 	cronexpr.daysOfMonthRestricted = true
 	cronexpr.lastDayOfMonth = false

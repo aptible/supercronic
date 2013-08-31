@@ -77,47 +77,32 @@ Import the library:
 
 Simplest way:
 
-    nextTime := cronexpression.NextTime("0 0 29 2 *", time.Now())
+    nextTime := cronexpression.Parse("0 0 29 2 *").Next(time.Now())
 
 Assuming `time.Now()` is "2013-08-29 09:28:00", then `nextTime` will be "2016-02-29 00:00:00".
 
-If you need to reuse many times the same cron expression in your code, it is more efficient
-to create a `CronExpression` object once and keep a copy of it for reuse:
+You can keep the returned Expression pointer around if you want to reuse it:
 
-    cronexpr := cronexpression.NewCronExpression("0 0 29 2 *")
-    nextTime := cronexpr.NextTime(time.Now())
+    cronexpr := cronexpression.Parse("0 0 29 2 *")
+    nextTime := cronexpr.Next(time.Now())
     ...
+    nextTime := cronexpr.Next(nextTime)
 
-Use `nextTime.IsZero()` to find out whether a valid time was returned. For example,
+Use `time.IsZero()` to find out whether a valid time was returned. For example,
 
-    cronexpression.NextTime("* * * * * 1980", time.Now()).IsZero()
+    cronexpression.Next("* * * * * 1980", time.Now()).IsZero()
 
 will return `true`, whereas
 
-    cronexpression.NextTime("* * * * * 2050", time.Now()).IsZero()
+    cronexpression.Next("* * * * * 2050", time.Now()).IsZero()
 
 will return `false` (as of 2013-08-29...)
 
-API
----
+You may also query for `n` next time stamps:
 
-#### func NextTime
+    cronexpression.Parse("0 0 29 2 *").NextN(time.Now(), 5)
 
-    func NextTime(cronLine string, fromTime time.Time) time.Time
-
-Given a time stamp `fromTime`, return the closest following time stamp which matches the cron expression string `cronLine`. The `time.Location` of the returned time stamp is the same as `fromTime`.
-
-#### func NextTimeN
-
-    func NextTimeN(cronLine string, fromTime time.Time, n int) []time.Time
-
-Given a time stamp `fromTime`, return a slice of `n` closest following time stamps which match the cron expression string `cronLine`. The time stamps in the returned slice are in chronological ascending order. The `time.Location` of the returned time stamps is the same as `fromTime`.
-
-Example:
-
-    cronexpression.NextTimeN("0 0 0 29 2 ? *", time.Now(), 5)
-
-will result in the following time stamps being returned (as of 2013-08-30):
+which returns a slice of time.Time objects, containing the following time stamps (as of 2013-08-30):
 
     2016-02-29 00:00:00
     2020-02-29 00:00:00
@@ -125,21 +110,6 @@ will result in the following time stamps being returned (as of 2013-08-30):
     2028-02-29 00:00:00
     2032-02-29 00:00:00
 
-#### func NewCronExpression
-
-    func NewCronExpression(cronLine string) *CronExpression
-
-Return a new `CronExpression` pointer which will interpret the cron expression string `cronLine`.
-
-#### func (*CronExpression) NextTime
-
-    func (cronexpr *CronExpression) NextTime(fromTime time.Time) time.Time
-
-Given a time stamp `fromTime`, return the closest following time stamp which matches the cron expression `cronexpr`. The `time.Location` of the returned time stamp is the same as `fromTime`.
-
-#### func (*CronExpression) NextTimeN
-
-    func (cronexpr *CronExpression) NextTimeN(fromTime time.Time, n int) []time.Time
-
-Given a time stamp `fromTime`, return a slice of `n` closest following time stamps which match the cron expression `cronexpr`. The time stamps in the returned slice are in chronological ascending order. The `time.Location` of the returned time stamps is the same as `fromTime`.
-
+API
+---
+<http://godoc.org/github.com/gorhill/cronexpression>
