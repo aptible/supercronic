@@ -90,11 +90,11 @@ You can keep the returned Expression pointer around if you want to reuse it:
 
 Use `time.IsZero()` to find out whether a valid time was returned. For example,
 
-    cronexpression.Next("* * * * * 1980", time.Now()).IsZero()
+    cronexpression.Parse("* * * * * 1980").Next(time.Now()).IsZero()
 
 will return `true`, whereas
 
-    cronexpression.Next("* * * * * 2050", time.Now()).IsZero()
+    cronexpression.Parse("* * * * * 2050").Next(time.Now()).IsZero()
 
 will return `false` (as of 2013-08-29...)
 
