@@ -45,9 +45,10 @@ type Expression struct {
 
 /******************************************************************************/
 
-// Parse() returns a new Expression pointer. It expects
-// a well-formed cron expression. If a malformed cron expression is
-// supplied, the result is undefined.
+// Returns a new Expression pointer. It expects a well-formed cron expression.
+// If a malformed cron expression is supplied, the result is undefined. See
+// <https://github.com/gorhill/cronexpr#implementation> for documentation
+// about what is a well-formed cron expression from this library point of view.
 func Parse(cronLine string) *Expression {
 	cronLineNormalized := cronNormalize(cronLine)
 
