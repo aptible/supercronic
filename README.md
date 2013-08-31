@@ -86,7 +86,7 @@ You can keep the returned Expression pointer around if you want to reuse it:
     expr := cronexpression.Parse("0 0 29 2 *")
     nextTime := expr.Next(time.Now())
     ...
-    nextTime := expr.Next(nextTime)
+    nextTime = expr.Next(nextTime)
 
 Use `time.IsZero()` to find out whether a valid time was returned. For example,
 
