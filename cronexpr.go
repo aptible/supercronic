@@ -23,8 +23,8 @@ import (
 
 /******************************************************************************/
 
-// A Expression represents a specific cron time expression as defined on
-// Wikipedia: https://en.wikipedia.org/wiki/Cron#CRON_expression
+// A Expression represents a specific cron time expression as defined at
+// <https://github.com/gorhill/cronexpr#implementation>
 type Expression struct {
 	expression             string
 	secondList             []int
