@@ -98,15 +98,15 @@ func Parse(cronLine string) *Expression {
 /******************************************************************************/
 
 // Given a time stamp `fromTime`, return the closest following time stamp which
-// matches the cron expression `cronexpr`. The `time.Location` of the returned
+// matches the cron expression `expr`. The `time.Location` of the returned
 // time stamp is the same as `fromTime`.
-func (cronexpr *Expression) Next(fromTime time.Time) time.Time {
+func (expr *Expression) Next(fromTime time.Time) time.Time {
 	// Special case
 	if fromTime.IsZero() {
 		return fromTime
 	}
 
-	// Since cronexpr.nextSecond()-cronexpr.nextMonth() expects that the
+	// Since expr.nextSecond()-expr.nextMonth() expects that the
 	// supplied time stamp is a perfect match to the underlying cron
 	// expression, and since this function is an entry point where `fromTime`
 	// does not necessarily matches the underlying cron expression,
@@ -118,80 +118,80 @@ func (cronexpr *Expression) Next(fromTime time.Time) time.Time {
 
 	// year
 	v := fromTime.Year()
-	i := sort.SearchInts(cronexpr.yearList, v)
-	if i == len(cronexpr.yearList) {
+	i := sort.SearchInts(expr.yearList, v)
+	if i == len(expr.yearList) {
 		return time.Time{}
 	}
-	if v != cronexpr.yearList[i] {
-		return cronexpr.nextYear(fromTime)
+	if v != expr.yearList[i] {
+		return expr.nextYear(fromTime)
 	}
 	// month
 	v = int(fromTime.Month())
-	i = sort.SearchInts(cronexpr.monthList, v)
-	if i == len(cronexpr.monthList) {
-		return cronexpr.nextYear(fromTime)
+	i = sort.SearchInts(expr.monthList, v)
+	if i == len(expr.monthList) {
+		return expr.nextYear(fromTime)
 	}
-	if v != cronexpr.monthList[i] {
-		return cronexpr.nextMonth(fromTime)
+	if v != expr.monthList[i] {
+		return expr.nextMonth(fromTime)
 	}
 
-	cronexpr.actualDaysOfMonthList = cronexpr.calculateActualDaysOfMonth(fromTime.Year(), int(fromTime.Month()))
-	if len(cronexpr.actualDaysOfMonthList) == 0 {
-		return cronexpr.nextMonth(fromTime)
+	expr.actualDaysOfMonthList = expr.calculateActualDaysOfMonth(fromTime.Year(), int(fromTime.Month()))
+	if len(expr.actualDaysOfMonthList) == 0 {
+		return expr.nextMonth(fromTime)
 	}
 
 	// day of month
 	v = fromTime.Day()
-	i = sort.SearchInts(cronexpr.actualDaysOfMonthList, v)
-	if i == len(cronexpr.actualDaysOfMonthList) {
-		return cronexpr.nextMonth(fromTime)
+	i = sort.SearchInts(expr.actualDaysOfMonthList, v)
+	if i == len(expr.actualDaysOfMonthList) {
+		return expr.nextMonth(fromTime)
 	}
-	if v != cronexpr.actualDaysOfMonthList[i] {
-		return cronexpr.nextDayOfMonth(fromTime)
+	if v != expr.actualDaysOfMonthList[i] {
+		return expr.nextDayOfMonth(fromTime)
 	}
 	// hour
 	v = fromTime.Hour()
-	i = sort.SearchInts(cronexpr.hourList, v)
-	if i == len(cronexpr.hourList) {
-		return cronexpr.nextDayOfMonth(fromTime)
+	i = sort.SearchInts(expr.hourList, v)
+	if i == len(expr.hourList) {
+		return expr.nextDayOfMonth(fromTime)
 	}
-	if v != cronexpr.hourList[i] {
-		return cronexpr.nextHour(fromTime)
+	if v != expr.hourList[i] {
+		return expr.nextHour(fromTime)
 	}
 	// minute
 	v = fromTime.Minute()
-	i = sort.SearchInts(cronexpr.minuteList, v)
-	if i == len(cronexpr.minuteList) {
-		return cronexpr.nextHour(fromTime)
+	i = sort.SearchInts(expr.minuteList, v)
+	if i == len(expr.minuteList) {
+		return expr.nextHour(fromTime)
 	}
-	if v != cronexpr.minuteList[i] {
-		return cronexpr.nextMinute(fromTime)
+	if v != expr.minuteList[i] {
+		return expr.nextMinute(fromTime)
 	}
 	// second
 	v = fromTime.Second()
-	i = sort.SearchInts(cronexpr.secondList, v)
-	if i == len(cronexpr.secondList) {
-		return cronexpr.nextMinute(fromTime)
+	i = sort.SearchInts(expr.secondList, v)
+	if i == len(expr.secondList) {
+		return expr.nextMinute(fromTime)
 	}
 
 	// If we reach this point, there is nothing better to do
 	// than to move to the next second
 
-	return cronexpr.nextSecond(fromTime)
+	return expr.nextSecond(fromTime)
 }
 
 /******************************************************************************/
 
 // Given a time stamp `fromTime`, return a slice of `n` closest following time
-// stamps which match the cron expression `cronexpr`. The time stamps in the
+// stamps which match the cron expression `expr`. The time stamps in the
 // returned slice are in chronological ascending order. The `time.Location` of
 // the returned time stamps is the same as `fromTime`.
-func (cronexpr *Expression) NextN(fromTime time.Time, n int) []time.Time {
+func (expr *Expression) NextN(fromTime time.Time, n int) []time.Time {
 	if n <= 0 {
 		panic("Expression.NextN(): invalid count")
 	}
 	nextTimes := make([]time.Time, 0)
-	fromTime = cronexpr.Next(fromTime)
+	fromTime = expr.Next(fromTime)
 	for {
 		if fromTime.IsZero() {
 			break
@@ -201,81 +201,81 @@ func (cronexpr *Expression) NextN(fromTime time.Time, n int) []time.Time {
 		if n == 0 {
 			break
 		}
-		fromTime = cronexpr.nextSecond(fromTime)
+		fromTime = expr.nextSecond(fromTime)
 	}
 	return nextTimes
 }
 
 /******************************************************************************/
 
-func (cronexpr *Expression) nextYear(t time.Time) time.Time {
+func (expr *Expression) nextYear(t time.Time) time.Time {
 	// Find index at which item in list is greater or equal to
 	// candidate year
-	i := sort.SearchInts(cronexpr.yearList, t.Year()+1)
-	if i == len(cronexpr.yearList) {
+	i := sort.SearchInts(expr.yearList, t.Year()+1)
+	if i == len(expr.yearList) {
 		return time.Time{}
 	}
 	// Year changed, need to recalculate actual days of month
-	cronexpr.actualDaysOfMonthList = cronexpr.calculateActualDaysOfMonth(cronexpr.yearList[i], cronexpr.monthList[0])
-	if len(cronexpr.actualDaysOfMonthList) == 0 {
-		return cronexpr.nextMonth(time.Date(
-			cronexpr.yearList[i],
-			time.Month(cronexpr.monthList[0]),
+	expr.actualDaysOfMonthList = expr.calculateActualDaysOfMonth(expr.yearList[i], expr.monthList[0])
+	if len(expr.actualDaysOfMonthList) == 0 {
+		return expr.nextMonth(time.Date(
+			expr.yearList[i],
+			time.Month(expr.monthList[0]),
 			1,
-			cronexpr.hourList[0],
-			cronexpr.minuteList[0],
-			cronexpr.secondList[0],
+			expr.hourList[0],
+			expr.minuteList[0],
+			expr.secondList[0],
 			0,
 			time.Local))
 	}
 	return time.Date(
-		cronexpr.yearList[i],
-		time.Month(cronexpr.monthList[0]),
-		cronexpr.actualDaysOfMonthList[0],
-		cronexpr.hourList[0],
-		cronexpr.minuteList[0],
-		cronexpr.secondList[0],
+		expr.yearList[i],
+		time.Month(expr.monthList[0]),
+		expr.actualDaysOfMonthList[0],
+		expr.hourList[0],
+		expr.minuteList[0],
+		expr.secondList[0],
 		0,
 		time.Local)
 }
 
 /******************************************************************************/
 
-func (cronexpr *Expression) nextMonth(t time.Time) time.Time {
+func (expr *Expression) nextMonth(t time.Time) time.Time {
 	// Find index at which item in list is greater or equal to
 	// candidate month
-	i := sort.SearchInts(cronexpr.monthList, int(t.Month())+1)
-	if i == len(cronexpr.monthList) {
-		return cronexpr.nextYear(t)
+	i := sort.SearchInts(expr.monthList, int(t.Month())+1)
+	if i == len(expr.monthList) {
+		return expr.nextYear(t)
 	}
 	// Month changed, need to recalculate actual days of month
-	cronexpr.actualDaysOfMonthList = cronexpr.calculateActualDaysOfMonth(t.Year(), cronexpr.monthList[i])
-	if len(cronexpr.actualDaysOfMonthList) == 0 {
-		return cronexpr.nextMonth(time.Date(
+	expr.actualDaysOfMonthList = expr.calculateActualDaysOfMonth(t.Year(), expr.monthList[i])
+	if len(expr.actualDaysOfMonthList) == 0 {
+		return expr.nextMonth(time.Date(
 			t.Year(),
-			time.Month(cronexpr.monthList[i]),
+			time.Month(expr.monthList[i]),
 			1,
-			cronexpr.hourList[0],
-			cronexpr.minuteList[0],
-			cronexpr.secondList[0],
+			expr.hourList[0],
+			expr.minuteList[0],
+			expr.secondList[0],
 			0,
 			time.Local))
 	}
 
 	return time.Date(
 		t.Year(),
-		time.Month(cronexpr.monthList[i]),
-		cronexpr.actualDaysOfMonthList[0],
-		cronexpr.hourList[0],
-		cronexpr.minuteList[0],
-		cronexpr.secondList[0],
+		time.Month(expr.monthList[i]),
+		expr.actualDaysOfMonthList[0],
+		expr.hourList[0],
+		expr.minuteList[0],
+		expr.secondList[0],
 		0,
 		time.Local)
 }
 
 /******************************************************************************/
 
-func (cronexpr *Expression) calculateActualDaysOfMonth(year, month int) []int {
+func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 	actualDaysOfMonthMap := make(map[int]bool)
 	timeOrigin := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
 	lastDayOfMonth := timeOrigin.AddDate(0, 1, -1).Day()
@@ -285,13 +285,13 @@ func (cronexpr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 	//  "fields - day of month, and day of week. If both fields are
 	//  "restricted (ie, aren't *), the command will be run when
 	//  "either field matches the current time"
-	if cronexpr.daysOfMonthRestricted || cronexpr.daysOfWeekRestricted == false {
+	if expr.daysOfMonthRestricted || expr.daysOfWeekRestricted == false {
 		// Last day of month
-		if cronexpr.lastDayOfMonth {
+		if expr.lastDayOfMonth {
 			actualDaysOfMonthMap[lastDayOfMonth] = true
 		}
 		// Days of month
-		for v, _ := range cronexpr.daysOfMonth {
+		for v, _ := range expr.daysOfMonth {
 			// Ignore days beyond end of month
 			if v <= lastDayOfMonth {
 				actualDaysOfMonthMap[v] = true
@@ -299,7 +299,7 @@ func (cronexpr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		}
 		// Work days of month
 		// As per Wikipedia: month boundaries are not crossed.
-		for v, _ := range cronexpr.workdaysOfMonth {
+		for v, _ := range expr.workdaysOfMonth {
 			// Ignore days beyond end of month
 			if v <= lastDayOfMonth {
 				// If saturday, then friday
@@ -322,14 +322,14 @@ func (cronexpr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		}
 	}
 
-	if cronexpr.daysOfWeekRestricted {
+	if expr.daysOfWeekRestricted {
 		// How far first sunday is from first day of month
 		offset := 7 - int(timeOrigin.Weekday())
 		// days of week
 		//  offset : (7 - day_of_week_of_1st_day_of_month)
 		//  target : 1 + (7 * week_of_month) + (offset + day_of_week) % 7
 		for w := 0; w <= 4; w += 1 {
-			for v, _ := range cronexpr.daysOfWeek {
+			for v, _ := range expr.daysOfWeek {
 				v := 1 + w*7 + (offset+v)%7
 				if v <= lastDayOfMonth {
 					actualDaysOfMonthMap[v] = true
@@ -339,7 +339,7 @@ func (cronexpr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		// days of week of specific week in the month
 		//  offset : (7 - day_of_week_of_1st_day_of_month)
 		//  target : 1 + (7 * week_of_month) + (offset + day_of_week) % 7
-		for v, _ := range cronexpr.specificWeekDaysOfWeek {
+		for v, _ := range expr.specificWeekDaysOfWeek {
 			v := 1 + 7*(v/7) + (offset+v)%7
 			if v <= lastDayOfMonth {
 				actualDaysOfMonthMap[v] = true
@@ -348,7 +348,7 @@ func (cronexpr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		// Last days of week of the month
 		lastWeekOrigin := timeOrigin.AddDate(0, 1, -7)
 		offset = 7 - int(lastWeekOrigin.Weekday())
-		for v, _ := range cronexpr.lastWeekDaysOfWeek {
+		for v, _ := range expr.lastWeekDaysOfWeek {
 			v := lastWeekOrigin.Day() + (offset+v)%7
 			if v <= lastDayOfMonth {
 				actualDaysOfMonthMap[v] = true
@@ -361,54 +361,54 @@ func (cronexpr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 
 /******************************************************************************/
 
-func (cronexpr *Expression) nextDayOfMonth(t time.Time) time.Time {
+func (expr *Expression) nextDayOfMonth(t time.Time) time.Time {
 	// Find index at which item in list is greater or equal to
 	// candidate day of month
-	i := sort.SearchInts(cronexpr.actualDaysOfMonthList, t.Day()+1)
-	if i == len(cronexpr.actualDaysOfMonthList) {
-		return cronexpr.nextMonth(t)
+	i := sort.SearchInts(expr.actualDaysOfMonthList, t.Day()+1)
+	if i == len(expr.actualDaysOfMonthList) {
+		return expr.nextMonth(t)
 	}
 
 	return time.Date(
 		t.Year(),
 		t.Month(),
-		cronexpr.actualDaysOfMonthList[i],
-		cronexpr.hourList[0],
-		cronexpr.minuteList[0],
-		cronexpr.secondList[0],
+		expr.actualDaysOfMonthList[i],
+		expr.hourList[0],
+		expr.minuteList[0],
+		expr.secondList[0],
 		0,
 		t.Location())
 }
 
 /******************************************************************************/
 
-func (cronexpr *Expression) nextHour(t time.Time) time.Time {
+func (expr *Expression) nextHour(t time.Time) time.Time {
 	// Find index at which item in list is greater or equal to
 	// candidate hour
-	i := sort.SearchInts(cronexpr.hourList, t.Hour()+1)
-	if i == len(cronexpr.hourList) {
-		return cronexpr.nextDayOfMonth(t)
+	i := sort.SearchInts(expr.hourList, t.Hour()+1)
+	if i == len(expr.hourList) {
+		return expr.nextDayOfMonth(t)
 	}
 
 	return time.Date(
 		t.Year(),
 		t.Month(),
 		t.Day(),
-		cronexpr.hourList[i],
-		cronexpr.minuteList[0],
-		cronexpr.secondList[0],
+		expr.hourList[i],
+		expr.minuteList[0],
+		expr.secondList[0],
 		0,
 		t.Location())
 }
 
 /******************************************************************************/
 
-func (cronexpr *Expression) nextMinute(t time.Time) time.Time {
+func (expr *Expression) nextMinute(t time.Time) time.Time {
 	// Find index at which item in list is greater or equal to
 	// candidate minute
-	i := sort.SearchInts(cronexpr.minuteList, t.Minute()+1)
-	if i == len(cronexpr.minuteList) {
-		return cronexpr.nextHour(t)
+	i := sort.SearchInts(expr.minuteList, t.Minute()+1)
+	if i == len(expr.minuteList) {
+		return expr.nextHour(t)
 	}
 
 	return time.Date(
@@ -416,23 +416,23 @@ func (cronexpr *Expression) nextMinute(t time.Time) time.Time {
 		t.Month(),
 		t.Day(),
 		t.Hour(),
-		cronexpr.minuteList[i],
-		cronexpr.secondList[0],
+		expr.minuteList[i],
+		expr.secondList[0],
 		0,
 		t.Location())
 }
 
 /******************************************************************************/
 
-func (cronexpr *Expression) nextSecond(t time.Time) time.Time {
+func (expr *Expression) nextSecond(t time.Time) time.Time {
 	// nextSecond() assumes all other fields are exactly matched
 	// to the cron expression
 
 	// Find index at which item in list is greater or equal to
 	// candidate second
-	i := sort.SearchInts(cronexpr.secondList, t.Second()+1)
-	if i == len(cronexpr.secondList) {
-		return cronexpr.nextMinute(t)
+	i := sort.SearchInts(expr.secondList, t.Second()+1)
+	if i == len(expr.secondList) {
+		return expr.nextMinute(t)
 	}
 
 	return time.Date(
@@ -441,7 +441,7 @@ func (cronexpr *Expression) nextSecond(t time.Time) time.Time {
 		t.Day(),
 		t.Hour(),
 		t.Minute(),
-		cronexpr.secondList[i],
+		expr.secondList[i],
 		0,
 		t.Location())
 }
@@ -504,11 +504,11 @@ func cronNormalize(cronLine string) string {
 
 /******************************************************************************/
 
-func (cronexpr *Expression) dayofweekFieldParse(cronField string) error {
+func (expr *Expression) dayofweekFieldParse(cronField string) error {
 	// Defaults
-	cronexpr.daysOfWeekRestricted = true
-	cronexpr.lastWeekDaysOfWeek = make(map[int]bool)
-	cronexpr.daysOfWeek = make(map[int]bool)
+	expr.daysOfWeekRestricted = true
+	expr.lastWeekDaysOfWeek = make(map[int]bool)
+	expr.daysOfWeek = make(map[int]bool)
 
 	// "You can also mix all of the above, as in: 1-5,10,12,20-30/5"
 	cronList := strings.Split(cronField, ",")
@@ -517,8 +517,8 @@ func (cronexpr *Expression) dayofweekFieldParse(cronField string) error {
 		step, s := extractInterval(s)
 		// "*"
 		if s == "*" {
-			cronexpr.daysOfWeekRestricted = (step > 1)
-			populateMany(cronexpr.daysOfWeek, 0, 6, step)
+			expr.daysOfWeekRestricted = (step > 1)
+			populateMany(expr.daysOfWeek, 0, 6, step)
 			continue
 		}
 		// "-"
@@ -527,14 +527,14 @@ func (cronexpr *Expression) dayofweekFieldParse(cronField string) error {
 		if i >= 0 {
 			min := atoi(s[:i]) % 7
 			max := atoi(s[i+1:]) % 7
-			populateMany(cronexpr.daysOfWeek, min, max, step)
+			populateMany(expr.daysOfWeek, min, max, step)
 			continue
 		}
 		// single value
 		// "l": week day for last week
 		i = strings.Index(s, "l")
 		if i >= 0 {
-			populateOne(cronexpr.lastWeekDaysOfWeek, atoi(s[:i])%7)
+			populateOne(expr.lastWeekDaysOfWeek, atoi(s[:i])%7)
 			continue
 		}
 		// "#": week day for specific week
@@ -545,18 +545,18 @@ func (cronexpr *Expression) dayofweekFieldParse(cronField string) error {
 			w := atoi(s[i+1:])
 			// v domain = [0,7]
 			// w domain = [1,5]
-			populateOne(cronexpr.specificWeekDaysOfWeek, (w-1)*7+(v%7))
+			populateOne(expr.specificWeekDaysOfWeek, (w-1)*7+(v%7))
 			continue
 		}
 		// week day interval for all weeks
 		if step > 0 {
 			v := atoi(s) % 7
-			populateMany(cronexpr.daysOfWeek, v, 6, step)
+			populateMany(expr.daysOfWeek, v, 6, step)
 			continue
 		}
 		// single week day for all weeks
 		v := atoi(s) % 7
-		populateOne(cronexpr.daysOfWeek, v)
+		populateOne(expr.daysOfWeek, v)
 	}
 
 	return nil
@@ -564,13 +564,13 @@ func (cronexpr *Expression) dayofweekFieldParse(cronField string) error {
 
 /******************************************************************************/
 
-func (cronexpr *Expression) dayofmonthFieldParse(cronField string) error {
+func (expr *Expression) dayofmonthFieldParse(cronField string) error {
 	// Defaults
-	cronexpr.daysOfMonthRestricted = true
-	cronexpr.lastDayOfMonth = false
+	expr.daysOfMonthRestricted = true
+	expr.lastDayOfMonth = false
 
-	cronexpr.daysOfMonth = make(map[int]bool)     // days of month map
-	cronexpr.workdaysOfMonth = make(map[int]bool) // work day of month map
+	expr.daysOfMonth = make(map[int]bool)     // days of month map
+	expr.workdaysOfMonth = make(map[int]bool) // work day of month map
 
 	// Comma separator is used to mix different allowed syntax
 	cronList := strings.Split(cronField, ",")
@@ -579,35 +579,35 @@ func (cronexpr *Expression) dayofmonthFieldParse(cronField string) error {
 		step, s := extractInterval(s)
 		// "*"
 		if s == "*" {
-			cronexpr.daysOfMonthRestricted = (step > 1)
-			populateMany(cronexpr.daysOfMonth, 1, 31, step)
+			expr.daysOfMonthRestricted = (step > 1)
+			populateMany(expr.daysOfMonth, 1, 31, step)
 			continue
 		}
 		// "-"
 		i := strings.Index(s, "-")
 		if i >= 0 {
-			populateMany(cronexpr.daysOfMonth, atoi(s[:i]), atoi(s[i+1:]), step)
+			populateMany(expr.daysOfMonth, atoi(s[:i]), atoi(s[i+1:]), step)
 			continue
 		}
 		// single value
 		// "l": last day of month
 		if s == "l" {
-			cronexpr.lastDayOfMonth = true
+			expr.lastDayOfMonth = true
 			continue
 		}
 		// "w": week day
 		i = strings.Index(s, "w")
 		if i >= 0 {
-			populateOne(cronexpr.workdaysOfMonth, atoi(s[:i]))
+			populateOne(expr.workdaysOfMonth, atoi(s[:i]))
 			continue
 		}
 		// single value with interval
 		if step > 0 {
-			populateMany(cronexpr.daysOfMonth, atoi(s), 31, step)
+			populateMany(expr.daysOfMonth, atoi(s), 31, step)
 			continue
 		}
 		// single value
-		populateOne(cronexpr.daysOfMonth, atoi(s))
+		populateOne(expr.daysOfMonth, atoi(s))
 	}
 
 	return nil
