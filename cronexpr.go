@@ -232,7 +232,7 @@ func (expr *Expression) nextYear(t time.Time) time.Time {
 			expr.minuteList[0],
 			expr.secondList[0],
 			0,
-			time.Local))
+			t.Location()))
 	}
 	return time.Date(
 		expr.yearList[i],
@@ -242,7 +242,7 @@ func (expr *Expression) nextYear(t time.Time) time.Time {
 		expr.minuteList[0],
 		expr.secondList[0],
 		0,
-		time.Local)
+		t.Location())
 }
 
 /******************************************************************************/
@@ -265,7 +265,7 @@ func (expr *Expression) nextMonth(t time.Time) time.Time {
 			expr.minuteList[0],
 			expr.secondList[0],
 			0,
-			time.Local))
+			t.Location()))
 	}
 
 	return time.Date(
@@ -276,7 +276,7 @@ func (expr *Expression) nextMonth(t time.Time) time.Time {
 		expr.minuteList[0],
 		expr.secondList[0],
 		0,
-		time.Local)
+		t.Location())
 }
 
 /******************************************************************************/
