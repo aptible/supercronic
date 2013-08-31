@@ -1,7 +1,5 @@
-cronexpression for Go
-=====================
-Cron expression parser in Go language (golang).
-
+Golang Cron expression parser
+=============================
 Given a cron expression and a time stamp, you can get the next time stamp which satisfies the cron expression.
 
 In another project, I decided to use cron expression syntax to encode scheduling information. Thus this standalone library to parse and apply time stamps to cron expressions.
@@ -66,41 +64,41 @@ Other details
 
 Install
 -------
-    go get github.com/gorhill/cronexpression
+    go get github.com/gorhill/cronexpr
 
 Usage
 -----
 Import the library:
 
-    import "github.com/gorhill/cronexpression"
+    import "github.com/gorhill/cronexpr"
     import "time"
 
 Simplest way:
 
-    nextTime := cronexpression.Parse("0 0 29 2 *").Next(time.Now())
+    nextTime := cronexpr.Parse("0 0 29 2 *").Next(time.Now())
 
 Assuming `time.Now()` is "2013-08-29 09:28:00", then `nextTime` will be "2016-02-29 00:00:00".
 
 You can keep the returned Expression pointer around if you want to reuse it:
 
-    expr := cronexpression.Parse("0 0 29 2 *")
+    expr := cronexpr.Parse("0 0 29 2 *")
     nextTime := expr.Next(time.Now())
     ...
     nextTime = expr.Next(nextTime)
 
 Use `time.IsZero()` to find out whether a valid time was returned. For example,
 
-    cronexpression.Parse("* * * * * 1980").Next(time.Now()).IsZero()
+    cronexpr.Parse("* * * * * 1980").Next(time.Now()).IsZero()
 
 will return `true`, whereas
 
-    cronexpression.Parse("* * * * * 2050").Next(time.Now()).IsZero()
+    cronexpr.Parse("* * * * * 2050").Next(time.Now()).IsZero()
 
 will return `false` (as of 2013-08-29...)
 
 You may also query for `n` next time stamps:
 
-    cronexpression.Parse("0 0 29 2 *").NextN(time.Now(), 5)
+    cronexpr.Parse("0 0 29 2 *").NextN(time.Now(), 5)
 
 which returns a slice of time.Time objects, containing the following time stamps (as of 2013-08-30):
 
@@ -112,4 +110,4 @@ which returns a slice of time.Time objects, containing the following time stamps
 
 API
 ---
-<http://godoc.org/github.com/gorhill/cronexpression>
+<http://godoc.org/github.com/gorhill/cronexpr>
