@@ -45,18 +45,6 @@ type Expression struct {
 
 /******************************************************************************/
 
-// Check whether the cron expression `cronLine` is valid. If not valid, the
-// index in the `cronLine` string at which there is an error is returned.
-func Check(cronLine string) int {
-
-	// Split into fields
-	_ = regexp.MustCompile(`\s+`).Split(cronLine, -1)
-
-	return -1
-}
-
-/******************************************************************************/
-
 // Parse() returns a new Expression pointer. It expects
 // a well-formed cron expression. If a malformed cron expression is
 // supplied, the result is undefined.
