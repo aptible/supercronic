@@ -1,19 +1,19 @@
 /*!
  * Copyright 2013 Raymond Hill
  *
- * Project: github.com/gorhill/cronexpression
- * File: cronexpression_test.go
+ * Project: github.com/gorhill/cronexpr
+ * File: cronexpr_test.go
  * Version: 1.0
  * License: GPL v3 see <https://www.gnu.org/licenses/gpl.html>
  *
  */
 
-package cronexpression_test
+package cronexpr_test
 
 /******************************************************************************/
 
 import (
-	"cronexpression"
+	"cronexpr"
 	"testing"
 	"time"
 )
@@ -113,7 +113,7 @@ func TestExpressions(t *testing.T) {
 	for _, test := range crontests {
 		for _, times := range test.times {
 			from, _ := time.Parse("2006-01-02 15:04:05", times.from)
-			next := cronexpression.Parse(test.expr).Next(from)
+			next := cronexpr.Parse(test.expr).Next(from)
 			nextstr := next.Format(test.layout)
 			if nextstr != times.next {
 				t.Errorf("(\"%s\").Next(\"%s\") = \"%s\", got \"%s\"", test.expr, times.from, times.next, nextstr)

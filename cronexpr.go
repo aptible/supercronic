@@ -1,15 +1,15 @@
 /*!
  * Copyright 2013 Raymond Hill
  *
- * Project: github.com/gorhill/cronexpression
- * File: cronexpression.go
+ * Project: github.com/gorhill/cronexpr
+ * File: cronexpr.go
  * Version: 1.0
  * License: GPL v3 see <https://www.gnu.org/licenses/gpl.html>
  *
  */
 
-// Package cronexpression parses cron time expressions.
-package cronexpression
+// Package cronexpr parses cron time expressions.
+package cronexpr
 
 /******************************************************************************/
 
@@ -100,6 +100,8 @@ func Parse(cronLine string) *Expression {
 // Given a time stamp `fromTime`, return the closest following time stamp which
 // matches the cron expression `expr`. The `time.Location` of the returned
 // time stamp is the same as `fromTime`.
+//
+// A nil time.Time object is returned if no matching time stamp exists.
 func (expr *Expression) Next(fromTime time.Time) time.Time {
 	// Special case
 	if fromTime.IsZero() {
@@ -186,6 +188,9 @@ func (expr *Expression) Next(fromTime time.Time) time.Time {
 // stamps which match the cron expression `expr`. The time stamps in the
 // returned slice are in chronological ascending order. The `time.Location` of
 // the returned time stamps is the same as `fromTime`.
+//
+// A slice with less than `n` entries (up to zero) is returned if not
+// enough existing matching time stamps which exist.
 func (expr *Expression) NextN(fromTime time.Time, n int) []time.Time {
 	if n <= 0 {
 		panic("Expression.NextN(): invalid count")
