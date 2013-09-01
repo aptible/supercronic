@@ -45,7 +45,7 @@ type Expression struct {
 
 /******************************************************************************/
 
-// Returns a new Expression pointer. It expects a well-formed cron expression.
+// Parse returns a new Expression pointer. It expects a well-formed cron expression.
 // If a malformed cron expression is supplied, the result is undefined. See
 // <https://github.com/gorhill/cronexpr#implementation> for documentation
 // about what is a well-formed cron expression from this library point of view.
@@ -98,11 +98,14 @@ func Parse(cronLine string) *Expression {
 
 /******************************************************************************/
 
-// Given a time stamp `fromTime`, return the closest following time stamp which
-// matches the cron expression `expr`. The `time.Location` of the returned
-// time stamp is the same as `fromTime`.
+// Next returns the closest time instant immediately following `fromTime` which
+// matches the cron expression `expr`.
 //
-// A nil time.Time object is returned if no matching time stamp exists.
+// The `time.Location` of the returned time instant is the same as that of
+// `fromTime`.
+//
+// The zero value of time.Time is returned if no matching time instant exists
+// or if a `fromTime` is itself a zero value.
 func (expr *Expression) Next(fromTime time.Time) time.Time {
 	// Special case
 	if fromTime.IsZero() {
@@ -185,29 +188,31 @@ func (expr *Expression) Next(fromTime time.Time) time.Time {
 
 /******************************************************************************/
 
-// Given a time stamp `fromTime`, return a slice of `n` closest following time
-// stamps which match the cron expression `expr`. The time stamps in the
-// returned slice are in chronological ascending order. The `time.Location` of
-// the returned time stamps is the same as `fromTime`.
+// NextN return a slice of `n` closest time instants immediately following
+// `fromTime` which match the cron expression `expr`.
 //
-// A slice with less than `n` entries (up to zero) is returned if not
-// enough existing matching time stamps which exist.
-func (expr *Expression) NextN(fromTime time.Time, n int) []time.Time {
-	if n <= 0 {
-		panic("Expression.NextN(): invalid count")
-	}
+// The time instants in the returned slice are in chronological ascending order.
+// The `time.Location` of the returned time instants is the same as that of
+// `fromTime`.
+//
+// A slice with len between [0-`n`] is returned, that is, if not enough existing
+// matching time instants exist, the number of returned entries will be less
+// than `n`.
+func (expr *Expression) NextN(fromTime time.Time, n uint) []time.Time {
 	nextTimes := make([]time.Time, 0)
-	fromTime = expr.Next(fromTime)
-	for {
-		if fromTime.IsZero() {
-			break
+	if n > 0 {
+		fromTime = expr.Next(fromTime)
+		for {
+			if fromTime.IsZero() {
+				break
+			}
+			nextTimes = append(nextTimes, fromTime)
+			n -= 1
+			if n == 0 {
+				break
+			}
+			fromTime = expr.nextSecond(fromTime)
 		}
-		nextTimes = append(nextTimes, fromTime)
-		n -= 1
-		if n == 0 {
-			break
-		}
-		fromTime = expr.nextSecond(fromTime)
 	}
 	return nextTimes
 }
@@ -297,7 +302,7 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 			actualDaysOfMonthMap[lastDayOfMonth] = true
 		}
 		// Days of month
-		for v, _ := range expr.daysOfMonth {
+		for v := range expr.daysOfMonth {
 			// Ignore days beyond end of month
 			if v <= lastDayOfMonth {
 				actualDaysOfMonthMap[v] = true
@@ -305,7 +310,7 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		}
 		// Work days of month
 		// As per Wikipedia: month boundaries are not crossed.
-		for v, _ := range expr.workdaysOfMonth {
+		for v := range expr.workdaysOfMonth {
 			// Ignore days beyond end of month
 			if v <= lastDayOfMonth {
 				// If saturday, then friday
@@ -335,7 +340,7 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		//  offset : (7 - day_of_week_of_1st_day_of_month)
 		//  target : 1 + (7 * week_of_month) + (offset + day_of_week) % 7
 		for w := 0; w <= 4; w += 1 {
-			for v, _ := range expr.daysOfWeek {
+			for v := range expr.daysOfWeek {
 				v := 1 + w*7 + (offset+v)%7
 				if v <= lastDayOfMonth {
 					actualDaysOfMonthMap[v] = true
@@ -345,7 +350,7 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		// days of week of specific week in the month
 		//  offset : (7 - day_of_week_of_1st_day_of_month)
 		//  target : 1 + (7 * week_of_month) + (offset + day_of_week) % 7
-		for v, _ := range expr.specificWeekDaysOfWeek {
+		for v := range expr.specificWeekDaysOfWeek {
 			v := 1 + 7*(v/7) + (offset+v)%7
 			if v <= lastDayOfMonth {
 				actualDaysOfMonthMap[v] = true
@@ -354,7 +359,7 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		// Last days of week of the month
 		lastWeekOrigin := timeOrigin.AddDate(0, 1, -7)
 		offset = 7 - int(lastWeekOrigin.Weekday())
-		for v, _ := range expr.lastWeekDaysOfWeek {
+		for v := range expr.lastWeekDaysOfWeek {
 			v := lastWeekOrigin.Day() + (offset+v)%7
 			if v <= lastDayOfMonth {
 				actualDaysOfMonthMap[v] = true
@@ -510,7 +515,7 @@ func cronNormalize(cronLine string) string {
 
 /******************************************************************************/
 
-func (expr *Expression) dayofweekFieldParse(cronField string) error {
+func (expr *Expression) dayofweekFieldParse(cronField string) {
 	// Defaults
 	expr.daysOfWeekRestricted = true
 	expr.lastWeekDaysOfWeek = make(map[int]bool)
@@ -564,13 +569,11 @@ func (expr *Expression) dayofweekFieldParse(cronField string) error {
 		v := atoi(s) % 7
 		populateOne(expr.daysOfWeek, v)
 	}
-
-	return nil
 }
 
 /******************************************************************************/
 
-func (expr *Expression) dayofmonthFieldParse(cronField string) error {
+func (expr *Expression) dayofmonthFieldParse(cronField string) {
 	// Defaults
 	expr.daysOfMonthRestricted = true
 	expr.lastDayOfMonth = false
@@ -615,8 +618,6 @@ func (expr *Expression) dayofmonthFieldParse(cronField string) error {
 		// single value
 		populateOne(expr.daysOfMonth, atoi(s))
 	}
-
-	return nil
 }
 
 /******************************************************************************/
@@ -691,7 +692,7 @@ func populateMany(values map[int]bool, min, max, step int) {
 func toList(set map[int]bool) []int {
 	list := make([]int, len(set))
 	i := 0
-	for k, _ := range set {
+	for k := range set {
 		list[i] = k
 		i += 1
 	}

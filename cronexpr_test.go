@@ -13,7 +13,8 @@ package cronexpr_test
 /******************************************************************************/
 
 import (
-	"cronexpr"
+	"github.com/gorhill/cronexpr"
+
 	"testing"
 	"time"
 )
@@ -126,11 +127,16 @@ func TestZero(t *testing.T) {
 	from, _ := time.Parse("2006-01-02", "2013-08-31")
 	next := cronexpr.Parse("* * * * * 1980").Next(from)
 	if next.IsZero() == false {
-		t.Error(`("* * * * * 1980").Next("2013-08-31") returned 'false', expected 'true'`)
+		t.Error(`("* * * * * 1980").Next("2013-08-31").IsZero() returned 'false', expected 'true'`)
 	}
 
 	next = cronexpr.Parse("* * * * * 2050").Next(from)
 	if next.IsZero() == true {
-		t.Error(`("* * * * * 2050").Next("2013-08-31") returned 'true', expected 'false'`)
+		t.Error(`("* * * * * 2050").Next("2013-08-31").IsZero() returned 'true', expected 'false'`)
+	}
+
+	next = cronexpr.Parse("* * * * * 2099").Next(time.Time{})
+	if next.IsZero() == false {
+		t.Error(`("* * * * * 2014").Next(time.Time{}).IsZero() returned 'true', expected 'false'`)
 	}
 }
