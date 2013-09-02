@@ -13,10 +13,10 @@ package cronexpr_test
 /******************************************************************************/
 
 import (
-	"github.com/gorhill/cronexpr"
-
 	"testing"
 	"time"
+
+	"github.com/gorhill/cronexpr"
 )
 
 /******************************************************************************/
@@ -123,7 +123,7 @@ func TestExpressions(t *testing.T) {
 	for _, test := range crontests {
 		for _, times := range test.times {
 			from, _ := time.Parse("2006-01-02 15:04:05", times.from)
-			next := cronexpr.Parse(test.expr).Next(from)
+			next := cronexpr.MustParse(test.expr).Next(from)
 			nextstr := next.Format(test.layout)
 			if nextstr != times.next {
 				t.Errorf(`("%s").Next("%s") = "%s", got "%s"`, test.expr, times.from, times.next, nextstr)
@@ -134,18 +134,41 @@ func TestExpressions(t *testing.T) {
 
 func TestZero(t *testing.T) {
 	from, _ := time.Parse("2006-01-02", "2013-08-31")
-	next := cronexpr.Parse("* * * * * 1980").Next(from)
+	next := cronexpr.MustParse("* * * * * 1980").Next(from)
 	if next.IsZero() == false {
 		t.Error(`("* * * * * 1980").Next("2013-08-31").IsZero() returned 'false', expected 'true'`)
 	}
 
-	next = cronexpr.Parse("* * * * * 2050").Next(from)
+	next = cronexpr.MustParse("* * * * * 2050").Next(from)
 	if next.IsZero() == true {
 		t.Error(`("* * * * * 2050").Next("2013-08-31").IsZero() returned 'true', expected 'false'`)
 	}
 
-	next = cronexpr.Parse("* * * * * 2099").Next(time.Time{})
+	next = cronexpr.MustParse("* * * * * 2099").Next(time.Time{})
 	if next.IsZero() == false {
 		t.Error(`("* * * * * 2014").Next(time.Time{}).IsZero() returned 'true', expected 'false'`)
+	}
+}
+
+func TestNextN(t *testing.T) {
+	expected := []string{
+		"Sat, 30 Nov 2013 00:00:00",
+		"Sat, 29 Mar 2014 00:00:00",
+		"Sat, 31 May 2014 00:00:00",
+		"Sat, 30 Aug 2014 00:00:00",
+		"Sat, 29 Nov 2014 00:00:00",
+	}
+	from, _ := time.Parse("2006-01-02 15:04:05", "2013-09-02 08:44:30")
+	result := cronexpr.MustParse("0 0 * * 6#5").NextN(from, uint(len(expected)))
+	if len(result) != len(expected) {
+		t.Errorf(`MustParse("0 0 * * 6#5").NextN("2013-09-02 08:44:30", 5):\n"`)
+		t.Errorf(`  Expected %d returned time values but got %d instead`, len(expected), len(result))
+	}
+	for i, next := range result {
+		nextStr := next.Format("Mon, 2 Jan 2006 15:04:15")
+		if nextStr != expected[i] {
+			t.Errorf(`MustParse("0 0 * * 6#5").NextN("2013-09-02 08:44:30", 5):\n"`)
+			t.Errorf(`  result[%d]: expected "%s" but got "%s"`, i, expected[i], nextStr)
+		}
 	}
 }

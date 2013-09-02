@@ -77,30 +77,30 @@ Import the library:
 
 Simplest way:
 
-    nextTime := cronexpr.Parse("0 0 29 2 *").Next(time.Now())
+    nextTime := cronexpr.MustParse("0 0 29 2 *").Next(time.Now())
 
 Assuming `time.Now()` is "2013-08-29 09:28:00", then `nextTime` will be "2016-02-29 00:00:00".
 
 You can keep the returned Expression pointer around if you want to reuse it:
 
-    expr := cronexpr.Parse("0 0 29 2 *")
+    expr := cronexpr.MustParse("0 0 29 2 *")
     nextTime := expr.Next(time.Now())
     ...
     nextTime = expr.Next(nextTime)
 
 Use `time.IsZero()` to find out whether a valid time was returned. For example,
 
-    cronexpr.Parse("* * * * * 1980").Next(time.Now()).IsZero()
+    cronexpr.MustParse("* * * * * 1980").Next(time.Now()).IsZero()
 
 will return `true`, whereas
 
-    cronexpr.Parse("* * * * * 2050").Next(time.Now()).IsZero()
+    cronexpr.MustParse("* * * * * 2050").Next(time.Now()).IsZero()
 
 will return `false` (as of 2013-08-29...)
 
 You may also query for `n` next time stamps:
 
-    cronexpr.Parse("0 0 29 2 *").NextN(time.Now(), 5)
+    cronexpr.MustParse("0 0 29 2 *").NextN(time.Now(), 5)
 
 which returns a slice of time.Time objects, containing the following time stamps (as of 2013-08-30):
 
@@ -111,7 +111,7 @@ which returns a slice of time.Time objects, containing the following time stamps
     2032-02-29 00:00:00
 
 The time zone of time values returned by `Next` and `NextN` is always the
-time zone of the time value passed as argument, unless  zero time value is
+time zone of the time value passed as argument, unless a zero time value is
 returned.
 
 API

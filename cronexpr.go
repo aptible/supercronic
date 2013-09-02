@@ -45,11 +45,12 @@ type Expression struct {
 
 /******************************************************************************/
 
-// Parse returns a new Expression pointer. It expects a well-formed cron expression.
-// If a malformed cron expression is supplied, the result is undefined. See
-// <https://github.com/gorhill/cronexpr#implementation> for documentation
-// about what is a well-formed cron expression from this library point of view.
-func Parse(cronLine string) *Expression {
+// MustParse returns a new Expression pointer. It expects a well-formed cron
+// expression. If a malformed cron expression is supplied, it will `panic`.
+// See <https://github.com/gorhill/cronexpr#implementation> for documentation
+// about what is a well-formed cron expression from this library's point of
+// view.
+func MustParse(cronLine string) *Expression {
 	cronLineNormalized := cronNormalize(cronLine)
 
 	// Split into fields
@@ -73,7 +74,7 @@ func Parse(cronLine string) *Expression {
 	// At this point, we should have at least 7 fields. Fields beyond the
 	// seventh one, if any, are ignored.
 	if len(cronFields) < 7 {
-		panic("Malformed cron expression\n")
+		panic("MustParse(): Not enough fields in the cron time expression\n")
 	}
 
 	// Generic parser can be used for most fields

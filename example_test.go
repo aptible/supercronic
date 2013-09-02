@@ -24,7 +24,7 @@ import (
 // ExampleParse
 func ExampleParse() {
 	t := time.Date(2013, time.August, 31, 0, 0, 0, 0, time.UTC)
-	nextTimes := cronexpr.Parse("0 0 29 2 *").NextN(t, 5)
+	nextTimes := cronexpr.MustParse("0 0 29 2 *").NextN(t, 5)
 	for i := range nextTimes {
 		fmt.Println(nextTimes[i].Format(time.RFC1123))
 		// Output:
