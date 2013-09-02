@@ -107,6 +107,15 @@ var crontests = []crontest{
 		},
 	},
 
+	// Specific weekdays of week
+	{
+		"0 0 * * 6#5",
+		"Mon 2006-01-02 15:04",
+		[]crontimes{
+			{"2013-09-02 00:00:00", "Sat 2013-11-30 00:00"},
+		},
+	},
+
 	// TODO: more tests
 }
 
