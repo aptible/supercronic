@@ -132,6 +132,8 @@ func TestExpressions(t *testing.T) {
 	}
 }
 
+/******************************************************************************/
+
 func TestZero(t *testing.T) {
 	from, _ := time.Parse("2006-01-02", "2013-08-31")
 	next := cronexpr.MustParse("* * * * * 1980").Next(from)
@@ -149,6 +151,8 @@ func TestZero(t *testing.T) {
 		t.Error(`("* * * * * 2014").Next(time.Time{}).IsZero() returned 'true', expected 'false'`)
 	}
 }
+
+/******************************************************************************/
 
 func TestNextN(t *testing.T) {
 	expected := []string{
@@ -170,5 +174,41 @@ func TestNextN(t *testing.T) {
 			t.Errorf(`MustParse("0 0 * * 6#5").NextN("2013-09-02 08:44:30", 5):\n"`)
 			t.Errorf(`  result[%d]: expected "%s" but got "%s"`, i, expected[i], nextStr)
 		}
+	}
+}
+
+/******************************************************************************/
+
+var benchmarkExpressions = []string{
+	"* * * * *",
+	"@hourly",
+	"@weekly",
+	"@yearly",
+	"30 3 15W 3/3 *",
+	"30 0 0 1-31/5 Oct-Dec * 2000,2006,2008,2013-2015",
+	"0 0 0 * Feb-Nov/2 thu#3 2000-2050",
+}
+var benchmarkExpressionsLen = len(benchmarkExpressions)
+
+func BenchmarkParse(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = cronexpr.MustParse(benchmarkExpressions[i%benchmarkExpressionsLen])
+	}
+}
+
+func BenchmarkNext(b *testing.B) {
+	exprs := make([]*cronexpr.Expression, benchmarkExpressionsLen)
+	for i := 0; i < benchmarkExpressionsLen; i++ {
+		exprs[i] = cronexpr.MustParse(benchmarkExpressions[i])
+	}
+	from := time.Now()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		expr := exprs[i%benchmarkExpressionsLen]
+		next := expr.Next(from)
+		next = expr.Next(next)
+		next = expr.Next(next)
+		next = expr.Next(next)
+		next = expr.Next(next)
 	}
 }
