@@ -13,16 +13,16 @@ package cronexpr_test
 /******************************************************************************/
 
 import (
-	"github.com/gorhill/cronexpr"
-
 	"fmt"
 	"time"
+
+	"github.com/gorhill/cronexpr"
 )
 
 /******************************************************************************/
 
-// ExampleParse
-func ExampleParse() {
+// ExampleMustParse
+func ExampleMustParse() {
 	t := time.Date(2013, time.August, 31, 0, 0, 0, 0, time.UTC)
 	nextTimes := cronexpr.MustParse("0 0 29 2 *").NextN(t, 5)
 	for i := range nextTimes {
