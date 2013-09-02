@@ -37,8 +37,8 @@ type Expression struct {
 	actualDaysOfMonthList  []int
 	monthList              []int
 	daysOfWeek             map[int]bool
-	specificWeekDaysOfWeek map[int]bool
-	lastWeekDaysOfWeek     map[int]bool
+	specificWeekdaysOfWeek map[int]bool
+	lastWeekdaysOfWeek     map[int]bool
 	daysOfWeekRestricted   bool
 	yearList               []int
 }
@@ -188,7 +188,7 @@ func (expr *Expression) Next(fromTime time.Time) time.Time {
 
 /******************************************************************************/
 
-// NextN return a slice of `n` closest time instants immediately following
+// NextN returns a slice of `n` closest time instants immediately following
 // `fromTime` which match the cron expression `expr`.
 //
 // The time instants in the returned slice are in chronological ascending order.
@@ -350,7 +350,7 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		// days of week of specific week in the month
 		//  offset : (7 - day_of_week_of_1st_day_of_month)
 		//  target : 1 + (7 * week_of_month) + (offset + day_of_week) % 7
-		for v := range expr.specificWeekDaysOfWeek {
+		for v := range expr.specificWeekdaysOfWeek {
 			v := 1 + 7*(v/7) + (offset+v)%7
 			if v <= lastDayOfMonth {
 				actualDaysOfMonthMap[v] = true
@@ -359,7 +359,7 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		// Last days of week of the month
 		lastWeekOrigin := timeOrigin.AddDate(0, 1, -7)
 		offset = 7 - int(lastWeekOrigin.Weekday())
-		for v := range expr.lastWeekDaysOfWeek {
+		for v := range expr.lastWeekdaysOfWeek {
 			v := lastWeekOrigin.Day() + (offset+v)%7
 			if v <= lastDayOfMonth {
 				actualDaysOfMonthMap[v] = true
@@ -518,8 +518,9 @@ func cronNormalize(cronLine string) string {
 func (expr *Expression) dayofweekFieldParse(cronField string) {
 	// Defaults
 	expr.daysOfWeekRestricted = true
-	expr.lastWeekDaysOfWeek = make(map[int]bool)
 	expr.daysOfWeek = make(map[int]bool)
+	expr.lastWeekdaysOfWeek = make(map[int]bool)
+	expr.specificWeekdaysOfWeek = make(map[int]bool)
 
 	// "You can also mix all of the above, as in: 1-5,10,12,20-30/5"
 	cronList := strings.Split(cronField, ",")
@@ -545,7 +546,7 @@ func (expr *Expression) dayofweekFieldParse(cronField string) {
 		// "l": week day for last week
 		i = strings.Index(s, "l")
 		if i >= 0 {
-			populateOne(expr.lastWeekDaysOfWeek, atoi(s[:i])%7)
+			populateOne(expr.lastWeekdaysOfWeek, atoi(s[:i])%7)
 			continue
 		}
 		// "#": week day for specific week
@@ -556,7 +557,7 @@ func (expr *Expression) dayofweekFieldParse(cronField string) {
 			w := atoi(s[i+1:])
 			// v domain = [0,7]
 			// w domain = [1,5]
-			populateOne(expr.specificWeekDaysOfWeek, (w-1)*7+(v%7))
+			populateOne(expr.specificWeekdaysOfWeek, (w-1)*7+(v%7))
 			continue
 		}
 		// week day interval for all weeks
