@@ -110,6 +110,10 @@ which returns a slice of time.Time objects, containing the following time stamps
     2028-02-29 00:00:00
     2032-02-29 00:00:00
 
+The time zone of time values returned by `Next` and `NextN` is always the
+time zone of the time value passed as argument, unless  zero time value is
+returned.
+
 API
 ---
 <http://godoc.org/github.com/gorhill/cronexpr>
