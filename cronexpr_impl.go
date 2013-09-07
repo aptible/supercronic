@@ -23,7 +23,7 @@ import (
 /******************************************************************************/
 
 var (
-	genericDefaultList []int = []int{
+	genericDefaultList = []int{
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
 		10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
 		20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
@@ -31,7 +31,7 @@ var (
 		40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
 		50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
 	}
-	yearDefaultList []int = []int{
+	yearDefaultList = []int{
 		1970, 1971, 1972, 1973, 1974, 1975, 1976, 1977, 1978, 1979,
 		1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989,
 		1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
@@ -51,7 +51,7 @@ var (
 /******************************************************************************/
 
 var (
-	numberTokens map[string]int = map[string]int{
+	numberTokens = map[string]int{
 		"0": 0, "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9,
 		"10": 10, "11": 11, "12": 12, "13": 13, "14": 14, "15": 15, "16": 16, "17": 17, "18": 18, "19": 19,
 		"20": 20, "21": 21, "22": 22, "23": 23, "24": 24, "25": 25, "26": 26, "27": 27, "28": 28, "29": 29,
@@ -72,7 +72,7 @@ var (
 		"2080": 2080, "2081": 2081, "2082": 2082, "2083": 2083, "2084": 2084, "2085": 2085, "2086": 2086, "2087": 2087, "2088": 2088, "2089": 2089,
 		"2090": 2090, "2091": 2091, "2092": 2092, "2093": 2093, "2094": 2094, "2095": 2095, "2096": 2096, "2097": 2097, "2098": 2098, "2099": 2099,
 	}
-	monthTokens map[string]int = map[string]int{
+	monthTokens = map[string]int{
 		`1`: 1, `jan`: 1, `january`: 1,
 		`2`: 2, `feb`: 2, `february`: 2,
 		`3`: 3, `mar`: 3, `march`: 3,
@@ -86,7 +86,7 @@ var (
 		`11`: 11, `nov`: 11, `november`: 11,
 		`12`: 12, `dec`: 12, `december`: 12,
 	}
-	dowTokens map[string]int = map[string]int{
+	dowTokens = map[string]int{
 		`0`: 0, `sun`: 0, `sunday`: 0,
 		`1`: 1, `mon`: 1, `monday`: 1,
 		`2`: 2, `tue`: 2, `tuesday`: 2,
@@ -113,7 +113,7 @@ type fieldDescriptor struct {
 }
 
 var (
-	secondDescriptor fieldDescriptor = fieldDescriptor{
+	secondDescriptor = fieldDescriptor{
 		name:         "second",
 		min:          0,
 		max:          59,
@@ -121,7 +121,7 @@ var (
 		valuePattern: `[0-9]|[1-5][0-9]`,
 		atoi:         atoi,
 	}
-	minuteDescriptor fieldDescriptor = fieldDescriptor{
+	minuteDescriptor = fieldDescriptor{
 		name:         "minute",
 		min:          0,
 		max:          59,
@@ -129,7 +129,7 @@ var (
 		valuePattern: `[0-9]|[1-5][0-9]`,
 		atoi:         atoi,
 	}
-	hourDescriptor fieldDescriptor = fieldDescriptor{
+	hourDescriptor = fieldDescriptor{
 		name:         "hour",
 		min:          0,
 		max:          23,
@@ -137,7 +137,7 @@ var (
 		valuePattern: `[0-9]|1[0-9]|2[0-3]`,
 		atoi:         atoi,
 	}
-	domDescriptor fieldDescriptor = fieldDescriptor{
+	domDescriptor = fieldDescriptor{
 		name:         "day-of-month",
 		min:          1,
 		max:          31,
@@ -145,7 +145,7 @@ var (
 		valuePattern: `[1-9]|[12][0-9]|3[01]`,
 		atoi:         atoi,
 	}
-	monthDescriptor fieldDescriptor = fieldDescriptor{
+	monthDescriptor = fieldDescriptor{
 		name:         "month",
 		min:          1,
 		max:          12,
@@ -155,7 +155,7 @@ var (
 			return monthTokens[s]
 		},
 	}
-	dowDescriptor fieldDescriptor = fieldDescriptor{
+	dowDescriptor = fieldDescriptor{
 		name:         "day-of-week",
 		min:          0,
 		max:          6,
@@ -165,7 +165,7 @@ var (
 			return dowTokens[s]
 		},
 	}
-	yearDescriptor fieldDescriptor = fieldDescriptor{
+	yearDescriptor = fieldDescriptor{
 		name:         "year",
 		min:          1970,
 		max:          2099,
@@ -178,23 +178,20 @@ var (
 /******************************************************************************/
 
 var (
-	layoutDomValue            string = `[1-9]|[12][0-9]|3[01]`
-	layoutDowValue            string = `[0-7]|sun|mon|tue|wed|thu|fri|sat|sunday|monday|tuesday|wednesday|thursday|friday|saturday`
-	layoutWildcard            string = `^\*|\?$`
-	layoutValue               string = `^(%value%)$`
-	layoutRange               string = `^(%value%)-(%value%)$`
-	layoutWildcardAndInterval string = `^\*/(\d+)$`
-	layoutValueAndInterval    string = `^(%value%)/(\d+)$`
-	layoutRangeAndInterval    string = `^(%value%)-(%value%)/(\d+)$`
-	layoutLastDom             string = `^l$`
-	layoutWorkdom             string = `^(%value%)w$`
-	layoutLastWorkdom         string = `^lw$`
-	layoutDowOfLastWeek       string = `^(%value%)l$`
-	layoutDowOfSpecificWeek   string = `^(%value%)#(\d+)$`
-
-	layoutRegexp map[string]*regexp.Regexp = make(map[string]*regexp.Regexp)
-	fieldFinder  *regexp.Regexp            = regexp.MustCompile(`\S+`)
-	entryFinder  *regexp.Regexp            = regexp.MustCompile(`[^,]+`)
+	layoutWildcard            = `^\*|\?$`
+	layoutValue               = `^(%value%)$`
+	layoutRange               = `^(%value%)-(%value%)$`
+	layoutWildcardAndInterval = `^\*/(\d+)$`
+	layoutValueAndInterval    = `^(%value%)/(\d+)$`
+	layoutRangeAndInterval    = `^(%value%)-(%value%)/(\d+)$`
+	layoutLastDom             = `^l$`
+	layoutWorkdom             = `^(%value%)w$`
+	layoutLastWorkdom         = `^lw$`
+	layoutDowOfLastWeek       = `^(%value%)l$`
+	layoutDowOfSpecificWeek   = `^(%value%)#(\d+)$`
+	fieldFinder               = regexp.MustCompile(`\S+`)
+	entryFinder               = regexp.MustCompile(`[^,]+`)
+	layoutRegexp              = make(map[string]*regexp.Regexp)
 )
 
 /******************************************************************************/
@@ -460,7 +457,7 @@ func (expr *Expression) nextSecond(t time.Time) time.Time {
 /******************************************************************************/
 
 func (expr *Expression) secondFieldHandler(s string) error {
-    var err error
+	var err error
 	expr.secondList, err = genericFieldHandler(s, secondDescriptor)
 	return err
 }
@@ -468,7 +465,7 @@ func (expr *Expression) secondFieldHandler(s string) error {
 /******************************************************************************/
 
 func (expr *Expression) minuteFieldHandler(s string) error {
-    var err error
+	var err error
 	expr.minuteList, err = genericFieldHandler(s, minuteDescriptor)
 	return err
 }
@@ -476,7 +473,7 @@ func (expr *Expression) minuteFieldHandler(s string) error {
 /******************************************************************************/
 
 func (expr *Expression) hourFieldHandler(s string) error {
-    var err error
+	var err error
 	expr.hourList, err = genericFieldHandler(s, hourDescriptor)
 	return err
 }
@@ -484,7 +481,7 @@ func (expr *Expression) hourFieldHandler(s string) error {
 /******************************************************************************/
 
 func (expr *Expression) monthFieldHandler(s string) error {
-    var err error
+	var err error
 	expr.monthList, err = genericFieldHandler(s, monthDescriptor)
 	return err
 }
@@ -492,7 +489,7 @@ func (expr *Expression) monthFieldHandler(s string) error {
 /******************************************************************************/
 
 func (expr *Expression) yearFieldHandler(s string) error {
-    var err error
+	var err error
 	expr.yearList, err = genericFieldHandler(s, yearDescriptor)
 	return err
 }
@@ -524,7 +521,7 @@ func genericFieldHandler(s string, desc fieldDescriptor) ([]int, error) {
 	for _, directive := range directives {
 		switch directive.kind {
 		case none:
-			return nil, fmt.Errorf("Syntax error in %s field: '%s'", desc.name, s[directive.sbeg:directive.send])
+			return nil, fmt.Errorf("syntax error in %s field: '%s'", desc.name, s[directive.sbeg:directive.send])
 		case one:
 			populateOne(values, directive.first)
 		case span:
@@ -562,7 +559,7 @@ func (expr *Expression) dowFieldHandler(s string) error {
 				if len(pairs) > 0 {
 					populateOne(expr.specificWeekDaysOfWeek, (dowDescriptor.atoi(snormal[pairs[4]:pairs[5]])-1)*7+(dowDescriptor.atoi(snormal[pairs[2]:pairs[3]])%7))
 				} else {
-					return fmt.Errorf("Syntax error in day-of-week field: '%s'", sdirective)
+					return fmt.Errorf("syntax error in day-of-week field: '%s'", sdirective)
 				}
 			}
 		case one:
@@ -607,7 +604,7 @@ func (expr *Expression) domFieldHandler(s string) error {
 					if len(pairs) > 0 {
 						populateOne(expr.workdaysOfMonth, domDescriptor.atoi(snormal[pairs[2]:pairs[3]]))
 					} else {
-						return fmt.Errorf("Syntax error in day-of-month field: '%s'", sdirective)
+						return fmt.Errorf("syntax error in day-of-month field: '%s'", sdirective)
 					}
 				}
 			}

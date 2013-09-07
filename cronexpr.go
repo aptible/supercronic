@@ -71,7 +71,7 @@ func Parse(cronLine string) (*Expression, error) {
 
 	indices := fieldFinder.FindAllStringIndex(cron, -1)
 	if len(indices) < 5 {
-		return nil, fmt.Errorf("Missing field(s)")
+		return nil, fmt.Errorf("missing field(s)")
 	}
 
 	expr := Expression{}
