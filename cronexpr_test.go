@@ -116,6 +116,51 @@ var crontests = []crontest{
 		},
 	},
 
+	// Work day of month
+	{
+		"0 0 14W * *",
+		"Mon 2006-01-02 15:04",
+		[]crontimes{
+			{"2013-03-31 00:00:00", "Mon 2013-04-15 00:00"},
+			{"2013-08-31 00:00:00", "Fri 2013-09-13 00:00"},
+		},
+	},
+
+	// Work day of month -- end of month
+	{
+		"0 0 30W * *",
+		"Mon 2006-01-02 15:04",
+		[]crontimes{
+			{"2013-03-02 00:00:00", "Fri 2013-03-29 00:00"},
+			{"2013-06-02 00:00:00", "Fri 2013-06-28 00:00"},
+			{"2013-09-02 00:00:00", "Mon 2013-09-30 00:00"},
+			{"2013-11-02 00:00:00", "Fri 2013-11-29 00:00"},
+		},
+	},
+
+	// Last day of month
+	{
+		"0 0 L * *",
+		"Mon 2006-01-02 15:04",
+		[]crontimes{
+			{"2013-09-02 00:00:00", "Mon 2013-09-30 00:00"},
+			{"2014-01-01 00:00:00", "Fri 2014-01-31 00:00"},
+			{"2014-02-01 00:00:00", "Fri 2014-02-28 00:00"},
+			{"2016-02-15 00:00:00", "Mon 2016-02-29 00:00"},
+		},
+	},
+
+	// Last work day of month
+	{
+		"0 0 LW * *",
+		"Mon 2006-01-02 15:04",
+		[]crontimes{
+			{"2013-09-02 00:00:00", "Mon 2013-09-30 00:00"},
+			{"2013-11-02 00:00:00", "Fri 2013-11-29 00:00"},
+			{"2014-08-15 00:00:00", "Fri 2014-08-29 00:00"},
+		},
+	},
+
 	// TODO: more tests
 }
 
@@ -123,7 +168,11 @@ func TestExpressions(t *testing.T) {
 	for _, test := range crontests {
 		for _, times := range test.times {
 			from, _ := time.Parse("2006-01-02 15:04:05", times.from)
-			next := cronexpr.MustParse(test.expr).Next(from)
+			expr, err := cronexpr.Parse(test.expr)
+			if err != nil {
+				t.Errorf(`cronexpr.Parse("%s") returned "%s"`, test.expr, err.Error())
+			}
+			next := expr.Next(from)
 			nextstr := next.Format(test.layout)
 			if nextstr != times.next {
 				t.Errorf(`("%s").Next("%s") = "%s", got "%s"`, test.expr, times.from, times.next, nextstr)

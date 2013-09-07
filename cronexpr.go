@@ -14,10 +14,8 @@ package cronexpr
 /******************************************************************************/
 
 import (
-	"regexp"
+	"fmt"
 	"sort"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -33,12 +31,13 @@ type Expression struct {
 	daysOfMonth            map[int]bool
 	workdaysOfMonth        map[int]bool
 	lastDayOfMonth         bool
+	lastWorkdayOfMonth     bool
 	daysOfMonthRestricted  bool
 	actualDaysOfMonthList  []int
 	monthList              []int
 	daysOfWeek             map[int]bool
-	specificWeekdaysOfWeek map[int]bool
-	lastWeekdaysOfWeek     map[int]bool
+	specificWeekDaysOfWeek map[int]bool
+	lastWeekDaysOfWeek     map[int]bool
 	daysOfWeekRestricted   bool
 	yearList               []int
 }
@@ -51,50 +50,90 @@ type Expression struct {
 // about what is a well-formed cron expression from this library's point of
 // view.
 func MustParse(cronLine string) *Expression {
-	cronLineNormalized := cronNormalize(cronLine)
-
-	// Split into fields
-	cronFields := regexp.MustCompile(`\s+`).Split(cronLineNormalized, -1)
-
-	// Our cron expression parser expects 7 fields:
-	//    second minute hour dayofmonth month dayofweek year
-	// Standard cron is 6 fields with year field being optional
-	//           minute hour dayofmonth month dayofweek {year}
-	// Thus...
-	// If we have 5 fields, append wildcard year field
-	if len(cronFields) < 6 {
-		cronFields = append(cronFields, "*")
+	expr, err := Parse(cronLine)
+	if err != nil {
+		panic(err)
 	}
-	// If we have 6 fields, prepend match-once second field
-	if len(cronFields) < 7 {
-		cronFields = append(cronFields, "")
-		copy(cronFields[1:], cronFields[0:])
-		cronFields[0] = "0"
-	}
-	// At this point, we should have at least 7 fields. Fields beyond the
-	// seventh one, if any, are ignored.
-	if len(cronFields) < 7 {
-		panic("MustParse(): Not enough fields in the cron time expression\n")
+	return expr
+}
+
+/******************************************************************************/
+
+// Parse returns a new Expression pointer. An error is returned if a malformed
+// cron expression is supplied.
+// See <https://github.com/gorhill/cronexpr#implementation> for documentation
+// about what is a well-formed cron expression from this library's point of
+// view.
+func Parse(cronLine string) (*Expression, error) {
+
+	// Maybe one of the built-in aliases is being used
+	cron := cronNormalizer.Replace(cronLine)
+
+	indices := fieldFinder.FindAllStringIndex(cron, -1)
+	if len(indices) < 5 {
+		return nil, fmt.Errorf("Missing field(s)")
 	}
 
-	// Generic parser can be used for most fields
-	cronExpr := &Expression{
-		expression: cronLine,
-		secondList: genericFieldParse(cronFields[0], 0, 59),
-		minuteList: genericFieldParse(cronFields[1], 0, 59),
-		hourList:   genericFieldParse(cronFields[2], 0, 23),
-		monthList:  genericFieldParse(cronFields[4], 1, 12),
-		yearList:   genericFieldParse(cronFields[6], 1970, 2099),
+	expr := Expression{}
+	field := 0
+
+	// second field (optional)
+	if len(indices) >= 7 {
+		err := expr.secondFieldHandler(cron[indices[field][0]:indices[field][1]])
+		if err != nil {
+			return nil, err
+		}
+		field += 1
+	} else {
+		expr.secondList = []int{0}
 	}
 
-	// Days of month/days of week is a bit more complicated, due
-	// to their extended syntax, and the fact that days per
-	// month is a variable quantity, and relation between
-	// days of week and days of month depends on the month/year.
-	cronExpr.dayofmonthFieldParse(cronFields[3])
-	cronExpr.dayofweekFieldParse(cronFields[5])
+	// minute field
+	err := expr.minuteFieldHandler(cron[indices[field][0]:indices[field][1]])
+	if err != nil {
+		return nil, err
+	}
+	field += 1
 
-	return cronExpr
+	// hour field
+	err = expr.hourFieldHandler(cron[indices[field][0]:indices[field][1]])
+	if err != nil {
+		return nil, err
+	}
+	field += 1
+
+	// day of month field
+	err = expr.domFieldHandler(cron[indices[field][0]:indices[field][1]])
+	if err != nil {
+		return nil, err
+	}
+	field += 1
+
+	// month field
+	err = expr.monthFieldHandler(cron[indices[field][0]:indices[field][1]])
+	if err != nil {
+		return nil, err
+	}
+	field += 1
+
+	// day of week field
+	err = expr.dowFieldHandler(cron[indices[field][0]:indices[field][1]])
+	if err != nil {
+		return nil, err
+	}
+	field += 1
+
+	// year field
+	if field < len(indices) {
+		err = expr.yearFieldHandler(cron[indices[field][0]:indices[field][1]])
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		expr.yearList = yearDescriptor.defaultList
+	}
+
+	return &expr, nil
 }
 
 /******************************************************************************/
@@ -200,7 +239,7 @@ func (expr *Expression) Next(fromTime time.Time) time.Time {
 // matching time instants exist, the number of returned entries will be less
 // than `n`.
 func (expr *Expression) NextN(fromTime time.Time, n uint) []time.Time {
-	nextTimes := make([]time.Time, 0)
+	nextTimes := make([]time.Time, 0, n)
 	if n > 0 {
 		fromTime = expr.Next(fromTime)
 		for {
@@ -216,488 +255,4 @@ func (expr *Expression) NextN(fromTime time.Time, n uint) []time.Time {
 		}
 	}
 	return nextTimes
-}
-
-/******************************************************************************/
-
-func (expr *Expression) nextYear(t time.Time) time.Time {
-	// Find index at which item in list is greater or equal to
-	// candidate year
-	i := sort.SearchInts(expr.yearList, t.Year()+1)
-	if i == len(expr.yearList) {
-		return time.Time{}
-	}
-	// Year changed, need to recalculate actual days of month
-	expr.actualDaysOfMonthList = expr.calculateActualDaysOfMonth(expr.yearList[i], expr.monthList[0])
-	if len(expr.actualDaysOfMonthList) == 0 {
-		return expr.nextMonth(time.Date(
-			expr.yearList[i],
-			time.Month(expr.monthList[0]),
-			1,
-			expr.hourList[0],
-			expr.minuteList[0],
-			expr.secondList[0],
-			0,
-			t.Location()))
-	}
-	return time.Date(
-		expr.yearList[i],
-		time.Month(expr.monthList[0]),
-		expr.actualDaysOfMonthList[0],
-		expr.hourList[0],
-		expr.minuteList[0],
-		expr.secondList[0],
-		0,
-		t.Location())
-}
-
-/******************************************************************************/
-
-func (expr *Expression) nextMonth(t time.Time) time.Time {
-	// Find index at which item in list is greater or equal to
-	// candidate month
-	i := sort.SearchInts(expr.monthList, int(t.Month())+1)
-	if i == len(expr.monthList) {
-		return expr.nextYear(t)
-	}
-	// Month changed, need to recalculate actual days of month
-	expr.actualDaysOfMonthList = expr.calculateActualDaysOfMonth(t.Year(), expr.monthList[i])
-	if len(expr.actualDaysOfMonthList) == 0 {
-		return expr.nextMonth(time.Date(
-			t.Year(),
-			time.Month(expr.monthList[i]),
-			1,
-			expr.hourList[0],
-			expr.minuteList[0],
-			expr.secondList[0],
-			0,
-			t.Location()))
-	}
-
-	return time.Date(
-		t.Year(),
-		time.Month(expr.monthList[i]),
-		expr.actualDaysOfMonthList[0],
-		expr.hourList[0],
-		expr.minuteList[0],
-		expr.secondList[0],
-		0,
-		t.Location())
-}
-
-/******************************************************************************/
-
-func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
-	actualDaysOfMonthMap := make(map[int]bool)
-	timeOrigin := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
-	lastDayOfMonth := timeOrigin.AddDate(0, 1, -1).Day()
-
-	// As per crontab man page (http://linux.die.net/man/5/crontab#):
-	//  "The day of a command's execution can be specified by two
-	//  "fields - day of month, and day of week. If both fields are
-	//  "restricted (ie, aren't *), the command will be run when
-	//  "either field matches the current time"
-	if expr.daysOfMonthRestricted || expr.daysOfWeekRestricted == false {
-		// Last day of month
-		if expr.lastDayOfMonth {
-			actualDaysOfMonthMap[lastDayOfMonth] = true
-		}
-		// Days of month
-		for v := range expr.daysOfMonth {
-			// Ignore days beyond end of month
-			if v <= lastDayOfMonth {
-				actualDaysOfMonthMap[v] = true
-			}
-		}
-		// Work days of month
-		// As per Wikipedia: month boundaries are not crossed.
-		for v := range expr.workdaysOfMonth {
-			// Ignore days beyond end of month
-			if v <= lastDayOfMonth {
-				// If saturday, then friday
-				if timeOrigin.AddDate(0, 0, v-1).Weekday() == time.Saturday {
-					if v > 1 {
-						v -= 1
-					} else {
-						v += 2
-					}
-					// If sunday, then monday
-				} else if timeOrigin.AddDate(0, 0, v-1).Weekday() == time.Sunday {
-					if v < lastDayOfMonth {
-						v += 1
-					} else {
-						v -= 2
-					}
-				}
-				actualDaysOfMonthMap[v] = true
-			}
-		}
-	}
-
-	if expr.daysOfWeekRestricted {
-		// How far first sunday is from first day of month
-		offset := 7 - int(timeOrigin.Weekday())
-		// days of week
-		//  offset : (7 - day_of_week_of_1st_day_of_month)
-		//  target : 1 + (7 * week_of_month) + (offset + day_of_week) % 7
-		for w := 0; w <= 4; w += 1 {
-			for v := range expr.daysOfWeek {
-				v := 1 + w*7 + (offset+v)%7
-				if v <= lastDayOfMonth {
-					actualDaysOfMonthMap[v] = true
-				}
-			}
-		}
-		// days of week of specific week in the month
-		//  offset : (7 - day_of_week_of_1st_day_of_month)
-		//  target : 1 + (7 * week_of_month) + (offset + day_of_week) % 7
-		for v := range expr.specificWeekdaysOfWeek {
-			v := 1 + 7*(v/7) + (offset+v)%7
-			if v <= lastDayOfMonth {
-				actualDaysOfMonthMap[v] = true
-			}
-		}
-		// Last days of week of the month
-		lastWeekOrigin := timeOrigin.AddDate(0, 1, -7)
-		offset = 7 - int(lastWeekOrigin.Weekday())
-		for v := range expr.lastWeekdaysOfWeek {
-			v := lastWeekOrigin.Day() + (offset+v)%7
-			if v <= lastDayOfMonth {
-				actualDaysOfMonthMap[v] = true
-			}
-		}
-	}
-
-	return toList(actualDaysOfMonthMap)
-}
-
-/******************************************************************************/
-
-func (expr *Expression) nextDayOfMonth(t time.Time) time.Time {
-	// Find index at which item in list is greater or equal to
-	// candidate day of month
-	i := sort.SearchInts(expr.actualDaysOfMonthList, t.Day()+1)
-	if i == len(expr.actualDaysOfMonthList) {
-		return expr.nextMonth(t)
-	}
-
-	return time.Date(
-		t.Year(),
-		t.Month(),
-		expr.actualDaysOfMonthList[i],
-		expr.hourList[0],
-		expr.minuteList[0],
-		expr.secondList[0],
-		0,
-		t.Location())
-}
-
-/******************************************************************************/
-
-func (expr *Expression) nextHour(t time.Time) time.Time {
-	// Find index at which item in list is greater or equal to
-	// candidate hour
-	i := sort.SearchInts(expr.hourList, t.Hour()+1)
-	if i == len(expr.hourList) {
-		return expr.nextDayOfMonth(t)
-	}
-
-	return time.Date(
-		t.Year(),
-		t.Month(),
-		t.Day(),
-		expr.hourList[i],
-		expr.minuteList[0],
-		expr.secondList[0],
-		0,
-		t.Location())
-}
-
-/******************************************************************************/
-
-func (expr *Expression) nextMinute(t time.Time) time.Time {
-	// Find index at which item in list is greater or equal to
-	// candidate minute
-	i := sort.SearchInts(expr.minuteList, t.Minute()+1)
-	if i == len(expr.minuteList) {
-		return expr.nextHour(t)
-	}
-
-	return time.Date(
-		t.Year(),
-		t.Month(),
-		t.Day(),
-		t.Hour(),
-		expr.minuteList[i],
-		expr.secondList[0],
-		0,
-		t.Location())
-}
-
-/******************************************************************************/
-
-func (expr *Expression) nextSecond(t time.Time) time.Time {
-	// nextSecond() assumes all other fields are exactly matched
-	// to the cron expression
-
-	// Find index at which item in list is greater or equal to
-	// candidate second
-	i := sort.SearchInts(expr.secondList, t.Second()+1)
-	if i == len(expr.secondList) {
-		return expr.nextMinute(t)
-	}
-
-	return time.Date(
-		t.Year(),
-		t.Month(),
-		t.Day(),
-		t.Hour(),
-		t.Minute(),
-		expr.secondList[i],
-		0,
-		t.Location())
-}
-
-/******************************************************************************/
-
-var cronNormalizer = strings.NewReplacer(
-	// Order is important!
-	"@yearly", "0 0 0 1 1 * *",
-	"@annually", "0 0 0 1 1 * *",
-	"@monthly", "0 0 0 1 * * *",
-	"@weekly", "0 0 0 * * 0 *",
-	"@daily", "0 0 0 * * * *",
-	"@hourly", "0 0 * * * * *",
-	"january", "1",
-	"february", "2",
-	"march", "3",
-	"april", "4",
-	"may", "5",
-	"june", "6",
-	"july", "7",
-	"august", "8",
-	"september", "9",
-	"october", "0",
-	"november", "1",
-	"december", "2",
-	"sunday", "0",
-	"monday", "1",
-	"tuesday", "2",
-	"wednesday", "3",
-	"thursday", "4",
-	"friday", "5",
-	"saturday", "6",
-	"jan", "1",
-	"feb", "2",
-	"mar", "3",
-	"apr", "4",
-	"jun", "6",
-	"jul", "7",
-	"aug", "8",
-	"sep", "9",
-	"oct", "10",
-	"nov", "11",
-	"dec", "12",
-	"sun", "0",
-	"mon", "1",
-	"tue", "2",
-	"wed", "3",
-	"thu", "4",
-	"fri", "5",
-	"sat", "6",
-	"?", "*")
-
-func cronNormalize(cronLine string) string {
-	cronLine = strings.TrimSpace(cronLine)
-	cronLine = strings.ToLower(cronLine)
-	cronLine = cronNormalizer.Replace(cronLine)
-	return cronLine
-}
-
-/******************************************************************************/
-
-func (expr *Expression) dayofweekFieldParse(cronField string) {
-	// Defaults
-	expr.daysOfWeekRestricted = true
-	expr.daysOfWeek = make(map[int]bool)
-	expr.lastWeekdaysOfWeek = make(map[int]bool)
-	expr.specificWeekdaysOfWeek = make(map[int]bool)
-
-	// "You can also mix all of the above, as in: 1-5,10,12,20-30/5"
-	cronList := strings.Split(cronField, ",")
-	for _, s := range cronList {
-		// "/"
-		step, s := extractInterval(s)
-		// "*"
-		if s == "*" {
-			expr.daysOfWeekRestricted = (step > 1)
-			populateMany(expr.daysOfWeek, 0, 6, step)
-			continue
-		}
-		// "-"
-		// week day interval for all weeks
-		i := strings.Index(s, "-")
-		if i >= 0 {
-			min := atoi(s[:i]) % 7
-			max := atoi(s[i+1:]) % 7
-			populateMany(expr.daysOfWeek, min, max, step)
-			continue
-		}
-		// single value
-		// "l": week day for last week
-		i = strings.Index(s, "l")
-		if i >= 0 {
-			populateOne(expr.lastWeekdaysOfWeek, atoi(s[:i])%7)
-			continue
-		}
-		// "#": week day for specific week
-		i = strings.Index(s, "#")
-		if i >= 0 {
-			// v#w
-			v := atoi(s[:i]) % 7
-			w := atoi(s[i+1:])
-			// v domain = [0,7]
-			// w domain = [1,5]
-			populateOne(expr.specificWeekdaysOfWeek, (w-1)*7+(v%7))
-			continue
-		}
-		// week day interval for all weeks
-		if step > 0 {
-			v := atoi(s) % 7
-			populateMany(expr.daysOfWeek, v, 6, step)
-			continue
-		}
-		// single week day for all weeks
-		v := atoi(s) % 7
-		populateOne(expr.daysOfWeek, v)
-	}
-}
-
-/******************************************************************************/
-
-func (expr *Expression) dayofmonthFieldParse(cronField string) {
-	// Defaults
-	expr.daysOfMonthRestricted = true
-	expr.lastDayOfMonth = false
-
-	expr.daysOfMonth = make(map[int]bool)     // days of month map
-	expr.workdaysOfMonth = make(map[int]bool) // work day of month map
-
-	// Comma separator is used to mix different allowed syntax
-	cronList := strings.Split(cronField, ",")
-	for _, s := range cronList {
-		// "/"
-		step, s := extractInterval(s)
-		// "*"
-		if s == "*" {
-			expr.daysOfMonthRestricted = (step > 1)
-			populateMany(expr.daysOfMonth, 1, 31, step)
-			continue
-		}
-		// "-"
-		i := strings.Index(s, "-")
-		if i >= 0 {
-			populateMany(expr.daysOfMonth, atoi(s[:i]), atoi(s[i+1:]), step)
-			continue
-		}
-		// single value
-		// "l": last day of month
-		if s == "l" {
-			expr.lastDayOfMonth = true
-			continue
-		}
-		// "w": week day
-		i = strings.Index(s, "w")
-		if i >= 0 {
-			populateOne(expr.workdaysOfMonth, atoi(s[:i]))
-			continue
-		}
-		// single value with interval
-		if step > 0 {
-			populateMany(expr.daysOfMonth, atoi(s), 31, step)
-			continue
-		}
-		// single value
-		populateOne(expr.daysOfMonth, atoi(s))
-	}
-}
-
-/******************************************************************************/
-
-func genericFieldParse(cronField string, min, max int) []int {
-	// Defaults
-	values := make(map[int]bool)
-
-	// Comma separator is used to mix different allowed syntax
-	cronList := strings.Split(cronField, ",")
-	for _, s := range cronList {
-		// "/"
-		step, s := extractInterval(s)
-		// "*"
-		if s == "*" {
-			populateMany(values, min, max, step)
-			continue
-		}
-		// "-"
-		i := strings.Index(s, "-")
-		if i >= 0 {
-			populateMany(values, atoi(s[:i]), atoi(s[i+1:]), step)
-			continue
-		}
-		// single value with interval
-		if step > 0 {
-			populateMany(values, atoi(s), max, step)
-			continue
-		}
-		// single value
-		populateOne(values, atoi(s))
-	}
-
-	return toList(values)
-}
-
-/******************************************************************************/
-
-// Local helpers
-
-func extractInterval(s string) (int, string) {
-	step := 0
-	i := strings.Index(s, "/")
-	if i >= 0 {
-		step = atoi(s[i+1:])
-		s = s[:i]
-	}
-	return step, s
-}
-
-func atoi(s string) int {
-	v, err := strconv.Atoi(s)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-func populateOne(values map[int]bool, v int) {
-	values[v] = true
-}
-
-func populateMany(values map[int]bool, min, max, step int) {
-	if step == 0 {
-		step = 1
-	}
-	for i := min; i <= max; i += step {
-		values[i] = true
-	}
-}
-
-func toList(set map[int]bool) []int {
-	list := make([]int, len(set))
-	i := 0
-	for k := range set {
-		list[i] = k
-		i += 1
-	}
-	sort.Ints(list)
-	return list
 }
