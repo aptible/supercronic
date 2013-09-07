@@ -2,7 +2,7 @@
  * Copyright 2013 Raymond Hill
  *
  * Project: github.com/gorhill/cronexpr
- * File: cronexpr_parser.go
+ * File: cronexpr_parse.go
  * Version: 1.0
  * License: GPL v3 see <https://www.gnu.org/licenses/gpl.html>
  *
