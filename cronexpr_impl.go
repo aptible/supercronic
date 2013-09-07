@@ -188,7 +188,7 @@ var (
 	layoutWorkdom             = `^(%value%)w$`
 	layoutLastWorkdom         = `^lw$`
 	layoutDowOfLastWeek       = `^(%value%)l$`
-	layoutDowOfSpecificWeek   = `^(%value%)#(\d+)$`
+	layoutDowOfSpecificWeek   = `^(%value%)#([1-5])$`
 	fieldFinder               = regexp.MustCompile(`\S+`)
 	entryFinder               = regexp.MustCompile(`[^,]+`)
 	layoutRegexp              = make(map[string]*regexp.Regexp)
