@@ -371,6 +371,29 @@ func (expr *Expression) domFieldHandler(s string) error {
 
 /******************************************************************************/
 
+func populateOne(values map[int]bool, v int) {
+	values[v] = true
+}
+
+func populateMany(values map[int]bool, min, max, step int) {
+	for i := min; i <= max; i += step {
+		values[i] = true
+	}
+}
+
+func toList(set map[int]bool) []int {
+	list := make([]int, len(set))
+	i := 0
+	for k := range set {
+		list[i] = k
+		i += 1
+	}
+	sort.Ints(list)
+	return list
+}
+
+/******************************************************************************/
+
 func genericFieldParse(s string, desc fieldDescriptor) ([]*cronDirective, error) {
 	// At least one entry must be present
 	indices := entryFinder.FindAllStringIndex(s, -1)
@@ -447,29 +470,6 @@ func genericFieldParse(s string, desc fieldDescriptor) ([]*cronDirective, error)
 		directives = append(directives, &directive)
 	}
 	return directives, nil
-}
-
-/******************************************************************************/
-
-func populateOne(values map[int]bool, v int) {
-	values[v] = true
-}
-
-func populateMany(values map[int]bool, min, max, step int) {
-	for i := min; i <= max; i += step {
-		values[i] = true
-	}
-}
-
-func toList(set map[int]bool) []int {
-	list := make([]int, len(set))
-	i := 0
-	for k := range set {
-		list[i] = k
-		i += 1
-	}
-	sort.Ints(list)
-	return list
 }
 
 /******************************************************************************/

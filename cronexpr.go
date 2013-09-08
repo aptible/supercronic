@@ -70,16 +70,22 @@ func Parse(cronLine string) (*Expression, error) {
 	cron := cronNormalizer.Replace(cronLine)
 
 	indices := fieldFinder.FindAllStringIndex(cron, -1)
-	if len(indices) < 5 {
+	fieldCount := len(indices)
+	if fieldCount < 5 {
 		return nil, fmt.Errorf("missing field(s)")
 	}
+	// ignore fields beyond 7th
+	if fieldCount > 7 {
+		fieldCount = 7
+	}
 
-	expr := Expression{}
-	field := 0
+	var expr = Expression{}
+	var field = 0
+	var err error
 
 	// second field (optional)
-	if len(indices) >= 7 {
-		err := expr.secondFieldHandler(cron[indices[field][0]:indices[field][1]])
+	if fieldCount == 7 {
+		err = expr.secondFieldHandler(cron[indices[field][0]:indices[field][1]])
 		if err != nil {
 			return nil, err
 		}
@@ -89,7 +95,7 @@ func Parse(cronLine string) (*Expression, error) {
 	}
 
 	// minute field
-	err := expr.minuteFieldHandler(cron[indices[field][0]:indices[field][1]])
+	err = expr.minuteFieldHandler(cron[indices[field][0]:indices[field][1]])
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +130,7 @@ func Parse(cronLine string) (*Expression, error) {
 	field += 1
 
 	// year field
-	if field < len(indices) {
+	if field < fieldCount {
 		err = expr.yearFieldHandler(cron[indices[field][0]:indices[field][1]])
 		if err != nil {
 			return nil, err
