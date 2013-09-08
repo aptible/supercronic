@@ -45,7 +45,7 @@ So, if the 15th is a Saturday, the trigger fires on Friday the 14th. If the 15th
 
 The `W` character can be specified only when the day-of-month is a single day, not a range or list of days.
 
-The `W` character can also be combined with `L` to mean "the last business day of the month."
+The `W` character can also be combined with `L`, i.e. `LW` to mean "the last business day of the month."
 
 #### Hash ( # )
 `#` is allowed for the day-of-week field, and must be followed by a number between one and five. It allows you to specify constructs such as "the second Friday" of a given month.
