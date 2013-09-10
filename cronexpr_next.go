@@ -183,7 +183,14 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 	//  "fields - day of month, and day of week. If both fields are
 	//  "restricted (ie, aren't *), the command will be run when
 	//  "either field matches the current time"
-	if expr.daysOfMonthRestricted || expr.daysOfWeekRestricted == false {
+
+	// If both fields are not restricted, all days of the month are a hit
+	if expr.daysOfMonthRestricted == false && expr.daysOfWeekRestricted == false {
+		return genericDefaultList[1 : lastDayOfMonth.Day()+1]
+	}
+
+	// day-of-month != `*`
+	if expr.daysOfMonthRestricted {
 		// Last day of month
 		if expr.lastDayOfMonth {
 			actualDaysOfMonthMap[lastDayOfMonth.Day()] = true
@@ -209,6 +216,7 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		}
 	}
 
+	// day-of-week != `*`
 	if expr.daysOfWeekRestricted {
 		// How far first sunday is from first day of month
 		offset := 7 - int(firstDayOfMonth.Weekday())
@@ -256,7 +264,7 @@ func workdayOfMonth(targetDom, lastDom time.Time) int {
 		} else {
 			dom += 2
 		}
-	// If sunday, then monday
+		// If sunday, then monday
 	} else if dow == time.Sunday {
 		if dom < lastDom.Day() {
 			dom += 1
