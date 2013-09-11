@@ -19,6 +19,18 @@ import (
 
 /******************************************************************************/
 
+var dowNormalizedOffsets = [][]int{
+	{1, 8, 15, 22, 29},
+	{2, 9, 16, 23, 30},
+	{3, 10, 17, 24, 31},
+	{4, 11, 18, 25},
+	{5, 12, 19, 26},
+	{6, 13, 20, 27},
+	{7, 14, 21, 28},
+}
+
+/******************************************************************************/
+
 func (expr *Expression) nextYear(t time.Time) time.Time {
 	// Find index at which item in list is greater or equal to
 	// candidate year
@@ -223,19 +235,21 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		// days of week
 		//  offset : (7 - day_of_week_of_1st_day_of_month)
 		//  target : 1 + (7 * week_of_month) + (offset + day_of_week) % 7
-		for w := 0; w <= 4; w += 1 {
-			for v := range expr.daysOfWeek {
-				v := 1 + w*7 + (offset+v)%7
-				if v <= lastDayOfMonth.Day() {
-					actualDaysOfMonthMap[v] = true
-				}
+		for v := range expr.daysOfWeek {
+			w := dowNormalizedOffsets[offset%7+v]
+			actualDaysOfMonthMap[w[0]] = true
+			actualDaysOfMonthMap[w[1]] = true
+			actualDaysOfMonthMap[w[2]] = true
+			actualDaysOfMonthMap[w[3]] = true
+			if len(w) > 4 && w[4] <= lastDayOfMonth.Day() {
+				actualDaysOfMonthMap[w[4]] = true
 			}
 		}
 		// days of week of specific week in the month
 		//  offset : (7 - day_of_week_of_1st_day_of_month)
 		//  target : 1 + (7 * week_of_month) + (offset + day_of_week) % 7
 		for v := range expr.specificWeekDaysOfWeek {
-			v := 1 + 7*(v/7) + (offset+v)%7
+			v = 1 + 7*(v/7) + (offset+v)%7
 			if v <= lastDayOfMonth.Day() {
 				actualDaysOfMonthMap[v] = true
 			}
@@ -244,7 +258,7 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		lastWeekOrigin := firstDayOfMonth.AddDate(0, 1, -7)
 		offset = 7 - int(lastWeekOrigin.Weekday())
 		for v := range expr.lastWeekDaysOfWeek {
-			v := lastWeekOrigin.Day() + (offset+v)%7
+			v = lastWeekOrigin.Day() + (offset+v)%7
 			if v <= lastDayOfMonth.Day() {
 				actualDaysOfMonthMap[v] = true
 			}
@@ -255,16 +269,16 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 }
 
 func workdayOfMonth(targetDom, lastDom time.Time) int {
+	// If saturday, then friday
+	// If sunday, then monday
 	dom := targetDom.Day()
 	dow := targetDom.Weekday()
-	// If saturday, then friday
 	if dow == time.Saturday {
 		if dom > 1 {
 			dom -= 1
 		} else {
 			dom += 2
 		}
-		// If sunday, then monday
 	} else if dow == time.Sunday {
 		if dom < lastDom.Day() {
 			dom += 1
