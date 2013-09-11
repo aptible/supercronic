@@ -236,7 +236,7 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		//  offset : (7 - day_of_week_of_1st_day_of_month)
 		//  target : 1 + (7 * week_of_month) + (offset + day_of_week) % 7
 		for v := range expr.daysOfWeek {
-			w := dowNormalizedOffsets[offset%7+v]
+			w := dowNormalizedOffsets[(offset+v)%7]
 			actualDaysOfMonthMap[w[0]] = true
 			actualDaysOfMonthMap[w[1]] = true
 			actualDaysOfMonthMap[w[2]] = true
