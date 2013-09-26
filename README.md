@@ -6,7 +6,7 @@ In another project, I decided to use cron expression syntax to encode scheduling
 
 The time-matching algorithm in this implementation is efficient, it avoids as much as possible to guess the next matching time stamp, a common technique seen in a number of implementations out there.
 
-There is also a companion command-line utility to evaluate cron time expressions: <https://github.com/gorhill/cronexpr/cronexpr> (which of course uses this library).
+There is also a companion command-line utility to evaluate cron time expressions: <https://github.com/gorhill/cronexpr/tree/master/cronexpr> (which of course uses this library).
 
 Implementation
 --------------
