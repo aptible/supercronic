@@ -4,7 +4,9 @@
  * Project: github.com/gorhill/cronexpr
  * File: cronexpr.go
  * Version: 1.0
- * License: GPL v3 see <https://www.gnu.org/licenses/gpl.html>
+ * License: pick the one which suits you :
+ *   GPL v3 see <https://www.gnu.org/licenses/gpl.html>
+ *   APL v2 see <http://www.apache.org/licenses/LICENSE-2.0>
  *
  */
 

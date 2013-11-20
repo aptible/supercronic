@@ -123,3 +123,12 @@ returned.
 API
 ---
 <http://godoc.org/github.com/gorhill/cronexpr>
+
+License
+-------
+
+License: pick the one which suits you best:
+
+- GPL v3 see <https://www.gnu.org/licenses/gpl.html>
+- APL v2 see <http://www.apache.org/licenses/LICENSE-2.0>
+
