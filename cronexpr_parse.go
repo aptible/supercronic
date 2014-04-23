@@ -179,7 +179,7 @@ var (
 /******************************************************************************/
 
 var (
-	layoutWildcard            = `^\*|\?$`
+	layoutWildcard            = `^\*$|^\?$`
 	layoutValue               = `^(%value%)$`
 	layoutRange               = `^(%value%)-(%value%)$`
 	layoutWildcardAndInterval = `^\*/(\d+)$`
@@ -412,16 +412,6 @@ func genericFieldParse(s string, desc fieldDescriptor) ([]*cronDirective, error)
 		}
 		snormal := strings.ToLower(s[indices[i][0]:indices[i][1]])
 
-		// `*/2`
-		pairs := makeLayoutRegexp(layoutWildcardAndInterval, desc.valuePattern).FindStringSubmatchIndex(snormal)
-		if len(pairs) > 0 {
-			directive.kind = span
-			directive.first = desc.min
-			directive.last = desc.max
-			directive.step = atoi(snormal[pairs[2]:pairs[3]])
-			directives = append(directives, &directive)
-			continue
-		}
 		// `*`
 		if makeLayoutRegexp(layoutWildcard, desc.valuePattern).MatchString(snormal) {
 			directive.kind = all
@@ -439,12 +429,22 @@ func genericFieldParse(s string, desc fieldDescriptor) ([]*cronDirective, error)
 			continue
 		}
 		// `5-20`
-		pairs = makeLayoutRegexp(layoutRange, desc.valuePattern).FindStringSubmatchIndex(snormal)
+		pairs := makeLayoutRegexp(layoutRange, desc.valuePattern).FindStringSubmatchIndex(snormal)
 		if len(pairs) > 0 {
 			directive.kind = span
 			directive.first = desc.atoi(snormal[pairs[2]:pairs[3]])
 			directive.last = desc.atoi(snormal[pairs[4]:pairs[5]])
 			directive.step = 1
+			directives = append(directives, &directive)
+			continue
+		}
+		// `*/2`
+		pairs = makeLayoutRegexp(layoutWildcardAndInterval, desc.valuePattern).FindStringSubmatchIndex(snormal)
+		if len(pairs) > 0 {
+			directive.kind = span
+			directive.first = desc.min
+			directive.last = desc.max
+			directive.step = atoi(snormal[pairs[2]:pairs[3]])
 			directives = append(directives, &directive)
 			continue
 		}
