@@ -50,6 +50,21 @@ var crontests = []crontest{
 		},
 	},
 
+	// every 5 Second
+	{
+		"*/5 * * * * * *",
+		"2006-01-02 15:04:05",
+		[]crontimes{
+			{"2013-01-01 00:00:00", "2013-01-01 00:00:05"},
+			{"2013-01-01 00:00:59", "2013-01-01 00:01:00"},
+			{"2013-01-01 00:59:59", "2013-01-01 01:00:00"},
+			{"2013-01-01 23:59:59", "2013-01-02 00:00:00"},
+			{"2013-02-28 23:59:59", "2013-03-01 00:00:00"},
+			{"2016-02-28 23:59:59", "2016-02-29 00:00:00"},
+			{"2012-12-31 23:59:59", "2013-01-01 00:00:00"},
+		},
+	},
+
 	// Minutes
 	{
 		"* * * * *",
@@ -241,6 +256,29 @@ func TestNextN(t *testing.T) {
 		nextStr := next.Format("Mon, 2 Jan 2006 15:04:15")
 		if nextStr != expected[i] {
 			t.Errorf(`MustParse("0 0 * * 6#5").NextN("2013-09-02 08:44:30", 5):\n"`)
+			t.Errorf(`  result[%d]: expected "%s" but got "%s"`, i, expected[i], nextStr)
+		}
+	}
+}
+
+func TestNextN_every5min(t *testing.T) {
+	expected := []string{
+		"Mon, 2 Sep 2013 08:45:00",
+		"Mon, 2 Sep 2013 08:50:00",
+		"Mon, 2 Sep 2013 08:55:00",
+		"Mon, 2 Sep 2013 09:00:00",
+		"Mon, 2 Sep 2013 09:05:00",
+	}
+	from, _ := time.Parse("2006-01-02 15:04:05", "2013-09-02 08:44:32")
+	result := cronexpr.MustParse("*/5 * * * *").NextN(from, uint(len(expected)))
+	if len(result) != len(expected) {
+		t.Errorf(`MustParse("*/5 * * * *").NextN("2013-09-02 08:44:30", 5):\n"`)
+		t.Errorf(`  Expected %d returned time values but got %d instead`, len(expected), len(result))
+	}
+	for i, next := range result {
+		nextStr := next.Format("Mon, 2 Jan 2006 15:04:05")
+		if nextStr != expected[i] {
+		t.Errorf(`MustParse("*/5 * * * *").NextN("2013-09-02 08:44:30", 5):\n"`)
 			t.Errorf(`  result[%d]: expected "%s" but got "%s"`, i, expected[i], nextStr)
 		}
 	}
