@@ -120,7 +120,7 @@ var (
 		min:          0,
 		max:          59,
 		defaultList:  genericDefaultList[0:60],
-		valuePattern: `[0-9]|[1-5][0-9]|0[0-9]`,
+		valuePattern: `0?[0-9]|[1-5][0-9]`,
 		atoi:         atoi,
 	}
 	minuteDescriptor = fieldDescriptor{
@@ -128,7 +128,7 @@ var (
 		min:          0,
 		max:          59,
 		defaultList:  genericDefaultList[0:60],
-		valuePattern: `[0-9]|[1-5][0-9]|0[0-9]`,
+		valuePattern: `0?[0-9]|[1-5][0-9]`,
 		atoi:         atoi,
 	}
 	hourDescriptor = fieldDescriptor{
@@ -136,7 +136,7 @@ var (
 		min:          0,
 		max:          23,
 		defaultList:  genericDefaultList[0:24],
-		valuePattern: `[0-9]|1[0-9]|2[0-3]|0[0-9]`,
+		valuePattern: `0?[0-9]|1[0-9]|2[0-3]`,
 		atoi:         atoi,
 	}
 	domDescriptor = fieldDescriptor{
@@ -144,7 +144,7 @@ var (
 		min:          1,
 		max:          31,
 		defaultList:  genericDefaultList[1:32],
-		valuePattern: `[1-9]|[12][0-9]|3[01]|0[0-9]`,
+		valuePattern: `0?[1-9]|[12][0-9]|3[01]`,
 		atoi:         atoi,
 	}
 	monthDescriptor = fieldDescriptor{
@@ -152,7 +152,7 @@ var (
 		min:          1,
 		max:          12,
 		defaultList:  genericDefaultList[1:13],
-		valuePattern: `[1-9]|1[012]|0[0-9]|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|march|april|june|july|august|september|october|november|december`,
+		valuePattern: `0?[1-9]|1[012]|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|march|april|june|july|august|september|october|november|december`,
 		atoi: func(s string) int {
 			return monthTokens[s]
 		},
@@ -162,7 +162,7 @@ var (
 		min:          0,
 		max:          6,
 		defaultList:  genericDefaultList[0:7],
-		valuePattern: `[0-7]|0[0-7]|sun|mon|tue|wed|thu|fri|sat|sunday|monday|tuesday|wednesday|thursday|friday|saturday`,
+		valuePattern: `0?[0-7]|sun|mon|tue|wed|thu|fri|sat|sunday|monday|tuesday|wednesday|thursday|friday|saturday`,
 		atoi: func(s string) int {
 			return dowTokens[s]
 		},
