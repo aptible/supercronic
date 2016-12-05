@@ -284,6 +284,29 @@ func TestNextN_every5min(t *testing.T) {
 	}
 }
 
+// Issue: https://github.com/gorhill/cronexpr/issues/16
+func TestInterval_Interval60Issue(t *testing.T){
+	_, err := cronexpr.Parse("*/60 * * * * *")
+	if err == nil {
+		t.Errorf("parsing with interval 60 should return err")
+	}
+
+	_, err = cronexpr.Parse("*/61 * * * * *")
+	if err == nil {
+		t.Errorf("parsing with interval 61 should return err")
+	}
+
+	_, err = cronexpr.Parse("2/60 * * * * *")
+	if err == nil {
+		t.Errorf("parsing with interval 60 should return err")
+	}
+
+	_, err = cronexpr.Parse("2-20/61 * * * * *")
+	if err == nil {
+		t.Errorf("parsing with interval 60 should return err")
+	}
+}
+
 /******************************************************************************/
 
 var benchmarkExpressions = []string{
