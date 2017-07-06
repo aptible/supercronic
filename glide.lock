@@ -1,0 +1,8 @@
+hash: ed8b81bb597a9419eaf363c402ac8db873b75929e07285d718e35f7ccbe9439d
+updated: 2017-07-06T19:02:35.835644965+02:00
+imports:
+- name: github.com/gorhill/cronexpr
+  version: a557574d6c024ed6e36acc8b610f5f211c91568a
+- name: github.com/sirupsen/logrus
+  version: 202f25545ea4cf9b191ff7f846df5d87c9382c2b
+testImports: []

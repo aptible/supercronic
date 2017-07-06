@@ -1,0 +1,6 @@
+package: github.com/aptible/concron
+import:
+- package: github.com/gorhill/cronexpr
+  version: ~1.0.0
+- package: github.com/sirupsen/logrus
+  version: ~1.0.0
