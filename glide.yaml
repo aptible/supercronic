@@ -1,4 +1,4 @@
-package: github.com/aptible/concron
+package: github.com/aptible/supercronic
 import:
 - package: github.com/gorhill/cronexpr
   version: ~1.0.0

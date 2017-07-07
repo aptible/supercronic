@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"bufio"
 	"os"
-	"github.com/aptible/concron/cron"
-	"github.com/aptible/concron/crontab"
+	"github.com/aptible/supercronic/cron"
+	"github.com/aptible/supercronic/crontab"
 	"github.com/sirupsen/logrus"
 )
 
