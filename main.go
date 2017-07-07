@@ -6,6 +6,9 @@ import (
 	"github.com/aptible/supercronic/crontab"
 	"github.com/sirupsen/logrus"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 )
 
 func main() {
@@ -30,21 +33,36 @@ func main() {
 	}
 	defer file.Close()
 
-	crontab, err := crontab.ParseCrontab(file)
+	tab, err := crontab.ParseCrontab(file)
 
 	if err != nil {
 		logrus.Fatal(err)
 		return
 	}
 
-	// TODO: Signal handling.
-	// TODO: Should actually have a sync group here, and send the exit
-	// request in.
-	requestExitChan := make(chan interface{})
+	var (
+		wg        sync.WaitGroup
+		exitChans []chan interface{}
+	)
 
-	for _, job := range crontab.Jobs {
-		go cron.StartJob(crontab.Context, job, requestExitChan)
+	for _, job := range tab.Jobs {
+		c := make(chan interface{}, 1)
+		exitChans = append(exitChans, c)
+		cron.StartJob(&wg, tab.Context, job, c)
 	}
 
-	<-requestExitChan
+	termChan := make(chan os.Signal, 1)
+	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)
+
+	termSig := <-termChan
+
+	logrus.Infof("received %s, shutting down", termSig)
+	for _, c := range exitChans {
+		c <- true
+	}
+
+	logrus.Info("waiting for jobs to finish")
+	wg.Wait()
+
+	logrus.Info("exiting")
 }

@@ -10,10 +10,11 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
-func drainReader(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.Reader) {
+func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.Reader) {
 	wg.Add(1)
 
 	go func() {
@@ -43,6 +44,10 @@ func runJob(context *crontab.Context, command string, jobLogger *logrus.Entry) e
 
 	cmd := exec.Command(context.Shell, "-c", command)
 
+	// Run in a separate process group so that in interactive usage, CTRL+C
+	// stops supercronic, not the children threads.
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
 	env := os.Environ()
 	for k, v := range context.Environ {
 		env = append(env, fmt.Sprintf("%s=%s", k, v))
@@ -66,10 +71,10 @@ func runJob(context *crontab.Context, command string, jobLogger *logrus.Entry) e
 	var wg sync.WaitGroup
 
 	stdoutLogger := jobLogger.WithFields(logrus.Fields{"channel": "stdout"})
-	go drainReader(&wg, stdoutLogger, stdout)
+	go startReaderDrain(&wg, stdoutLogger, stdout)
 
 	stderrLogger := jobLogger.WithFields(logrus.Fields{"channel": "stderr"})
-	go drainReader(&wg, stderrLogger, stderr)
+	go startReaderDrain(&wg, stderrLogger, stderr)
 
 	wg.Wait()
 
@@ -80,43 +85,54 @@ func runJob(context *crontab.Context, command string, jobLogger *logrus.Entry) e
 	return nil
 }
 
-func StartJob(context *crontab.Context, job *crontab.Job, exitChan chan interface{}) {
-	// NOTE: this (intentionally) does not run multiple instances of the
-	// job concurrently
-	cronLogger := logrus.WithFields(logrus.Fields{
-		"job.schedule": job.Schedule,
-		"job.command":  job.Command,
-		"job.position": job.Position,
-	})
+func StartJob(wg *sync.WaitGroup, context *crontab.Context, job *crontab.Job, exitChan chan interface{}) {
+	wg.Add(1)
 
-	var cronIteration uint64 = 0
-	nextRun := job.Expression.Next(time.Now())
+	go func() {
+		defer wg.Done()
 
-	for {
-		nextRun = job.Expression.Next(nextRun)
-		cronLogger.Debugf("job will run next at %v", nextRun)
-
-		delay := nextRun.Sub(time.Now())
-		if delay < 0 {
-			cronLogger.Warningf("job took too long to run: it should have started %v ago", -delay)
-			nextRun = time.Now()
-			continue
-		}
-
-		time.Sleep(delay)
-
-		jobLogger := cronLogger.WithFields(logrus.Fields{
-			"iteration": cronIteration,
+		cronLogger := logrus.WithFields(logrus.Fields{
+			"job.schedule": job.Schedule,
+			"job.command":  job.Command, "job.position": job.Position,
 		})
 
-		err := runJob(context, job.Command, jobLogger)
+		var cronIteration uint64 = 0
+		nextRun := job.Expression.Next(time.Now())
 
-		if err == nil {
-			jobLogger.Info("job succeeded")
-		} else {
-			jobLogger.Error(err)
+		// NOTE: this (intentionally) does not run multiple instances of the
+		// job concurrently
+		for {
+			nextRun = job.Expression.Next(nextRun)
+			cronLogger.Debugf("job will run next at %v", nextRun)
+
+			delay := nextRun.Sub(time.Now())
+			if delay < 0 {
+				cronLogger.Warningf("job took too long to run: it should have started %v ago", -delay)
+				nextRun = time.Now()
+				continue
+			}
+
+			select {
+			case <-exitChan:
+				cronLogger.Debug("shutting down")
+				return
+			case <-time.After(delay):
+				// Proceed normally
+			}
+
+			jobLogger := cronLogger.WithFields(logrus.Fields{
+				"iteration": cronIteration,
+			})
+
+			err := runJob(context, job.Command, jobLogger)
+
+			if err == nil {
+				jobLogger.Info("job succeeded")
+			} else {
+				jobLogger.Error(err)
+			}
+
+			cronIteration++
 		}
-
-		cronIteration++
-	}
+	}()
 }
