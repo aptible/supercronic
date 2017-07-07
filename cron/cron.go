@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func drainReader(wg sync.WaitGroup, readerLogger *logrus.Entry, reader io.Reader) {
+func drainReader(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.Reader) {
 	wg.Add(1)
 
 	go func() {
@@ -66,10 +66,10 @@ func runJob(context *crontab.Context, command string, jobLogger *logrus.Entry) e
 	var wg sync.WaitGroup
 
 	stdoutLogger := jobLogger.WithFields(logrus.Fields{"channel": "stdout"})
-	go drainReader(wg, stdoutLogger, stdout)
+	go drainReader(&wg, stdoutLogger, stdout)
 
 	stderrLogger := jobLogger.WithFields(logrus.Fields{"channel": "stderr"})
-	go drainReader(wg, stderrLogger, stderr)
+	go drainReader(&wg, stderrLogger, stderr)
 
 	wg.Wait()
 
