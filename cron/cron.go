@@ -1,18 +1,17 @@
 package cron
 
 import (
-	"fmt"
-	"time"
 	"bufio"
+	"fmt"
+	"github.com/aptible/supercronic/crontab"
+	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"os/exec"
-	"sync"
 	"strings"
-	"github.com/aptible/supercronic/crontab"
-	"github.com/sirupsen/logrus"
+	"sync"
+	"time"
 )
-
 
 func drainReader(wg sync.WaitGroup, readerLogger *logrus.Entry, reader io.Reader) {
 	wg.Add(1)
@@ -26,12 +25,11 @@ func drainReader(wg sync.WaitGroup, readerLogger *logrus.Entry, reader io.Reader
 			readerLogger.Info(scanner.Text())
 		}
 
-
 		if err := scanner.Err(); err != nil {
 			// The underlying reader might get closed by e.g. Wait(), or
 			// even the process we're starting, so we don't log EOF-like
 			// errors
-			if (strings.Contains(err.Error(), os.ErrClosed.Error())) {
+			if strings.Contains(err.Error(), os.ErrClosed.Error()) {
 				return
 			}
 
@@ -67,10 +65,10 @@ func runJob(context *crontab.Context, command string, jobLogger *logrus.Entry) e
 
 	var wg sync.WaitGroup
 
-	stdoutLogger := jobLogger.WithFields(logrus.Fields{ "channel": "stdout", })
+	stdoutLogger := jobLogger.WithFields(logrus.Fields{"channel": "stdout"})
 	go drainReader(wg, stdoutLogger, stdout)
 
-	stderrLogger := jobLogger.WithFields(logrus.Fields{ "channel": "stderr", })
+	stderrLogger := jobLogger.WithFields(logrus.Fields{"channel": "stderr"})
 	go drainReader(wg, stderrLogger, stderr)
 
 	wg.Wait()
@@ -78,8 +76,6 @@ func runJob(context *crontab.Context, command string, jobLogger *logrus.Entry) e
 	if err := cmd.Wait(); err != nil {
 		return err
 	}
-
-	jobLogger.Info("job succeeded")
 
 	return nil
 }
@@ -89,7 +85,7 @@ func StartJob(context *crontab.Context, job *crontab.Job, exitChan chan interfac
 	// job concurrently
 	cronLogger := logrus.WithFields(logrus.Fields{
 		"job.schedule": job.Schedule,
-		"job.command": job.Command,
+		"job.command":  job.Command,
 		"job.position": job.Position,
 	})
 
@@ -101,7 +97,7 @@ func StartJob(context *crontab.Context, job *crontab.Job, exitChan chan interfac
 		cronLogger.Debugf("job will run next at %v", nextRun)
 
 		delay := nextRun.Sub(time.Now())
-		if (delay < 0) {
+		if delay < 0 {
 			cronLogger.Warningf("job took too long to run: it should have started %v ago", -delay)
 			nextRun = time.Now()
 			continue
@@ -113,8 +109,12 @@ func StartJob(context *crontab.Context, job *crontab.Job, exitChan chan interfac
 			"iteration": cronIteration,
 		})
 
-		if err := runJob(context, job.Command, jobLogger); err != nil {
-			cronLogger.Error(err)
+		err := runJob(context, job.Command, jobLogger)
+
+		if err == nil {
+			jobLogger.Info("job succeeded")
+		} else {
+			jobLogger.Error(err)
 		}
 
 		cronIteration++
