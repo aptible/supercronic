@@ -15,13 +15,16 @@ import (
 )
 
 var (
-	delimiter  = regexp.MustCompile(`\S+`)
+	jobLineSeparator = regexp.MustCompile(`\S+`)
+	envLineMatcher = regexp.MustCompile(`^([^\s=]+)\s*=\s*(.*)$`)
+
 	parameterCounts = []int{
 		7, // POSIX + seconds + years
 		6, // POSIX + years
 		5, // POSIX
 		1, // shorthand (e.g. @hourly)
 	}
+
 )
 
 type CrontabLine struct {
@@ -35,8 +38,18 @@ type Job struct {
 	position int
 }
 
-func parseCrontabLine(line string) (*CrontabLine, error) {
-	indices := delimiter.FindAllStringIndex(line, -1)
+type Context struct {
+	shell string
+	environ map[string]string
+}
+
+type Crontab struct {
+	jobs []*Job
+	context *Context
+}
+
+func parseJobLine(line string) (*CrontabLine, error) {
+	indices := jobLineSeparator.FindAllStringIndex(line, -1)
 
 	for _, count := range parameterCounts {
 		if len(indices) <= count {
@@ -63,23 +76,49 @@ func parseCrontabLine(line string) (*CrontabLine, error) {
 	return nil, fmt.Errorf("bad crontab line: %s", line)
 }
 
-func parseCrontab(scanner *bufio.Scanner) ([]*Job, error) {
+func parseCrontab(scanner *bufio.Scanner) (*Crontab, error) {
+	// TODO: Don't return an array of Job, return an object representing the crontab
 	// TODO: Understand environment variables, too.
+	// TODO: Increment position
 	position := 0
-	ret := make([]*Job, 0)
+
+	jobs := make([]*Job, 0)
+
+	// TODO: CRON_TZ
+	environ := make(map[string]string)
+	shell := "/bin/sh"
 
 	for scanner.Scan() {
-		line := scanner.Text();
+		line := strings.TrimLeft(scanner.Text(), " \t");
 
-		// TODO: Allow environment variables? We may need special handling for:
-		// - SHELL
-		// - USER?
-		parsedLine, err := parseCrontabLine(line)
+		if line == "" {
+			continue
+		}
+
+		if line[0] == '#' {
+			continue
+		}
+
+		r := envLineMatcher.FindAllStringSubmatch(line, -1)
+		if len(r) == 1 && len(r[0]) == 3 {
+			// TODO: Should error on setting USER?
+			envKey := r[0][1]
+			envVal := r[0][2]
+			if envKey == "SHELL" {
+				shell = envVal
+			} else {
+				environ[envKey] = envVal
+			}
+			continue
+		}
+
+		jobLine, err := parseJobLine(line)
 		if (err != nil) {
 			return nil, err
 		}
 
-		ret = append(ret, &Job{CrontabLine: *parsedLine, position: position})
+		jobs = append(jobs, &Job{CrontabLine: *jobLine, position: position,})
+		position++
 	}
 
 
@@ -87,7 +126,13 @@ func parseCrontab(scanner *bufio.Scanner) ([]*Job, error) {
 		return nil, err
 	}
 
-	return ret, nil
+	return &Crontab{
+		jobs: jobs,
+		context: &Context{
+			shell: shell,
+			environ: environ,
+		},
+	}, nil
 }
 
 func drainReader(wg sync.WaitGroup, readerLogger *logrus.Entry, reader io.Reader) {
@@ -116,10 +161,16 @@ func drainReader(wg sync.WaitGroup, readerLogger *logrus.Entry, reader io.Reader
 	}()
 }
 
-func runJob(command string, jobLogger *logrus.Entry) error {
+func runJob(context *Context, command string, jobLogger *logrus.Entry) error {
 	jobLogger.Info("starting")
 
-	cmd := exec.Command("/bin/sh", "-c", command)
+	cmd := exec.Command(context.shell, "-c", command)
+
+	env := os.Environ()
+	for k, v := range context.environ {
+		env = append(env, fmt.Sprintf("%s=%s", k, v))
+	}
+	cmd.Env = env
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -154,7 +205,7 @@ func runJob(command string, jobLogger *logrus.Entry) error {
 	return nil
 }
 
-func runCron(job *Job, exitChan chan interface{}) {
+func runCron(context *Context, job *Job, exitChan chan interface{}) {
 	// NOTE: this (intentionally) does not run multiple instances of the
 	// job concurrently
 	cronLogger := logrus.WithFields(logrus.Fields{
@@ -183,7 +234,7 @@ func runCron(job *Job, exitChan chan interface{}) {
 			"iteration": cronIteration,
 		})
 
-		if err := runJob(job.command, jobLogger); err != nil {
+		if err := runJob(context, job.command, jobLogger); err != nil {
 			cronLogger.Error(err)
 		}
 
@@ -203,17 +254,17 @@ func main() {
 		return
 	}
 
-	crontab := os.Args[1]
-	logrus.Infof("read crontab: %s", crontab)
+	crontabFileName := os.Args[1]
+	logrus.Infof("read crontab: %s", crontabFileName)
 
-	file, err := os.Open(crontab)
+	file, err := os.Open(crontabFileName)
 	if err != nil {
 		logrus.Fatal(err)
 		return
 	}
 	defer file.Close()
 
-	entries, err := parseCrontab(bufio.NewScanner(file))
+	crontab, err := parseCrontab(bufio.NewScanner(file))
 
 	if (err != nil) {
 		logrus.Fatal(err)
@@ -225,8 +276,8 @@ func main() {
 	// request in.
 	requestExitChan := make(chan interface{})
 
-	for _, job := range entries {
-		go runCron(job, requestExitChan)
+	for _, job := range crontab.jobs {
+		go runCron(crontab.context, job, requestExitChan)
 	}
 
 	<-requestExitChan
