@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"sync"
 	"strings"
-	"github.com/aptible/concron/crontab"
+	"github.com/aptible/supercronic/crontab"
 	"github.com/sirupsen/logrus"
 )
 
