@@ -2,22 +2,19 @@ package main
 
 import (
 	"fmt"
-	"bufio"
-	"os"
 	"github.com/aptible/supercronic/cron"
 	"github.com/aptible/supercronic/crontab"
 	"github.com/sirupsen/logrus"
+	"os"
 )
-
-
 
 func main() {
 	// TODO: debug flag instead
 	// TODO: JSON logging?
 	logrus.SetLevel(logrus.DebugLevel)
-	logrus.SetFormatter(&logrus.TextFormatter{ FullTimestamp: true, })
+	logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
 
-	if (len(os.Args) != 2) {
+	if len(os.Args) != 2 {
 		fmt.Fprintf(os.Stderr, "Usage: %s CRONTAB\n", os.Args[0])
 		os.Exit(2)
 		return
@@ -33,9 +30,9 @@ func main() {
 	}
 	defer file.Close()
 
-	crontab, err := crontab.ParseCrontab(bufio.NewScanner(file))
+	crontab, err := crontab.ParseCrontab(file)
 
-	if (err != nil) {
+	if err != nil {
 		logrus.Fatal(err)
 		return
 	}

@@ -6,8 +6,8 @@ import (
 
 type crontabLine struct {
 	Expression *cronexpr.Expression
-	Schedule string
-	Command  string
+	Schedule   string
+	Command    string
 }
 
 type Job struct {
@@ -16,11 +16,11 @@ type Job struct {
 }
 
 type Context struct {
-	Shell string
+	Shell   string
 	Environ map[string]string
 }
 
 type Crontab struct {
-	Jobs []*Job
+	Jobs    []*Job
 	Context *Context
 }
