@@ -22,7 +22,7 @@ var (
 	}
 )
 
-func parseJobLine(line string) (*crontabLine, error) {
+func parseJobLine(line string) (*CrontabLine, error) {
 	indices := jobLineSeparator.FindAllStringIndex(line, -1)
 
 	for _, count := range parameterCounts {
@@ -42,7 +42,7 @@ func parseJobLine(line string) (*crontabLine, error) {
 			continue
 		}
 
-		return &crontabLine{
+		return &CrontabLine{
 			Expression: expr,
 			Schedule:   line[:scheduleEnds],
 			Command:    line[commandStarts:],
@@ -94,7 +94,7 @@ func ParseCrontab(reader io.Reader) (*Crontab, error) {
 			return nil, err
 		}
 
-		jobs = append(jobs, &Job{crontabLine: *jobLine, Position: position})
+		jobs = append(jobs, &Job{CrontabLine: *jobLine, Position: position})
 		position++
 	}
 

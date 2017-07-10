@@ -1,17 +1,21 @@
 package crontab
 
 import (
-	"github.com/gorhill/cronexpr"
+	"time"
 )
 
-type crontabLine struct {
-	Expression *cronexpr.Expression
+type Expression interface {
+	Next(fromTime time.Time) time.Time
+}
+
+type CrontabLine struct {
+	Expression Expression
 	Schedule   string
 	Command    string
 }
 
 type Job struct {
-	crontabLine
+	CrontabLine
 	Position int
 }
 

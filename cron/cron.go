@@ -93,7 +93,8 @@ func StartJob(wg *sync.WaitGroup, context *crontab.Context, job *crontab.Job, ex
 
 		cronLogger := logrus.WithFields(logrus.Fields{
 			"job.schedule": job.Schedule,
-			"job.command":  job.Command, "job.position": job.Position,
+			"job.command":  job.Command,
+			"job.position": job.Position,
 		})
 
 		var cronIteration uint64 = 0

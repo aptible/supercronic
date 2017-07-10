@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	"sync"
 	"testing"
 	"time"
 )
@@ -42,8 +43,15 @@ func newTestLogger() (*logrus.Entry, chan *logrus.Entry) {
 	return logger.WithFields(logrus.Fields{}), channel
 }
 
+type testExpression struct {
+}
+
+func (expr *testExpression) Next(t time.Time) time.Time {
+	return t.Add(time.Minute)
+}
+
 var (
-	basicContext = &crontab.Context{
+	basicContext = crontab.Context{
 		Shell:   "/bin/sh",
 		Environ: map[string]string{},
 	}
@@ -60,26 +68,26 @@ var runJobTestCases = []struct {
 	messages []*logrus.Entry
 }{
 	{
-		"true", true, basicContext,
+		"true", true, &basicContext,
 		[]*logrus.Entry{
 			{Message: "starting", Level: logrus.InfoLevel, Data: noData},
 		},
 	},
 	{
-		"false", false, basicContext,
+		"false", false, &basicContext,
 		[]*logrus.Entry{
 			{Message: "starting", Level: logrus.InfoLevel, Data: noData},
 		},
 	},
 	{
-		"echo hello", true, basicContext,
+		"echo hello", true, &basicContext,
 		[]*logrus.Entry{
 			{Message: "starting", Level: logrus.InfoLevel, Data: noData},
 			{Message: "hello", Level: logrus.InfoLevel, Data: stdoutData},
 		},
 	},
 	{
-		"echo hello >&2", true, basicContext,
+		"echo hello >&2", true, &basicContext,
 		[]*logrus.Entry{
 			{Message: "starting", Level: logrus.InfoLevel, Data: noData},
 			{Message: "hello", Level: logrus.InfoLevel, Data: stderrData},
@@ -107,7 +115,7 @@ var runJobTestCases = []struct {
 		},
 	},
 	{
-		"echo hello\nsleep 0.1\necho bar >&2", true, basicContext,
+		"echo hello\nsleep 0.1\necho bar >&2", true, &basicContext,
 		[]*logrus.Entry{
 			{Message: "starting", Level: logrus.InfoLevel, Data: noData},
 			{Message: "hello", Level: logrus.InfoLevel, Data: stdoutData},
@@ -148,4 +156,24 @@ func TestRunJob(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestStartJobExitsOnRequest(t *testing.T) {
+	job := crontab.Job{
+		CrontabLine: crontab.CrontabLine{
+			Expression: &testExpression{},
+			Schedule:   "always!",
+			Command:    "true",
+		},
+		Position: 1,
+	}
+
+	exitChan := make(chan interface{}, 1)
+	exitChan <- nil
+
+	var wg sync.WaitGroup
+
+	StartJob(&wg, &basicContext, &job, exitChan)
+
+	wg.Wait()
 }
