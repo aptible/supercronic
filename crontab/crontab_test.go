@@ -43,7 +43,7 @@ var parseCrontabTestCases = []struct {
 			},
 			Jobs: []*Job{
 				{
-					crontabLine: crontabLine{
+					CrontabLine: CrontabLine{
 						Schedule: "* * * * *",
 						Command:  "foo some # qux",
 					},
@@ -63,13 +63,13 @@ var parseCrontabTestCases = []struct {
 			},
 			Jobs: []*Job{
 				{
-					crontabLine: crontabLine{
+					CrontabLine: CrontabLine{
 						Schedule: "* * * * *",
 						Command:  "foo",
 					},
 				},
 				{
-					crontabLine: crontabLine{
+					CrontabLine: CrontabLine{
 						Schedule: "1 1 1 1 1",
 						Command:  "bar",
 					},
@@ -87,19 +87,19 @@ var parseCrontabTestCases = []struct {
 			},
 			Jobs: []*Job{
 				{
-					crontabLine: crontabLine{
+					CrontabLine: CrontabLine{
 						Schedule: "* * * * * *",
 						Command:  "with year",
 					},
 				},
 				{
-					crontabLine: crontabLine{
+					CrontabLine: CrontabLine{
 						Schedule: "* * * * * * *",
 						Command:  "with seconds",
 					},
 				},
 				{
-					crontabLine: crontabLine{
+					CrontabLine: CrontabLine{
 						Schedule: "@daily",
 						Command:  "with shorthand",
 					},
@@ -117,7 +117,7 @@ var parseCrontabTestCases = []struct {
 			},
 			Jobs: []*Job{
 				{
-					crontabLine: crontabLine{
+					CrontabLine: CrontabLine{
 						Schedule: "*/2 * * * *",
 						Command:  "will run",
 					},
@@ -135,7 +135,7 @@ var parseCrontabTestCases = []struct {
 			},
 			Jobs: []*Job{
 				{
-					crontabLine: crontabLine{
+					CrontabLine: CrontabLine{
 						Schedule: "* * * * *",
 						Command:  "with plenty of whitespace",
 					},
@@ -153,7 +153,7 @@ var parseCrontabTestCases = []struct {
 			},
 			Jobs: []*Job{
 				{
-					crontabLine: crontabLine{
+					CrontabLine: CrontabLine{
 						Schedule: "*\t*\t*\t*\t*",
 						Command:  "tabs everywhere",
 					},
