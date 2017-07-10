@@ -1,0 +1,2 @@
+VAR="hello from bar"
+* * * * * * * echo "$VAR"
