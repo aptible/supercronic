@@ -13,6 +13,28 @@ var parseCrontabTestCases = []struct {
 }{
 	// Success cases
 	{
+		"",
+		&Crontab{
+			Context: &Context{
+				Shell:   "/bin/sh",
+				Environ: map[string]string{},
+			},
+			Jobs: []*Job{},
+		},
+	},
+
+	{
+		"\n",
+		&Crontab{
+			Context: &Context{
+				Shell:   "/bin/sh",
+				Environ: map[string]string{},
+			},
+			Jobs: []*Job{},
+		},
+	},
+
+	{
 		"FOO=bar\n",
 		&Crontab{
 			Context: &Context{
