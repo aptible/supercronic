@@ -71,10 +71,10 @@ func runJob(context *crontab.Context, command string, jobLogger *logrus.Entry) e
 	var wg sync.WaitGroup
 
 	stdoutLogger := jobLogger.WithFields(logrus.Fields{"channel": "stdout"})
-	go startReaderDrain(&wg, stdoutLogger, stdout)
+	startReaderDrain(&wg, stdoutLogger, stdout)
 
 	stderrLogger := jobLogger.WithFields(logrus.Fields{"channel": "stderr"})
-	go startReaderDrain(&wg, stderrLogger, stderr)
+	startReaderDrain(&wg, stderrLogger, stderr)
 
 	wg.Wait()
 
