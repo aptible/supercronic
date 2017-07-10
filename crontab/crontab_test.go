@@ -35,6 +35,50 @@ var parseCrontabTestCases = []struct {
 	},
 
 	{
+		"FOO=\"bar\"",
+		&Crontab{
+			Context: &Context{
+				Shell:   "/bin/sh",
+				Environ: map[string]string{"FOO": "bar"},
+			},
+			Jobs: []*Job{},
+		},
+	},
+
+	{
+		"FOO='bar'",
+		&Crontab{
+			Context: &Context{
+				Shell:   "/bin/sh",
+				Environ: map[string]string{"FOO": "bar"},
+			},
+			Jobs: []*Job{},
+		},
+	},
+
+	{
+		"FOO='",
+		&Crontab{
+			Context: &Context{
+				Shell:   "/bin/sh",
+				Environ: map[string]string{"FOO": "'"},
+			},
+			Jobs: []*Job{},
+		},
+	},
+
+	{
+		"FOO=''",
+		&Crontab{
+			Context: &Context{
+				Shell:   "/bin/sh",
+				Environ: map[string]string{"FOO": ""},
+			},
+			Jobs: []*Job{},
+		},
+	},
+
+	{
 		"* * * * * foo some # qux",
 		&Crontab{
 			Context: &Context{
@@ -58,7 +102,8 @@ var parseCrontabTestCases = []struct {
 			Context: &Context{
 				Shell: "some",
 				Environ: map[string]string{
-					"KEY": "VAL",
+					"SHELL": "some",
+					"KEY":   "VAL",
 				},
 			},
 			Jobs: []*Job{
