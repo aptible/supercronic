@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/aptible/supercronic/cron"
 	"github.com/aptible/supercronic/crontab"
@@ -11,19 +12,33 @@ import (
 	"syscall"
 )
 
-func main() {
-	// TODO: debug flag instead
-	// TODO: JSON logging?
-	logrus.SetLevel(logrus.DebugLevel)
-	logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+var Usage = func() {
+	fmt.Fprintf(os.Stderr, "Usage: %s [OPTIONS] CRONTAB\n\nAvailable options:\n", os.Args[0])
+	flag.PrintDefaults()
+}
 
-	if len(os.Args) != 2 {
-		fmt.Fprintf(os.Stderr, "Usage: %s CRONTAB\n", os.Args[0])
+func main() {
+	debug := flag.Bool("debug", false, "enable debug logging")
+	json := flag.Bool("json", false, "enable JSON logging")
+	flag.Parse()
+
+	if *debug {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+
+	if *json {
+		logrus.SetFormatter(&logrus.JSONFormatter{})
+	} else {
+		logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+	}
+
+	if flag.NArg() != 1 {
+		Usage()
 		os.Exit(2)
 		return
 	}
 
-	crontabFileName := os.Args[1]
+	crontabFileName := flag.Args()[0]
 	logrus.Infof("read crontab: %s", crontabFileName)
 
 	file, err := os.Open(crontabFileName)
