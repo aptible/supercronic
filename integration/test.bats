@@ -6,7 +6,8 @@ function run_supercronic() {
 }
 
 @test "it runs a cron job" {
-  run_supercronic "${BATS_TEST_DIRNAME}/hello.crontab" | grep -iE "hello from crontab.*channel=stdout"
+  n="$(run_supercronic "${BATS_TEST_DIRNAME}/hello.crontab" 5s | grep -iE "hello from crontab.*channel=stdout" | wc -l)"
+  [[ "$n" -gt 3 ]]
 }
 
 @test "it passes the environment through" {
