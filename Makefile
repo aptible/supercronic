@@ -6,9 +6,10 @@ build: $(GOFILES)
 	go build
 
 .PHONY: test
-test:
+test: build
 	go test $$(go list ./... | grep -v /vendor/)
 	go vet $$(go list ./... | grep -v /vendor/)
+	bats integration
 
 .PHONY: fmt
 fmt:
