@@ -5,17 +5,21 @@ function run_supercronic() {
 }
 
 @test "it runs a cron job" {
-  run_supercronic "${BATS_TEST_DIRNAME}/hello.crontab" | grep -E "hello from crontab.*channel=stdout"
+  run_supercronic "${BATS_TEST_DIRNAME}/hello.crontab" | grep -iE "hello from crontab.*channel=stdout"
 }
 
 @test "it passes the environment through" {
-  VAR="hello from foo" run_supercronic "${BATS_TEST_DIRNAME}/env.crontab" | grep -E "hello from foo.*channel=stdout"
+  VAR="hello from foo" run_supercronic "${BATS_TEST_DIRNAME}/env.crontab" | grep -iE "hello from foo.*channel=stdout"
 }
 
 @test "it overrides the environment with the crontab" {
-  VAR="hello from foo" run_supercronic "${BATS_TEST_DIRNAME}/override.crontab" | grep -E "hello from bar.*channel=stdout"
+  VAR="hello from foo" run_supercronic "${BATS_TEST_DIRNAME}/override.crontab" | grep -iE "hello from bar.*channel=stdout"
+}
+
+@test "it warns when USER is set" {
+  run_supercronic "${BATS_TEST_DIRNAME}/user.crontab" 5s | grep -iE "processes will not.*USER="
 }
 
 @test "it warns when a job is falling behind" {
-  run_supercronic "${BATS_TEST_DIRNAME}/timeout.crontab" 5s | grep -E "job took too long to run"
+  run_supercronic "${BATS_TEST_DIRNAME}/timeout.crontab" 5s | grep -iE "job took too long to run"
 }

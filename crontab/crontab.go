@@ -54,14 +54,11 @@ func parseJobLine(line string) (*CrontabLine, error) {
 func ParseCrontab(reader io.Reader) (*Crontab, error) {
 	scanner := bufio.NewScanner(reader)
 
-	// TODO: Don't return an array of Job, return an object representing the crontab
-	// TODO: Understand environment variables, too.
-	// TODO: Increment position
 	position := 0
 
 	jobs := make([]*Job, 0)
 
-	// TODO: CRON_TZ
+	// TODO: CRON_TZ?
 	environ := make(map[string]string)
 	shell := "/bin/sh"
 
@@ -78,14 +75,27 @@ func ParseCrontab(reader io.Reader) (*Crontab, error) {
 
 		r := envLineMatcher.FindAllStringSubmatch(line, -1)
 		if len(r) == 1 && len(r[0]) == 3 {
-			// TODO: Should error on setting USER?
 			envKey := r[0][1]
 			envVal := r[0][2]
-			if envKey == "SHELL" {
-				shell = envVal
-			} else {
-				environ[envKey] = envVal
+
+			// Remove quotes (this emulates what Vixie cron does)
+			if envVal[0] == '"' || envVal[0] == '\'' {
+				if len(envVal) > 1 && envVal[0] == envVal[len(envVal)-1] {
+					envVal = envVal[1 : len(envVal)-1]
+				}
 			}
+
+			if envKey == "SHELL" {
+				logrus.Infof("processes will be spawned using shell: %s", envVal)
+				shell = envVal
+			}
+
+			if envKey == "USER" {
+				logrus.Warnf("processes will NOT be spawned as USER=%s", envVal)
+			}
+
+			environ[envKey] = envVal
+
 			continue
 		}
 
