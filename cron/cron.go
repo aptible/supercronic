@@ -85,20 +85,14 @@ func runJob(context *crontab.Context, command string, jobLogger *logrus.Entry) e
 	return nil
 }
 
-func StartJob(wg *sync.WaitGroup, context *crontab.Context, job *crontab.Job, exitChan chan interface{}) {
+func StartJob(wg *sync.WaitGroup, context *crontab.Context, job *crontab.Job, exitChan chan interface{}, cronLogger *logrus.Entry) {
 	wg.Add(1)
 
 	go func() {
 		defer wg.Done()
 
-		cronLogger := logrus.WithFields(logrus.Fields{
-			"job.schedule": job.Schedule,
-			"job.command":  job.Command,
-			"job.position": job.Position,
-		})
-
 		var cronIteration uint64 = 0
-		nextRun := job.Expression.Next(time.Now())
+		nextRun := time.Now()
 
 		// NOTE: this (intentionally) does not run multiple instances of the
 		// job concurrently

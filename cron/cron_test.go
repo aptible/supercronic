@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	"regexp"
 	"sync"
 	"testing"
 	"time"
@@ -35,6 +36,7 @@ func (hook *testHook) Levels() []logrus.Level {
 func newTestLogger() (*logrus.Entry, chan *logrus.Entry) {
 	logger := logrus.New()
 	logger.Out = ioutil.Discard
+	logger.Level = logrus.DebugLevel
 
 	channel := make(chan *logrus.Entry, BUFFER_SIZE)
 	hook := newTestHook(channel)
@@ -44,10 +46,11 @@ func newTestLogger() (*logrus.Entry, chan *logrus.Entry) {
 }
 
 type testExpression struct {
+	delay time.Duration
 }
 
 func (expr *testExpression) Next(t time.Time) time.Time {
-	return t.Add(time.Minute)
+	return t.Add(expr.delay)
 }
 
 var (
@@ -161,7 +164,7 @@ func TestRunJob(t *testing.T) {
 func TestStartJobExitsOnRequest(t *testing.T) {
 	job := crontab.Job{
 		CrontabLine: crontab.CrontabLine{
-			Expression: &testExpression{},
+			Expression: &testExpression{time.Minute},
 			Schedule:   "always!",
 			Command:    "true",
 		},
@@ -171,9 +174,81 @@ func TestStartJobExitsOnRequest(t *testing.T) {
 	exitChan := make(chan interface{}, 1)
 	exitChan <- nil
 
+	logger, _ := newTestLogger()
+
 	var wg sync.WaitGroup
 
-	StartJob(&wg, &basicContext, &job, exitChan)
+	StartJob(&wg, &basicContext, &job, exitChan, logger)
 
+	wg.Wait()
+}
+
+func TestStartJobRunsJob(t *testing.T) {
+	job := crontab.Job{
+		CrontabLine: crontab.CrontabLine{
+			Expression: &testExpression{2 * time.Second},
+			Schedule:   "always!",
+			Command:    "true",
+		},
+		Position: 1,
+	}
+
+	exitChan := make(chan interface{}, 1)
+
+	var wg sync.WaitGroup
+
+	logger, channel := newTestLogger()
+
+	StartJob(&wg, &basicContext, &job, exitChan, logger)
+
+	select {
+	case entry := <-channel:
+		fmt.Printf("got %s\n", entry.Message)
+		assert.Regexp(t, regexp.MustCompile("job will run next"), entry.Message)
+	case <-time.After(time.Second):
+		t.Fatalf("timed out waiting for schedule")
+	}
+
+	select {
+	case entry := <-channel:
+		fmt.Printf("got %s\n", entry.Message)
+		assert.Regexp(t, regexp.MustCompile("starting"), entry.Message)
+	case <-time.After(3 * time.Second):
+		t.Fatalf("timed out waiting for start")
+	}
+
+	select {
+	case entry := <-channel:
+		fmt.Printf("got %s\n", entry.Message)
+		assert.Regexp(t, regexp.MustCompile("job succeeded"), entry.Message)
+	case <-time.After(time.Second):
+		t.Fatalf("timed out waiting for success")
+	}
+
+	select {
+	case entry := <-channel:
+		fmt.Printf("got %s\n", entry.Message)
+		assert.Regexp(t, regexp.MustCompile("job will run next"), entry.Message)
+	case <-time.After(time.Second):
+		t.Fatalf("timed out waiting for second schedule")
+	}
+
+	select {
+	case entry := <-channel:
+		fmt.Printf("got %s\n", entry.Message)
+		assert.Regexp(t, regexp.MustCompile("starting"), entry.Message)
+	case <-time.After(3 * time.Second):
+		t.Fatalf("timed out waiting for second start")
+	}
+
+	select {
+	case entry := <-channel:
+		fmt.Printf("got %s\n", entry.Message)
+		assert.Regexp(t, regexp.MustCompile("job succeeded"), entry.Message)
+	case <-time.After(time.Second):
+		t.Fatalf("timed out waiting for second success")
+	}
+
+	exitChan <- nil
 	wg.Wait()
 }

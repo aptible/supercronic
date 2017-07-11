@@ -61,9 +61,16 @@ func main() {
 	)
 
 	for _, job := range tab.Jobs {
-		c := make(chan interface{}, 1)
-		exitChans = append(exitChans, c)
-		cron.StartJob(&wg, tab.Context, job, c)
+		exitChan := make(chan interface{}, 1)
+		exitChans = append(exitChans, exitChan)
+
+		cronLogger := logrus.WithFields(logrus.Fields{
+			"job.schedule": job.Schedule,
+			"job.command":  job.Command,
+			"job.position": job.Position,
+		})
+
+		cron.StartJob(&wg, tab.Context, job, exitChan, cronLogger)
 	}
 
 	termChan := make(chan os.Signal, 1)
