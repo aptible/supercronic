@@ -25,3 +25,11 @@ jobs:
         - file *
         - sha1sum *
         - sha256sum *
+      deploy:
+        provider: releases
+        api_key:
+          secure: "MPXVtn7XhcWkkDpDCcPqvfp1klsfGflsMrhBTH5WO2dUD352fJdbHTUi87Yuo+aFib+yNArzFn3cl9ZfUmD7vSSjmxqFjrgcIJT45Qqo4Y+T39JMUo7QuCsBUV4QbLlHMAyA3ZrcpWmpyGC5VgqiRN6D/XCTmB355fMfbF/Wov/shADiLLzYxDRkxUggx2nqBrG1Eo0JfS5Ji/MUbA5dhmOoDnf0YTsu2SWhS1nErj0HTe/j2/o7wG9aM1rQg6sU0DDTarPWNVJn6HNx0E65VzvfZH2v6g0rfLQ3sydeHdtvyS2KxBlCcp7ceJ2VHLuurR9IZTqH8GYA8GYAAZpo2oZF2esqH6tIpTIG5kJJy9Ybzw1o5Q3R3LAY18/IvdiUmfrMUy1Bkai1Lz1nHvcG5azwSOgrZ/hTbby1XPS4TdjbC7tyQXJ/u0ch+qxLOcIwKp/3DiE6nmMXJkCv4hf5YX/AYze2TKtm2uhE2qQF7kQ3tKi64nOBX9N3+mJVthS37JA8Zrak3D/5E4vtul87lahczOCNS2qYcET04Td77HJ1HEGgSnJETvnfG4+8LmLYoIqN3201Vsk585CNVpUY7PjYCxFBRadj7SfHmAq8mEQF7rpM8ELmBirkwta1QQq5Qma49ozCxWcnhnqw9NPRG3oNCrYsVC2APIrkvsOjVPo="
+        file: "dist/*"
+        skip_cleanup: true
+        on:
+          tags: true
