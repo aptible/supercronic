@@ -46,10 +46,36 @@ expect from running `cron` in a container:
 - You're done!
 
 
-### Installation
+## Installation
 
-- If you have a `go` toolchain available: `go install github.com/aptible/supercronic`
-- TODO: Docker installation instructions / packaging.
+### Download
+
+The easiest way to install Supercronic is to download a pre-build binary.
+
+Navigate to [the releases page][releases], and grab the build that suits your
+system. Make it executable, and you're all set.
+
+If you're unsure, you're probably looking for `supercronic-linux-amd64`.
+
+### Build
+
+You can also build Supercronic from source.
+
+Supercronic uses Glide for dependency management, so you'll need to [install
+Glide][glide-install] first:
+
+```
+curl https://glide.sh/get | sh
+```
+
+Then, fetch Supercronic, install its dependencies, then install it:
+
+```
+go get github.com/aptible/supercronic
+cd "${GOPATH}/src/github.com/aptible/supercronic"
+glide install
+go install
+```
 
 
 ## Crontab format ##
@@ -150,3 +176,5 @@ WARN[2017-07-11T12:24:32+02:00] job took too long to run: it should have started
 ```
 
   [cronexpr]: https://github.com/gorhill/cronexpr
+  [releases]: https://github.com/aptible/supercronic/releases
+  [glide-install]: https://github.com/Masterminds/glide#install
