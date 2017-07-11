@@ -5,6 +5,10 @@ function run_supercronic() {
     "${BATS_TEST_DIRNAME}/../supercronic" ${SUPERCRONIC_ARGS:-} "$crontab" 2>&1
 }
 
+@test "it starts" {
+  run_supercronic "${BATS_TEST_DIRNAME}/noop.crontab" 2s
+}
+
 @test "it runs a cron job" {
   n="$(run_supercronic "${BATS_TEST_DIRNAME}/hello.crontab" 5s | grep -iE "hello from crontab.*channel=stdout" | wc -l)"
   [[ "$n" -gt 3 ]]

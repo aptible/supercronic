@@ -1,0 +1,27 @@
+sudo: false
+dist: trusty
+
+language: go
+
+go: "1.8"
+
+install:
+  - curl https://glide.sh/get | sh
+  - make deps
+  - git clone https://github.com/sstephenson/bats.git --branch v0.4.0 --depth 1 "${HOME}/bats"
+  - export "PATH=${PATH}:${HOME}/bats/bin"
+
+jobs:
+  include:
+    - stage: test
+      script:
+        - make fmt && make test
+    - stage: build
+      script:
+        - mkdir -p dist
+        - for arch in amd64 386 arm arm64; do GOARCH="$arch" go build && mv supercronic "dist/supercronic-${arch}"; done
+        - cd dist
+        - ls -lah *
+        - file *
+        - sha1sum *
+        - sha256sum *
