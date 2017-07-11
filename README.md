@@ -50,12 +50,14 @@ expect from running `cron` in a container:
 
 ### Download
 
-The easiest way to install Supercronic is to download a pre-build binary.
+The easiest way to install Supercronic is to download a pre-built binary.
 
 Navigate to [the releases page][releases], and grab the build that suits your
-system. Make it executable, and you're all set.
+system. The releases include `Dockerfile` stanzas to install Supercronic that
+you can easily include in your own `Dockerfile` or adjust as needed.
 
-If you're unsure, you're probably looking for `supercronic-linux-amd64`.
+Note: if you're unsure which binary is right for you, you're probably looking
+for `supercronic-linux-amd64`.
 
 ### Build
 
