@@ -19,7 +19,8 @@ jobs:
     - stage: build
       script:
         - mkdir -p dist
-        - for arch in amd64 386 arm arm64; do GOARCH="$arch" go build && mv supercronic "dist/supercronic-${arch}"; done
+        - export GOOS="linux"
+        - for arch in amd64 386 arm arm64; do GOARCH="$arch" go build && mv supercronic "dist/supercronic-${GOOS}-${arch}"; done
         - pushd dist
         - ls -lah *
         - file *
