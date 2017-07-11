@@ -5,8 +5,14 @@ language: go
 
 go: "1.8"
 
+addons:
+  apt:
+    sources:
+      - sourceline: 'ppa:masterminds/glide'
+    packages:
+      - glide
+
 install:
-  - curl https://glide.sh/get | sh
   - make deps
   - git clone https://github.com/sstephenson/bats.git --branch v0.4.0 --depth 1 "${HOME}/bats"
   - export "PATH=${PATH}:${HOME}/bats/bin"
