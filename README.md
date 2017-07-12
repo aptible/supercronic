@@ -91,7 +91,8 @@ There are, however, a few exceptions:
   Supercronic uses [the `cronexpr` package][cronexpr], so refer to its
   documentation to know exactly what you can do.
 - Second, Supercronic does not support changing users when running tasks.
-  Again, this is something that hardly makes sense in a cron environment. This
+  Again, this is something that hardly makes sense in a container environment
+  (you would typically add a `USER` directive to your Dockerfile instead). This
   means that setting `USER` in your crontab won't have any effect.
 
 Here's an example crontab:
@@ -102,6 +103,9 @@ Here's an example crontab:
 
 # Run every 2 seconds
 */2 * * * * * * ls 2>/dev/null
+
+# Run once every hour
+@hourly echo "$SOME_HOURLY_JOB"
 ```
 
 
@@ -115,10 +119,15 @@ this feature is generally **not recommended** when using Supercronic.
 
 Indeed, Supercronic does not wipe your environment before running jobs, so if
 you need environment variables to be available when your jobs run, just set
-them before starting Supercronic itself, and your jobs will inherit them
-(unless you've used cron before, this is exactly what you expect).
+them before starting Supercronic itself, and your jobs will inherit them.
 
-For example, if you're using Docker, Supercronic
+For example, if you're using Docker, jobs started by Supercronic will inherit
+the environment variables defined using `ENV` directives in your `Dockerfile`,
+and variables passed when you run the container (e.g. via `docker run -e
+SOME_VARIABLE=SOME_VALUE`).
+
+Unless you've used cron before, this is exactly how you expect environment
+variables to work!
 
 
 ## Logging ##
