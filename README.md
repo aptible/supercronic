@@ -46,6 +46,13 @@ expect from running `cron` in a container:
 - You're done!
 
 
+## Who is it for?
+
+We originally created Supercronic to make it easy for customers of Aptible's
+[container orchestration platform (Enclave)][aptible-enclave] to incorporate
+periodic jobs in their apps, but it's more broadly applicable to **anyone
+running cron jobs in containers**.
+
 ## Installation
 
 ### Download
@@ -186,6 +193,34 @@ INFO[2017-07-11T12:24:32+02:00] job succeeded                                 it
 WARN[2017-07-11T12:24:32+02:00] job took too long to run: it should have started 1.014474099s ago  job.command="sleep 2" job.position=0 job.schedule="* * * * * * *"
 ```
 
+
+## Questions and Support ###
+
+Please feel free to open an issue in this repository if you have any question
+about Supercronic!
+
+Note that if you're trying to use Supercronic on Aptible Enclave, we have [a
+dedicated support article][how-to-run-scheduled-tasks].
+
+
+## Contributing ##
+
+PRs are always welcome! Before undertaking a major change, consider opening an
+issue for some discussion.
+
+
+## Author ##
+
+[Aptible][aptible]
+
+
+## License ##
+
+See [LICENSE.md](./LICENSE.md).
+
   [cronexpr]: https://github.com/gorhill/cronexpr
   [releases]: https://github.com/aptible/supercronic/releases
   [glide-install]: https://github.com/Masterminds/glide#install
+  [aptible]: https://www.aptible.com
+  [aptible-enclave]: https://www.aptible.com/enclave
+  [how-to-run-scheduled-tasks]: https://www.aptible.com/support/topics/enclave/how-to-run-scheduled-tasks/
