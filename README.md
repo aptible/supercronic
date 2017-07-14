@@ -1,4 +1,4 @@
-# Supercronic #
+# ![][aptible-logo] Supercronic #
 
 Supercronic is a crontab-compatible job runner, designed specifically to run in
 containers.
@@ -26,30 +26,29 @@ implementations are ill-suited for container environments:
   centralized logging when a syslog server is running, but with containers,
   simply logging to `stdout` or `stderr` is preferred.
 
-Finally, they are often very quiet, which makes the above issues difficult to
-understand or debug!
+Finally, they are often quiet, making these issues difficult to understand and
+debug!
 
-The list could go on, but the fundamental takeaway is this: unlike typical
-server cron implementations, Supercronic tries very hard to do exactly what you
-expect from running `cron` in a container:
+Supercronic's goal is to behave exactly how you would expect `cron` running in
+a container to behave:
 
-- Your environment variables are available in jobs.
-- Job output is logged to `stdout` / `stderr`.
-- `SIGTERM` (or `SIGINT`, which you can deliver via CTRL+C when used
-  interactively) triggers a graceful shutdown
-- Job return codes and schedules are also logged to `stdout` / `stderr`.
+- Your environment variables are available in jobs
+- Job output is logged to `stdout` / `stderr`
+- `SIGTERM` triggers a graceful shutdown (and so does `SIGINT`, which you can
+  deliver via CTRL+C when used interactively)
+- Job return codes and schedules are logged to `stdout` / `stderr`
 
 ## How does it work? ##
 
-- Install Supercronic (see below).
-- Point it at a crontab: `supercronic CRONTAB`.
+- Install Supercronic (see below)
+- Point it at a crontab: `supercronic CRONTAB`
 - You're done!
 
 
 ## Who is it for?
 
-We originally created Supercronic to make it easy for customers of Aptible's
-[container orchestration platform (Enclave)][aptible-enclave] to incorporate
+We (Aptible) originally created Supercronic to make it easy for customers of our
+[Enclave container orchestration platform][aptible-enclave] to incorporate
 periodic jobs in their apps, but it's more broadly applicable to **anyone
 running cron jobs in containers**.
 
@@ -60,11 +59,12 @@ running cron jobs in containers**.
 The easiest way to install Supercronic is to download a pre-built binary.
 
 Navigate to [the releases page][releases], and grab the build that suits your
-system. The releases include `Dockerfile` stanzas to install Supercronic that
-you can easily include in your own `Dockerfile` or adjust as needed.
+system. The releases include example `Dockerfile` stanzas to install
+Supercronic that you can easily include in your own `Dockerfile` or adjust as
+needed.
 
-Note: if you're unsure which binary is right for you, you're probably looking
-for `supercronic-linux-amd64`.
+Note: If you are unsure which binary is right for you, try
+`supercronic-linux-amd64`.
 
 ### Build
 
@@ -94,13 +94,14 @@ does. In most cases, it should be compatible with your existing crontab.
 
 There are, however, a few exceptions:
 
-- First, Supercronic supports second-resolution schedules: under the hood,
+- First, Supercronic supports second-resolution schedules: Under the hood,
   Supercronic uses [the `cronexpr` package][cronexpr], so refer to its
   documentation to know exactly what you can do.
 - Second, Supercronic does not support changing users when running tasks.
-  Again, this is something that hardly makes sense in a container environment
-  (you would typically add a `USER` directive to your Dockerfile instead). This
-  means that setting `USER` in your crontab won't have any effect.
+  Setting `USER` in your crontab will have no effect. Changing users is usually
+  best accomplished in container environments via other means, e.g., by adding
+  a `USER` directive to your Dockerfile.
+
 
 Here's an example crontab:
 
@@ -209,15 +210,18 @@ PRs are always welcome! Before undertaking a major change, consider opening an
 issue for some discussion.
 
 
-## Author ##
-
-[Aptible][aptible]
-
-
 ## License ##
 
 See [LICENSE.md](./LICENSE.md).
 
+
+## Copyright ##
+
+Copyright (c) 2017 [Aptible][aptible]. All rights reserved.
+
+[<img src="https://s.gravatar.com/avatar/f532cf09084eb963bfc913867fff2258?s=60" style="border-radius: 50%;" alt="@krallin" />](https://github.com/krallin)
+
+  [aptible-logo]: https://raw.github.com/aptible/straptible/master/lib/straptible/rails/templates/public.api/icon-60px.png
   [cronexpr]: https://github.com/gorhill/cronexpr
   [releases]: https://github.com/aptible/supercronic/releases
   [glide-install]: https://github.com/Masterminds/glide#install
