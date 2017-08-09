@@ -1,0 +1,4 @@
+*.md
+integration
+.travis.yml
+**/*_test.go
