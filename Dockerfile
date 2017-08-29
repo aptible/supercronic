@@ -1,16 +1,16 @@
-FROM billyteves/alpine-golang-glide:1.2.0 as builder
+FROM alpine:3.6 as builder
 
+RUN apk add --no-cache go glide git build-base
+
+ENV GOPATH /go
 WORKDIR /go/src/github.com/aptible/supercronic/
-# Download dependencies in a separate layer to optimize
-# the use of the layers cache even when the project code changes
 COPY glide.yaml .
+COPY glide.lock .
 RUN glide install
-
 COPY . .
-RUN make build
+RUN go build -i
 
-# Build final image straight from alpine
-FROM alpine:latest
-WORKDIR /root/
-COPY --from=builder /go/src/github.com/aptible/supercronic/supercronic .
-ENTRYPOINT ["./supercronic"]
+FROM alpine
+COPY --from=builder /go/src/github.com/aptible/supercronic/supercronic /usr/local/bin/
+ENTRYPOINT ["supercronic"]
+
