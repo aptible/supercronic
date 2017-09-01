@@ -14,11 +14,16 @@ import (
 	"time"
 )
 
-func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.Reader) {
+func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.ReadCloser) {
 	wg.Add(1)
 
 	go func() {
-		defer wg.Done()
+		defer func() {
+			wg.Done()
+			if err := reader.Close(); err != nil {
+				readerLogger.Error("failed to close pipe: %v", err)
+			}
+		}()
 
 		scanner := bufio.NewScanner(reader)
 
@@ -34,7 +39,7 @@ func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.
 				return
 			}
 
-			readerLogger.Error(err)
+			readerLogger.Error("failed to read pipe: %v", err)
 		}
 	}()
 }
@@ -79,7 +84,7 @@ func runJob(context *crontab.Context, command string, jobLogger *logrus.Entry) e
 	wg.Wait()
 
 	if err := cmd.Wait(); err != nil {
-		return err
+		return fmt.Errorf("error running command: %v", err)
 	}
 
 	return nil
