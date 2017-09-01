@@ -14,6 +14,10 @@ import (
 	"time"
 )
 
+var (
+	READ_BUFFER_SIZE = 64 * 1024
+)
+
 func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.ReadCloser) {
 	wg.Add(1)
 
@@ -21,25 +25,36 @@ func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.
 		defer func() {
 			wg.Done()
 			if err := reader.Close(); err != nil {
-				readerLogger.Error("failed to close pipe: %v", err)
+				readerLogger.Errorf("failed to close pipe: %v", err)
 			}
 		}()
 
-		scanner := bufio.NewScanner(reader)
+		bufReader := bufio.NewReaderSize(reader, READ_BUFFER_SIZE)
 
-		for scanner.Scan() {
-			readerLogger.Info(scanner.Text())
-		}
+		for {
+			line, isPrefix, err := bufReader.ReadLine()
 
-		if err := scanner.Err(); err != nil {
-			// The underlying reader might get closed by e.g. Wait(), or
-			// even the process we're starting, so we don't log EOF-like
-			// errors
-			if strings.Contains(err.Error(), os.ErrClosed.Error()) {
-				return
+			if err != nil {
+				if strings.Contains(err.Error(), os.ErrClosed.Error()) {
+					// The underlying reader might get
+					// closed by e.g. Wait(), or even the
+					// process we're starting, so we don't
+					// log this.
+				} else if err == io.EOF {
+					// EOF, we don't need to log this
+				} else {
+					// Unexpected error: log it
+					readerLogger.Errorf("failed to read pipe: %v", err)
+				}
+
+				break
 			}
 
-			readerLogger.Error("failed to read pipe: %v", err)
+			readerLogger.Info(string(line))
+
+			if isPrefix {
+				readerLogger.Warn("last line exceeded buffer size, continuing...")
+			}
 		}
 	}()
 }
