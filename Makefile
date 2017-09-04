@@ -25,3 +25,5 @@ test: unit integration
 .PHONY: fmt
 fmt:
 	gofmt -l -w ${GOFILES_NOVENDOR}
+
+.DEFAULT_GOAL := test
