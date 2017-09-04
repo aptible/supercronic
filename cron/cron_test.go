@@ -7,13 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"regexp"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 )
 
 var (
-	BUFFER_SIZE = 100
+	TEST_CHANNEL_BUFFER_SIZE = 100
 )
 
 type testHook struct {
@@ -38,7 +39,7 @@ func newTestLogger() (*logrus.Entry, chan *logrus.Entry) {
 	logger.Out = ioutil.Discard
 	logger.Level = logrus.DebugLevel
 
-	channel := make(chan *logrus.Entry, BUFFER_SIZE)
+	channel := make(chan *logrus.Entry, TEST_CHANNEL_BUFFER_SIZE)
 	hook := newTestHook(channel)
 	logger.Hooks.Add(hook)
 
@@ -125,6 +126,17 @@ var runJobTestCases = []struct {
 			{Message: "bar", Level: logrus.InfoLevel, Data: stderrData},
 		},
 	},
+	{
+		fmt.Sprintf("python -c 'print(\"a\" * %d * 3)'", READ_BUFFER_SIZE), true, &basicContext,
+		[]*logrus.Entry{
+			{Message: "starting", Level: logrus.InfoLevel, Data: noData},
+			{Message: strings.Repeat("a", READ_BUFFER_SIZE), Level: logrus.InfoLevel, Data: stdoutData},
+			{Message: "last line exceeded buffer size, continuing...", Level: logrus.WarnLevel, Data: stdoutData},
+			{Message: strings.Repeat("a", READ_BUFFER_SIZE), Level: logrus.InfoLevel, Data: stdoutData},
+			{Message: "last line exceeded buffer size, continuing...", Level: logrus.WarnLevel, Data: stdoutData},
+			{Message: strings.Repeat("a", READ_BUFFER_SIZE), Level: logrus.InfoLevel, Data: stdoutData},
+		},
+	},
 }
 
 func TestRunJob(t *testing.T) {
@@ -203,7 +215,6 @@ func TestStartJobRunsJob(t *testing.T) {
 
 	select {
 	case entry := <-channel:
-		fmt.Printf("got %s\n", entry.Message)
 		assert.Regexp(t, regexp.MustCompile("job will run next"), entry.Message)
 	case <-time.After(time.Second):
 		t.Fatalf("timed out waiting for schedule")
@@ -211,7 +222,6 @@ func TestStartJobRunsJob(t *testing.T) {
 
 	select {
 	case entry := <-channel:
-		fmt.Printf("got %s\n", entry.Message)
 		assert.Regexp(t, regexp.MustCompile("starting"), entry.Message)
 	case <-time.After(3 * time.Second):
 		t.Fatalf("timed out waiting for start")
@@ -219,7 +229,6 @@ func TestStartJobRunsJob(t *testing.T) {
 
 	select {
 	case entry := <-channel:
-		fmt.Printf("got %s\n", entry.Message)
 		assert.Regexp(t, regexp.MustCompile("job succeeded"), entry.Message)
 	case <-time.After(time.Second):
 		t.Fatalf("timed out waiting for success")
@@ -227,7 +236,6 @@ func TestStartJobRunsJob(t *testing.T) {
 
 	select {
 	case entry := <-channel:
-		fmt.Printf("got %s\n", entry.Message)
 		assert.Regexp(t, regexp.MustCompile("job will run next"), entry.Message)
 	case <-time.After(time.Second):
 		t.Fatalf("timed out waiting for second schedule")
@@ -235,7 +243,6 @@ func TestStartJobRunsJob(t *testing.T) {
 
 	select {
 	case entry := <-channel:
-		fmt.Printf("got %s\n", entry.Message)
 		assert.Regexp(t, regexp.MustCompile("starting"), entry.Message)
 	case <-time.After(3 * time.Second):
 		t.Fatalf("timed out waiting for second start")
@@ -243,7 +250,6 @@ func TestStartJobRunsJob(t *testing.T) {
 
 	select {
 	case entry := <-channel:
-		fmt.Printf("got %s\n", entry.Message)
 		assert.Regexp(t, regexp.MustCompile("job succeeded"), entry.Message)
 	case <-time.After(time.Second):
 		t.Fatalf("timed out waiting for second success")

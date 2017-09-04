@@ -21,7 +21,9 @@ jobs:
   include:
     - stage: test
       script:
-        - make fmt && make test
+        - make fmt
+        - git diff --exit-code
+        - make test
     - stage: build
       script:
         - mkdir -p dist
