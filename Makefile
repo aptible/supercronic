@@ -3,7 +3,7 @@ SHELL=/bin/bash
 
 .PHONY: deps
 deps:
-	glide install
+	dep ensure
 
 .PHONY: build
 build: $(GOFILES)

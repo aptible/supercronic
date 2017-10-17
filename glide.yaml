@@ -1,8 +1,0 @@
-package: github.com/aptible/supercronic
-import:
-- package: github.com/gorhill/cronexpr
-  version: ~1.0.0
-- package: github.com/sirupsen/logrus
-  version: ~1.0.0
-- package: github.com/stretchr/testify
-  version: ~1.1.4
