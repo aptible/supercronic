@@ -10,13 +10,7 @@ before_install:
   - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/aptible/supercronic/
   - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/aptible/supercronic
   - cd $TRAVIS_BUILD_DIR
-
-addons:
-  apt:
-    sources:
-      - sourceline: 'ppa:masterminds/glide'
-    packages:
-      - glide
+  - go get -u github.com/golang/dep/cmd/dep
 
 install:
   - make deps

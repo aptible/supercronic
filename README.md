@@ -72,19 +72,15 @@ Note: If you are unsure which binary is right for you, try
 
 You can also build Supercronic from source.
 
-Supercronic uses Glide for dependency management, so you'll need to [install
-Glide][glide-install] first:
-
-```
-curl https://glide.sh/get | sh
-```
+Supercronic uses `dep` for dependency management, so you'll need to [install
+dep][dep] first.
 
 Then, fetch Supercronic, install its dependencies, then install it:
 
 ```
 go get github.com/aptible/supercronic
 cd "${GOPATH}/src/github.com/aptible/supercronic"
-glide install
+dep ensure
 go install
 ```
 
@@ -227,7 +223,7 @@ Copyright (c) 2017 [Aptible][aptible]. All rights reserved.
   [blog-post]: https://www.aptible.com/blog/cron-for-containers-introduction-supercronic/
   [cronexpr]: https://github.com/gorhill/cronexpr
   [releases]: https://github.com/aptible/supercronic/releases
-  [glide-install]: https://github.com/Masterminds/glide#install
+  [dep]: https://github.com/golang/dep
   [aptible]: https://www.aptible.com
   [aptible-enclave]: https://www.aptible.com/enclave
   [how-to-run-scheduled-tasks]: https://www.aptible.com/support/topics/enclave/how-to-run-scheduled-tasks/
