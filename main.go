@@ -41,14 +41,7 @@ func main() {
 	crontabFileName := flag.Args()[0]
 	logrus.Infof("read crontab: %s", crontabFileName)
 
-	file, err := os.Open(crontabFileName)
-	if err != nil {
-		logrus.Fatal(err)
-		return
-	}
-	defer file.Close()
-
-	tab, err := crontab.ParseCrontab(file)
+	tab, err := readCrontabAtPath(crontabFileName)
 
 	if err != nil {
 		logrus.Fatal(err)
@@ -87,4 +80,15 @@ func main() {
 	wg.Wait()
 
 	logrus.Info("exiting")
+}
+
+func readCrontabAtPath(path string) (*crontab.Crontab, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+
+	return crontab.ParseCrontab(file)
 }
