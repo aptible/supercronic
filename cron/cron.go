@@ -23,10 +23,10 @@ func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.
 
 	go func() {
 		defer func() {
-			wg.Done()
 			if err := reader.Close(); err != nil {
 				readerLogger.Errorf("failed to close pipe: %v", err)
 			}
+			wg.Done()
 		}()
 
 		bufReader := bufio.NewReaderSize(reader, READ_BUFFER_SIZE)
