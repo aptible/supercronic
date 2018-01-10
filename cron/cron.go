@@ -2,6 +2,7 @@ package cron
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"github.com/aptible/supercronic/crontab"
 	"github.com/sirupsen/logrus"
@@ -59,17 +60,17 @@ func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.
 	}()
 }
 
-func runJob(context *crontab.Context, command string, jobLogger *logrus.Entry) error {
+func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry) error {
 	jobLogger.Info("starting")
 
-	cmd := exec.Command(context.Shell, "-c", command)
+	cmd := exec.Command(cronCtx.Shell, "-c", command)
 
 	// Run in a separate process group so that in interactive usage, CTRL+C
 	// stops supercronic, not the children threads.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	env := os.Environ()
-	for k, v := range context.Environ {
+	for k, v := range cronCtx.Environ {
 		env = append(env, fmt.Sprintf("%s=%s", k, v))
 	}
 	cmd.Env = env
@@ -105,7 +106,22 @@ func runJob(context *crontab.Context, command string, jobLogger *logrus.Entry) e
 	return nil
 }
 
-func StartJob(wg *sync.WaitGroup, context *crontab.Context, job *crontab.Job, exitChan chan interface{}, cronLogger *logrus.Entry) {
+func monitorJob(ctx context.Context, expression crontab.Expression, t0 time.Time, jobLogger *logrus.Entry) {
+	t := t0
+
+	for {
+		t = expression.Next(t)
+
+		select {
+		case <-time.After(time.Until(t)):
+			jobLogger.Warnf("not starting: job is still running since %s (%s elapsed)", t0, t.Sub(t0))
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func StartJob(wg *sync.WaitGroup, cronCtx *crontab.Context, job *crontab.Job, exitChan chan interface{}, cronLogger *logrus.Entry) {
 	wg.Add(1)
 
 	go func() {
@@ -139,7 +155,14 @@ func StartJob(wg *sync.WaitGroup, context *crontab.Context, job *crontab.Job, ex
 				"iteration": cronIteration,
 			})
 
-			err := runJob(context, job.Command, jobLogger)
+			err := func() error {
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+
+				go monitorJob(ctx, job.Expression, nextRun, jobLogger)
+
+				return runJob(cronCtx, job.Command, jobLogger)
+			}()
 
 			if err == nil {
 				jobLogger.Info("job succeeded")
