@@ -1,12 +1,12 @@
 function run_supercronic() {
   local crontab="$1"
-  local timeout="${2:-2s}"
+  local timeout="${2:-1s}"
   timeout --preserve-status --kill-after "30s" "$timeout" \
     "${BATS_TEST_DIRNAME}/../supercronic" ${SUPERCRONIC_ARGS:-} "$crontab" 2>&1
 }
 
 @test "it starts" {
-  run_supercronic "${BATS_TEST_DIRNAME}/noop.crontab" 2s
+  run_supercronic "${BATS_TEST_DIRNAME}/noop.crontab"
 }
 
 @test "it runs a cron job" {
@@ -23,11 +23,16 @@ function run_supercronic() {
 }
 
 @test "it warns when USER is set" {
-  run_supercronic "${BATS_TEST_DIRNAME}/user.crontab" 5s | grep -iE "processes will not.*USER="
+  run_supercronic "${BATS_TEST_DIRNAME}/user.crontab" 1s | grep -iE "processes will not.*USER="
 }
 
 @test "it warns when a job is falling behind" {
-  run_supercronic "${BATS_TEST_DIRNAME}/timeout.crontab" 5s | grep -iE "job took too long to run"
+  run_supercronic "${BATS_TEST_DIRNAME}/timeout.crontab" 1s | grep -iE "job took too long to run"
+}
+
+@test "it warns repeatedly when a job is still running" {
+  n="$(run_supercronic "${BATS_TEST_DIRNAME}/timeout.crontab" 1s | grep -iE "job is still running" | wc -l)"
+  [[ "$n" -eq 2 ]]
 }
 
 @test "it supports debug logging " {
