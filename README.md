@@ -179,11 +179,12 @@ you.
 Here is an example:
 
 ```
+$ cat ./my-crontab
 # Sleep for 2 seconds every second. This will take too long.
 * * * * * * * sleep 2
 
 $ ./supercronic ./my-crontab
-INFO[2017-07-11T12:24:25+02:00] read crontab: foo
+INFO[2017-07-11T12:24:25+02:00] read crontab: ./my-crontab
 INFO[2017-07-11T12:24:27+02:00] starting                                      iteration=0 job.command="sleep 2" job.position=0 job.schedule="* * * * * * *"
 INFO[2017-07-11T12:24:29+02:00] job succeeded                                 iteration=0 job.command="sleep 2" job.position=0 job.schedule="* * * * * * *"
 WARN[2017-07-11T12:24:29+02:00] job took too long to run: it should have started 1.009438854s ago  job.command="sleep 2" job.position=0 job.schedule="* * * * * * *"
