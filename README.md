@@ -136,6 +136,16 @@ Unless you've used cron before, this is exactly how you expect environment
 variables to work!
 
 
+## Timezone ##
+
+Supercronic uses your current timezone from `/etc/localtime` to schedule jobs.
+You can also override the timezone by setting the environment variable `TZ`
+when running Supercronic.
+
+If you're unsure what timezone Supercronic is using, you can run it with the
+`-debug` flag to confirm.
+
+
 ## Logging ##
 
 Supercronic provides rich logging, and will let you know exactly what command
