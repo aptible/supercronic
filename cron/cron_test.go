@@ -1,6 +1,7 @@
 package cron
 
 import (
+	"context"
 	"fmt"
 	"github.com/aptible/supercronic/crontab"
 	"github.com/sirupsen/logrus"
@@ -189,8 +190,10 @@ func TestStartJobExitsOnRequest(t *testing.T) {
 	logger, _ := newTestLogger()
 
 	var wg sync.WaitGroup
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
 
-	StartJob(&wg, &basicContext, &job, exitChan, logger)
+	StartJob(&wg, &basicContext, &job, ctx, logger)
 
 	wg.Wait()
 }
@@ -205,13 +208,12 @@ func TestStartJobRunsJob(t *testing.T) {
 		Position: 1,
 	}
 
-	exitChan := make(chan interface{}, 1)
-
 	var wg sync.WaitGroup
+	ctx, cancel := context.WithCancel(context.Background())
 
 	logger, channel := newTestLogger()
 
-	StartJob(&wg, &basicContext, &job, exitChan, logger)
+	StartJob(&wg, &basicContext, &job, ctx, logger)
 
 	select {
 	case entry := <-channel:
@@ -255,6 +257,6 @@ func TestStartJobRunsJob(t *testing.T) {
 		t.Fatalf("timed out waiting for second success")
 	}
 
-	exitChan <- nil
+	cancel()
 	wg.Wait()
 }

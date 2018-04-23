@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"github.com/aptible/supercronic/cron"
@@ -48,22 +49,17 @@ func main() {
 		return
 	}
 
-	var (
-		wg        sync.WaitGroup
-		exitChans []chan interface{}
-	)
+	var wg sync.WaitGroup
+	exitCtx, notifyExit := context.WithCancel(context.Background())
 
 	for _, job := range tab.Jobs {
-		exitChan := make(chan interface{}, 1)
-		exitChans = append(exitChans, exitChan)
-
 		cronLogger := logrus.WithFields(logrus.Fields{
 			"job.schedule": job.Schedule,
 			"job.command":  job.Command,
 			"job.position": job.Position,
 		})
 
-		cron.StartJob(&wg, tab.Context, job, exitChan, cronLogger)
+		cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger)
 	}
 
 	termChan := make(chan os.Signal, 1)
@@ -72,9 +68,7 @@ func main() {
 	termSig := <-termChan
 
 	logrus.Infof("received %s, shutting down", termSig)
-	for _, c := range exitChans {
-		c <- true
-	}
+	notifyExit()
 
 	logrus.Info("waiting for jobs to finish")
 	wg.Wait()
