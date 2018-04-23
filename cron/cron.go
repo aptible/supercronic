@@ -121,7 +121,7 @@ func monitorJob(ctx context.Context, expression crontab.Expression, t0 time.Time
 	}
 }
 
-func StartJob(wg *sync.WaitGroup, cronCtx *crontab.Context, job *crontab.Job, exitChan chan interface{}, cronLogger *logrus.Entry) {
+func StartJob(wg *sync.WaitGroup, cronCtx *crontab.Context, job *crontab.Job, exitCtx context.Context, cronLogger *logrus.Entry) {
 	wg.Add(1)
 
 	go func() {
@@ -144,7 +144,7 @@ func StartJob(wg *sync.WaitGroup, cronCtx *crontab.Context, job *crontab.Job, ex
 			}
 
 			select {
-			case <-exitChan:
+			case <-exitCtx.Done():
 				cronLogger.Debug("shutting down")
 				return
 			case <-time.After(delay):

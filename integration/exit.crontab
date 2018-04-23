@@ -1,0 +1,1 @@
+* * * * * * * echo "$MSG_START" && sleep 2 && echo "$MSG_DONE"
