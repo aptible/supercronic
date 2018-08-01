@@ -23,7 +23,8 @@
 
 [[constraint]]
   name = "github.com/gorhill/cronexpr"
-  version = "~1.0.0"
+  branch = "strict"
+  source = "github.com/krallin/cronexpr"
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"

@@ -36,7 +36,7 @@ func parseJobLine(line string) (*CrontabLine, error) {
 		// TODO: Should receive a logger?
 		logrus.Debugf("try parse(%d): %s[0:%d] = %s", count, line, scheduleEnds, line[0:scheduleEnds])
 
-		expr, err := cronexpr.Parse(line[:scheduleEnds])
+		expr, err := cronexpr.ParseStrict(line[:scheduleEnds])
 
 		if err != nil {
 			continue
