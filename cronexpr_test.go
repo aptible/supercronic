@@ -307,6 +307,22 @@ func TestInterval_Interval60Issue(t *testing.T) {
 
 /******************************************************************************/
 
+func TestTooManyFields(t *testing.T) {
+	cronLine := "* * * * * * * foobar"
+
+	_, err := ParseStrict(cronLine)
+	if err == nil {
+		t.Errorf("ParseStrict with too many fields should return err ")
+	}
+
+	_, err = Parse(cronLine)
+	if err != nil {
+		t.Errorf("Parse with too many fields should not return err ")
+	}
+}
+
+/******************************************************************************/
+
 var benchmarkExpressions = []string{
 	"* * * * *",
 	"@hourly",

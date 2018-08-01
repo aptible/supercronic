@@ -62,11 +62,22 @@ func MustParse(cronLine string) *Expression {
 /******************************************************************************/
 
 // Parse returns a new Expression pointer. An error is returned if a malformed
-// cron expression is supplied.
+// cron expression is supplied. ParseStrict does the same thing, but unlike
+// Parse, it will return an error if the provided cron line has too many
+// tokens.
 // See <https://github.com/gorhill/cronexpr#implementation> for documentation
 // about what is a well-formed cron expression from this library's point of
 // view.
+
 func Parse(cronLine string) (*Expression, error) {
+	return parse(cronLine, false)
+}
+
+func ParseStrict(cronLine string) (*Expression, error) {
+	return parse(cronLine, true)
+}
+
+func parse(cronLine string, strict bool) (*Expression, error) {
 
 	// Maybe one of the built-in aliases is being used
 	cron := cronNormalizer.Replace(cronLine)
@@ -76,8 +87,14 @@ func Parse(cronLine string) (*Expression, error) {
 	if fieldCount < 5 {
 		return nil, fmt.Errorf("missing field(s)")
 	}
-	// ignore fields beyond 7th
+
 	if fieldCount > 7 {
+		// In strict mode, error out
+		if strict {
+			return nil, fmt.Errorf("too many fields")
+		}
+
+		// In non-strict mode, ignore fields beyond 7th
 		fieldCount = 7
 	}
 
