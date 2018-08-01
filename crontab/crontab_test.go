@@ -229,6 +229,24 @@ var parseCrontabTestCases = []struct {
 		},
 	},
 
+	{
+		"@hourly foo1 foo2 foo3 foo4 foo5 foo6",
+		&Crontab{
+			Context: &Context{
+				Shell:   "/bin/sh",
+				Environ: map[string]string{},
+			},
+			Jobs: []*Job{
+				{
+					CrontabLine: CrontabLine{
+						Schedule: "@hourly",
+						Command:  "foo1 foo2 foo3 foo4 foo5 foo6",
+					},
+				},
+			},
+		},
+	},
+
 	// Failure cases
 	{"* foo \n", nil},
 	{"* some * * *  more\n", nil},
