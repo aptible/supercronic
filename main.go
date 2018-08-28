@@ -4,13 +4,16 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/aptible/supercronic/cron"
-	"github.com/aptible/supercronic/crontab"
-	"github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
+
+	"github.com/aptible/supercronic/cron"
+	"github.com/aptible/supercronic/crontab"
+	"github.com/evalphobia/logrus_sentry"
+	"github.com/sirupsen/logrus"
 )
 
 var Usage = func() {
@@ -21,6 +24,7 @@ var Usage = func() {
 func main() {
 	debug := flag.Bool("debug", false, "enable debug logging")
 	json := flag.Bool("json", false, "enable JSON logging")
+	sentry := flag.String("sentryDsn", "", "enable Sentry error logging, using provided DSN")
 	flag.Parse()
 
 	if *debug {
@@ -31,6 +35,22 @@ func main() {
 		logrus.SetFormatter(&logrus.JSONFormatter{})
 	} else {
 		logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+	}
+
+	var sentryHook *logrus_sentry.SentryHook
+	if *sentry != "" {
+		sentryLevels := []logrus.Level{
+			logrus.PanicLevel,
+			logrus.FatalLevel,
+			logrus.ErrorLevel,
+		}
+		sh, err := logrus_sentry.NewSentryHook(*sentry, sentryLevels)
+		if err != nil {
+			logrus.Warningf("Could not init sentry logger: %s", err)
+		} else {
+			sh.Timeout = 5 * time.Second
+			sentryHook = sh
+		}
 	}
 
 	if flag.NArg() != 1 {
@@ -58,6 +78,10 @@ func main() {
 			"job.command":  job.Command,
 			"job.position": job.Position,
 		})
+
+		if sentryHook != nil {
+			cronLogger.Logger.AddHook(sentryHook)
+		}
 
 		cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger)
 	}
