@@ -2,7 +2,15 @@
 
 
 [[projects]]
-  digest = "1:0a39ec8bf5629610a4bc7873a92039ee509246da3cef1a0ea60f1ed7e5f9cea5"
+  digest = "1:8722889ad027febfced94665914d1e7be8f1b703d31f2ef9461c59e4d40fe974"
+  name = "github.com/certifi/gocertifi"
+  packages = ["."]
+  pruneopts = ""
+  revision = "deb3ae2ef2610fde3330947281941c562861188b"
+  version = "2018.01.18"
+
+[[projects]]
+  digest = "1:56c130d885a4aacae1dd9c7b71cfe39912c7ebc1ff7d2b46083c8812996dc43b"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   pruneopts = ""
@@ -10,13 +18,37 @@
   version = "v1.1.0"
 
 [[projects]]
+  digest = "1:a9ed1d8b070755631d246e0288dc5de6f19bd7b52baec5d515e7975a4c12dc8d"
+  name = "github.com/evalphobia/logrus_sentry"
+  packages = ["."]
+  pruneopts = ""
+  revision = "b78b27461c8163c45abf4ab3a8330d2b1ee9456a"
+  version = "v0.4.6"
+
+[[projects]]
+  branch = "master"
+  digest = "1:ce0aa3cbde7855cafdc8920d780672b2f8628ea06bce295f351794b7c80a4d43"
+  name = "github.com/getsentry/raven-go"
+  packages = ["."]
+  pruneopts = ""
+  revision = "a9457d81ec91fa6d538567f14c6138e9ce5a37fb"
+
+[[projects]]
   branch = "strict"
-  digest = "1:e5d20cc67b8eb587f3f6e1c2be24a217f7eebec257977fc48034204faf38f9c2"
+  digest = "1:8928810213f9690c5e1cbd19b004a8c97ecc457f0a8c1da362bd96bdc3a5ab8c"
   name = "github.com/gorhill/cronexpr"
   packages = ["."]
   pruneopts = ""
   revision = "b648cc9a908c22490de781dbe600459edd0ac533"
   source = "github.com/krallin/cronexpr"
+
+[[projects]]
+  digest = "1:7365acd48986e205ccb8652cc746f09c8b7876030d53710ea6ef7d0bd0dcd7ca"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = ""
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   digest = "1:256484dbbcd271f9ecebc6795b2df8cad4c458dd0f5fd82a8c2fa0c29f233411"
@@ -27,7 +59,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:2c38661f5fb038bfb95197e0e5bc7a8f050d1f992c5ddaa01945e58fe2ef00de"
+  digest = "1:3fcbf733a8d810a21265a7f2fe08a3353db2407da052b233f8b204b5afc03d9b"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   pruneopts = ""
@@ -35,7 +67,7 @@
   version = "v1.0.6"
 
 [[projects]]
-  digest = "1:8e7d1910593db3b38b0c3e4bf3f82bc041dfddfed5f6d36a47f3ad7e72710d8d"
+  digest = "1:3926a4ec9a4ff1a072458451aa2d9b98acd059a45b38f7335d31e06c3d6a0159"
   name = "github.com/stretchr/testify"
   packages = ["assert"]
   pruneopts = ""
@@ -44,7 +76,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:798981f04990c9da3f4fde5d7b717e9cdabed624450aaecf01e9a2896d076040"
+  digest = "1:cae234a803b78380e4d769db6036b9fcc8c08ed4ff862571ffc1a958edc1f629"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = ""
@@ -52,7 +84,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:cfc5bd16b264cf9960abb45ecc09e4f3c70638d838f0d9c18e39b5b35af45e86"
+  digest = "1:dd631ee90bd2e7aa16b6e094217d77a797684b52811374c948c695cbb46b5bbb"
   name = "golang.org/x/sys"
   packages = [
     "unix",
@@ -65,6 +97,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/evalphobia/logrus_sentry",
     "github.com/gorhill/cronexpr",
     "github.com/sirupsen/logrus",
     "github.com/stretchr/testify/assert",
