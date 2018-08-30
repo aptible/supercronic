@@ -37,22 +37,6 @@ func main() {
 		logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
 	}
 
-	var sentryHook *logrus_sentry.SentryHook
-	if *sentry != "" {
-		sentryLevels := []logrus.Level{
-			logrus.PanicLevel,
-			logrus.FatalLevel,
-			logrus.ErrorLevel,
-		}
-		sh, err := logrus_sentry.NewSentryHook(*sentry, sentryLevels)
-		if err != nil {
-			logrus.Warningf("Could not init sentry logger: %s", err)
-		} else {
-			sh.Timeout = 5 * time.Second
-			sentryHook = sh
-		}
-	}
-
 	if flag.NArg() != 1 {
 		Usage()
 		os.Exit(2)
@@ -67,6 +51,22 @@ func main() {
 	if err != nil {
 		logrus.Fatal(err)
 		return
+	}
+
+	var sentryHook *logrus_sentry.SentryHook
+	if *sentry != "" {
+		sentryLevels := []logrus.Level{
+			logrus.PanicLevel,
+			logrus.FatalLevel,
+			logrus.ErrorLevel,
+		}
+		sh, err := logrus_sentry.NewSentryHook(*sentry, sentryLevels)
+		if err != nil {
+			logrus.Fatalf("Could not init sentry logger: %s", err)
+		} else {
+			sh.Timeout = 5 * time.Second
+			sentryHook = sh
+		}
 	}
 
 	var wg sync.WaitGroup
