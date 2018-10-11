@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/aptible/supercronic/crontab"
-	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"os/exec"
@@ -13,13 +11,16 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/aptible/supercronic/crontab"
+	"github.com/sirupsen/logrus"
 )
 
 var (
 	READ_BUFFER_SIZE = 64 * 1024
 )
 
-func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.ReadCloser) {
+func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.ReadCloser, outputError bool) {
 	wg.Add(1)
 
 	go func() {
@@ -51,7 +52,11 @@ func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.
 				break
 			}
 
-			readerLogger.Info(string(line))
+			if outputError {
+				readerLogger.Error(string(line))
+			} else {
+				readerLogger.Info(string(line))
+			}
 
 			if isPrefix {
 				readerLogger.Warn("last line exceeded buffer size, continuing...")
@@ -92,10 +97,10 @@ func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry) e
 	var wg sync.WaitGroup
 
 	stdoutLogger := jobLogger.WithFields(logrus.Fields{"channel": "stdout"})
-	startReaderDrain(&wg, stdoutLogger, stdout)
+	startReaderDrain(&wg, stdoutLogger, stdout, false)
 
 	stderrLogger := jobLogger.WithFields(logrus.Fields{"channel": "stderr"})
-	startReaderDrain(&wg, stderrLogger, stderr)
+	startReaderDrain(&wg, stderrLogger, stderr, true)
 
 	wg.Wait()
 
