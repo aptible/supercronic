@@ -77,3 +77,16 @@ wait_for() {
 
   wait_for grep "$canary" "$out"
 }
+
+@test "it tests a valid crontab" {
+  timeout 1s "${BATS_TEST_DIRNAME}/../supercronic" -test "${BATS_TEST_DIRNAME}/noop.crontab"
+}
+
+@test "it tests an invalid crontab" {
+  run timeout 1s "${BATS_TEST_DIRNAME}/../supercronic" -test "${BATS_TEST_DIRNAME}/invalid.crontab"
+  [[ "$status" -eq 1 ]]
+}
+
+@test "it errors on an invalid crontab" {
+  ! run_supercronic -test "${BATS_TEST_DIRNAME}/invalid.crontab"
+}

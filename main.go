@@ -21,6 +21,7 @@ var Usage = func() {
 func main() {
 	debug := flag.Bool("debug", false, "enable debug logging")
 	json := flag.Bool("json", false, "enable JSON logging")
+	test := flag.Bool("test", false, "test crontab (does not run jobs)")
 	flag.Parse()
 
 	if *debug {
@@ -46,6 +47,12 @@ func main() {
 
 	if err != nil {
 		logrus.Fatal(err)
+		return
+	}
+
+	if *test {
+		logrus.Info("crontab is valid")
+		os.Exit(0)
 		return
 	}
 
