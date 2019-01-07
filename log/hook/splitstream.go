@@ -2,41 +2,46 @@ package hook
 
 import (
 	"github.com/sirupsen/logrus"
-	"os"
+	"io"
+	"io/ioutil"
 )
 
-type SplitStdoutStreamHook struct{}
-
-func (soh *SplitStdoutStreamHook) Levels() []logrus.Level {
-	return []logrus.Level{
-		logrus.DebugLevel,
-		logrus.InfoLevel,
-	}
+type writerHook struct {
+	writer io.Writer
+	levels []logrus.Level
 }
-func (soh *SplitStdoutStreamHook) Fire(entry *logrus.Entry) error {
+
+func (h *writerHook) Levels() []logrus.Level {
+	return h.levels
+}
+
+func (h *writerHook) Fire(entry *logrus.Entry) error {
 	serialized, err := entry.Logger.Formatter.Format(entry)
 	if err != nil {
 		return err
 	}
-	_, err = os.Stdout.Write(serialized)
+	_, err = h.writer.Write(serialized)
 	return err
 }
 
-type SplitStderrStreamHook struct{}
+func RegisterSplitLogger(logger *logrus.Logger, outWriter io.Writer, errWriter io.Writer) {
+	logger.SetOutput(ioutil.Discard)
 
-func (seh *SplitStderrStreamHook) Levels() []logrus.Level {
-	return []logrus.Level{
-		logrus.WarnLevel,
-		logrus.ErrorLevel,
-		logrus.FatalLevel,
-		logrus.PanicLevel,
-	}
-}
-func (seh *SplitStderrStreamHook) Fire(entry *logrus.Entry) error {
-	serialized, err := entry.Logger.Formatter.Format(entry)
-	if err != nil {
-		return err
-	}
-	_, err = os.Stderr.Write(serialized)
-	return err
+	logger.AddHook(&writerHook{
+		writer: outWriter,
+		levels: []logrus.Level{
+			logrus.DebugLevel,
+			logrus.InfoLevel,
+		},
+	})
+
+	logger.AddHook(&writerHook{
+		writer: errWriter,
+		levels: []logrus.Level{
+			logrus.WarnLevel,
+			logrus.ErrorLevel,
+			logrus.FatalLevel,
+			logrus.PanicLevel,
+		},
+	})
 }

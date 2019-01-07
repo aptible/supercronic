@@ -8,7 +8,6 @@ import (
 	"github.com/aptible/supercronic/crontab"
 	"github.com/aptible/supercronic/log/hook"
 	"github.com/sirupsen/logrus"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"sync"
@@ -38,9 +37,11 @@ func main() {
 	}
 
 	if *splitLogs {
-		logrus.SetOutput(ioutil.Discard)
-		logrus.AddHook(&hook.SplitStderrStreamHook{})
-		logrus.AddHook(&hook.SplitStdoutStreamHook{})
+		hook.RegisterSplitLogger(
+			logrus.StandardLogger(),
+			os.Stdout,
+			os.Stderr,
+		)
 	}
 
 	if flag.NArg() != 1 {

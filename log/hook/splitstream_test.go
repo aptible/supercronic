@@ -1,79 +1,69 @@
 package hook
 
 import (
-	"bytes"
 	"github.com/sirupsen/logrus"
-	"io"
-	"io/ioutil"
-	"os"
-	"strings"
+	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
-func TestSplitStdoutStreamHook_Fire(t *testing.T) {
-
-	logrus.SetLevel(logrus.DebugLevel)
-	logrus.SetOutput(ioutil.Discard)
-	logrus.AddHook(&SplitStdoutStreamHook{})
-
-	oldStdout := os.Stdout
-	sr, sw, _ := os.Pipe()
-	os.Stdout = sw
-
-	outChan := make(chan string, 2)
-	go func() {
-		var stdoutBuff bytes.Buffer
-		io.Copy(&stdoutBuff, sr)
-		outChan <- stdoutBuff.String()
-		outChan <- stdoutBuff.String()
-	}()
-
-	logrus.Debug("out1")
-	logrus.Info("out2")
-
-	sw.Close()
-	os.Stdout = oldStdout
-
-	stdoutMsg := <-outChan
-	if !strings.Contains(stdoutMsg, "msg=out1") {
-		t.Fatalf("failed to split info level log into stdout")
-	}
-
-	stdoutMsg = <-outChan
-	if !strings.Contains(stdoutMsg, "msg=out2") {
-		t.Fatalf("failed to split info level log into stdout")
-	}
+type testWriter struct {
+	c chan []byte
 }
 
-func TestSplitStderrStreamHook_Fire(t *testing.T) {
-	logrus.SetOutput(ioutil.Discard)
-	logrus.AddHook(&SplitStderrStreamHook{})
+func (w testWriter) Write(p []byte) (int, error) {
+	w.c <- p
+	return len(p), nil
+}
 
-	oldStderr := os.Stderr
-	er, ew, _ := os.Pipe()
-	os.Stderr = ew
+func TestSplitStdoutStreamHook_Fire(t *testing.T) {
+	outWriter := testWriter{c: make(chan []byte, 2)}
+	errWriter := testWriter{c: make(chan []byte, 2)}
+	defaultWriter := testWriter{c: make(chan []byte, 2)}
 
-	errChan := make(chan string, 2)
-	go func() {
-		var stderrOut bytes.Buffer
-		io.Copy(&stderrOut, er)
-		errChan <- stderrOut.String()
-		errChan <- stderrOut.String()
-	}()
+	log := logrus.New()
+	log.SetOutput(defaultWriter)
+	log.SetLevel(logrus.DebugLevel)
 
-	logrus.Warn("err1")
-	logrus.Error("err2")
+	RegisterSplitLogger(log, outWriter, errWriter)
 
-	ew.Close()
-	os.Stderr = oldStderr
+	log.Debug("out1")
+	log.Info("out2")
+	log.Warn("err1")
+	log.Error("err2")
 
-	stderrMsg := <-errChan
-	if !strings.Contains(stderrMsg, "msg=err1") {
-		t.Fatalf("failed to split error level log into stderr")
+	select {
+	case log := <-outWriter.c:
+		assert.Contains(t, string(log), "out1")
+	case <-time.After(time.Second):
+		t.Fatalf("timed out waiting for out log")
 	}
 
-	stderrMsg = <-errChan
-	if !strings.Contains(stderrMsg, "msg=err2") {
-		t.Fatalf("failed to split error level log into stderr")
+	select {
+	case log := <-outWriter.c:
+		assert.Contains(t, string(log), "out2")
+	case <-time.After(time.Second):
+		t.Fatalf("timed out waiting for out log")
+	}
+
+	select {
+	case log := <-errWriter.c:
+		assert.Contains(t, string(log), "err1")
+	case <-time.After(time.Second):
+		t.Fatalf("timed out waiting for err log")
+	}
+
+	select {
+	case log := <-errWriter.c:
+		assert.Contains(t, string(log), "err2")
+	case <-time.After(time.Second):
+		t.Fatalf("timed out waiting for err log")
+	}
+
+	select {
+	case <-defaultWriter.c:
+		t.Fatalf("got default log")
+	case <-time.After(time.Second):
+		// Noop
 	}
 }
