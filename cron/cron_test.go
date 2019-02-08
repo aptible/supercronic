@@ -3,15 +3,17 @@ package cron
 import (
 	"context"
 	"fmt"
-	"github.com/aptible/supercronic/crontab"
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"regexp"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/aptible/supercronic/crontab"
 )
 
 var (
@@ -193,7 +195,7 @@ func TestStartJobExitsOnRequest(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	StartJob(&wg, &basicContext, &job, ctx, logger)
+	StartJob(&wg, &basicContext, &job, ctx, logger, false)
 
 	wg.Wait()
 }
@@ -213,7 +215,7 @@ func TestStartJobRunsJob(t *testing.T) {
 
 	logger, channel := newTestLogger()
 
-	StartJob(&wg, &basicContext, &job, ctx, logger)
+	StartJob(&wg, &basicContext, &job, ctx, logger, false)
 
 	select {
 	case entry := <-channel:
@@ -258,5 +260,128 @@ func TestStartJobRunsJob(t *testing.T) {
 	}
 
 	cancel()
+	wg.Wait()
+}
+
+func TestStartFuncWaitsForCompletion(t *testing.T) {
+	// We use startFunc to start a function, wait for it to start, then
+	// tell the whole thing to exit, and verify that it waits for the
+	// function to finish.
+	expr := &testExpression{10 * time.Millisecond}
+
+	var wg sync.WaitGroup
+	logger, _ := newTestLogger()
+
+	ctxStartFunc, cancelStartFunc := context.WithCancel(context.Background())
+	ctxAllDone, allDone := context.WithCancel(context.Background())
+
+	ctxStep1, step1Done := context.WithCancel(context.Background())
+	ctxStep2, step2Done := context.WithCancel(context.Background())
+
+	testFn := func(t0 time.Time, jobLogger *logrus.Entry) {
+		step1Done()
+		<-ctxStep2.Done()
+	}
+
+	startFunc(&wg, ctxStartFunc, logger, false, expr, testFn)
+	go func() {
+		wg.Wait()
+		allDone()
+	}()
+
+	select {
+	case <-ctxStep1.Done():
+	case <-time.After(time.Second):
+		t.Fatalf("timed out waiting for testFn to start")
+	}
+
+	cancelStartFunc()
+
+	select {
+	case <-ctxAllDone.Done():
+		t.Fatalf("wg completed before jobs finished")
+	case <-time.After(time.Second):
+	}
+
+	step2Done()
+
+	select {
+	case <-ctxAllDone.Done():
+	case <-time.After(time.Second):
+		t.Fatalf("wg did not complete after jobs finished")
+	}
+}
+
+func TestStartFuncDoesNotRunOverlappingJobs(t *testing.T) {
+	// We kick off a function that does not terminate. We expect to see it
+	// run only once.
+
+	expr := &testExpression{10 * time.Millisecond}
+
+	testChan := make(chan interface{}, TEST_CHANNEL_BUFFER_SIZE)
+
+	var wg sync.WaitGroup
+	logger, _ := newTestLogger()
+
+	ctxStartFunc, cancelStartFunc := context.WithCancel(context.Background())
+	ctxAllDone, allDone := context.WithCancel(context.Background())
+
+	testFn := func(t0 time.Time, jobLogger *logrus.Entry) {
+		testChan <- nil
+		<-ctxAllDone.Done()
+	}
+
+	startFunc(&wg, ctxStartFunc, logger, false, expr, testFn)
+
+	select {
+	case <-testChan:
+	case <-time.After(time.Second):
+		t.Fatalf("fn did not run")
+	}
+
+	select {
+	case <-testChan:
+		t.Fatalf("fn instances overlapped")
+	case <-time.After(time.Second):
+	}
+
+	cancelStartFunc()
+	allDone()
+
+	wg.Wait()
+}
+
+func TestStartFuncRunsOverlappingJobs(t *testing.T) {
+	// We kick off a bunch of functions that never terminate, and expect to
+	// still see multiple iterations
+
+	expr := &testExpression{10 * time.Millisecond}
+
+	testChan := make(chan interface{}, TEST_CHANNEL_BUFFER_SIZE)
+
+	var wg sync.WaitGroup
+	logger, _ := newTestLogger()
+
+	ctxStartFunc, cancelStartFunc := context.WithCancel(context.Background())
+	ctxAllDone, allDone := context.WithCancel(context.Background())
+
+	testFn := func(t0 time.Time, jobLogger *logrus.Entry) {
+		testChan <- nil
+		<-ctxAllDone.Done()
+	}
+
+	startFunc(&wg, ctxStartFunc, logger, true, expr, testFn)
+
+	for i := 0; i < 5; i++ {
+		select {
+		case <-testChan:
+		case <-time.After(time.Second):
+			t.Fatalf("fn instances did not overlap")
+		}
+	}
+
+	cancelStartFunc()
+	allDone()
+
 	wg.Wait()
 }

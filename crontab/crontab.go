@@ -3,11 +3,12 @@ package crontab
 import (
 	"bufio"
 	"fmt"
-	"github.com/gorhill/cronexpr"
-	"github.com/sirupsen/logrus"
 	"io"
 	"regexp"
 	"strings"
+
+	"github.com/gorhill/cronexpr"
+	"github.com/sirupsen/logrus"
 )
 
 var (

@@ -106,7 +106,7 @@ func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry) e
 	return nil
 }
 
-func monitorJob(ctx context.Context, expression crontab.Expression, t0 time.Time, jobLogger *logrus.Entry) {
+func monitorJob(ctx context.Context, expression crontab.Expression, t0 time.Time, jobLogger *logrus.Entry, overlapping bool) {
 	t := t0
 
 	for {
@@ -114,63 +114,89 @@ func monitorJob(ctx context.Context, expression crontab.Expression, t0 time.Time
 
 		select {
 		case <-time.After(time.Until(t)):
-			jobLogger.Warnf("not starting: job is still running since %s (%s elapsed)", t0, t.Sub(t0))
+			m := "not starting"
+			if overlapping {
+				m = "overlapping jobs"
+			}
+
+			jobLogger.Warnf("%s: job is still running since %s (%s elapsed)", m, t0, t.Sub(t0))
 		case <-ctx.Done():
 			return
 		}
 	}
 }
 
-func StartJob(wg *sync.WaitGroup, cronCtx *crontab.Context, job *crontab.Job, exitCtx context.Context, cronLogger *logrus.Entry) {
+func startFunc(wg *sync.WaitGroup, exitCtx context.Context, logger *logrus.Entry, overlapping bool, expression crontab.Expression, fn func(time.Time, *logrus.Entry)) {
 	wg.Add(1)
 
 	go func() {
 		defer wg.Done()
 
-		var cronIteration uint64 = 0
+		var jobWg sync.WaitGroup
+		defer jobWg.Wait()
+
+		var cronIteration uint64
 		nextRun := time.Now()
 
-		// NOTE: this (intentionally) does not run multiple instances of the
-		// job concurrently
+		// NOTE: if overlapping is disabled (default), this does not run multiple
+		// instances of the job concurrently
 		for {
-			nextRun = job.Expression.Next(nextRun)
-			cronLogger.Debugf("job will run next at %v", nextRun)
+			nextRun = expression.Next(nextRun)
+			logger.Debugf("job will run next at %v", nextRun)
 
 			delay := nextRun.Sub(time.Now())
 			if delay < 0 {
-				cronLogger.Warningf("job took too long to run: it should have started %v ago", -delay)
+				logger.Warningf("job took too long to run: it should have started %v ago", -delay)
 				nextRun = time.Now()
 				continue
 			}
 
 			select {
 			case <-exitCtx.Done():
-				cronLogger.Debug("shutting down")
+				logger.Debug("shutting down")
 				return
 			case <-time.After(delay):
 				// Proceed normally
 			}
 
-			jobLogger := cronLogger.WithFields(logrus.Fields{
-				"iteration": cronIteration,
-			})
+			jobWg.Add(1)
 
-			err := func() error {
-				ctx, cancel := context.WithCancel(context.Background())
-				defer cancel()
+			runThisJob := func(cronIteration uint64) {
+				defer jobWg.Done()
 
-				go monitorJob(ctx, job.Expression, nextRun, jobLogger)
+				jobLogger := logger.WithFields(logrus.Fields{
+					"iteration": cronIteration,
+				})
 
-				return runJob(cronCtx, job.Command, jobLogger)
-			}()
+				fn(nextRun, jobLogger)
+			}
 
-			if err == nil {
-				jobLogger.Info("job succeeded")
+			if overlapping {
+				go runThisJob(cronIteration)
 			} else {
-				jobLogger.Error(err)
+				runThisJob(cronIteration)
 			}
 
 			cronIteration++
 		}
 	}()
+}
+
+func StartJob(wg *sync.WaitGroup, cronCtx *crontab.Context, job *crontab.Job, exitCtx context.Context, cronLogger *logrus.Entry, overlapping bool) {
+	runThisJob := func(t0 time.Time, jobLogger *logrus.Entry) {
+		monitorCtx, cancelMonitor := context.WithCancel(context.Background())
+		defer cancelMonitor()
+
+		go monitorJob(monitorCtx, job.Expression, t0, jobLogger, overlapping)
+
+		err := runJob(cronCtx, job.Command, jobLogger)
+
+		if err == nil {
+			jobLogger.Info("job succeeded")
+		} else {
+			jobLogger.Error(err)
+		}
+	}
+
+	startFunc(wg, exitCtx, cronLogger, overlapping, job.Expression, runThisJob)
 }
