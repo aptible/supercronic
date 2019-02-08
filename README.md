@@ -211,6 +211,21 @@ execute it. This is useful as part of e.g. a build process to verify the syntax
 of your crontab.
 
 
+## Level-based logging ##
+
+By default, Supersonic routes all logs to `stderr`. If you wish to change this
+behaviour to level-based logging, pass the `-split-logs` flag to route debug
+and info level logs to `stdout`:
+
+ ```
+$ ./supercronic -split-logs ./my-crontab 1>./stdout.log
+$ cat ./stdout.log
+time="2019-01-12T19:34:57+09:00" level=info msg="read crontab: ./my-crontab"
+time="2019-01-12T19:35:00+09:00" level=info msg=starting iteration=0 job.command="echo \"hello from Supercronic\"" job.position=0 job.schedule="*/5 * * * * * *"
+time="2019-01-12T19:35:00+09:00" level=info msg="hello from Supercronic" channel=stdout iteration=0 job.command="echo \"hello from Supercronic\"" job.position=0 job.schedule="*/5 * * * * * *"
+time="2019-01-12T19:35:00+09:00" level=info msg="job succeeded" iteration=0 job.command="echo \"hello from Supercronic\"" job.position=0 job.schedule="*/5 * * * * * *"
+
+
 ## Questions and Support ###
 
 Please feel free to open an issue in this repository if you have any question
