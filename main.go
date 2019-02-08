@@ -28,6 +28,7 @@ func main() {
 	splitLogs := flag.Bool("split-logs", false, "split log output into stdout/stderr")
 	sentry := flag.String("sentry-dsn", "", "enable Sentry error logging, using provided DSN")
 	sentryAlias := flag.String("sentryDsn", "", "alias for sentry-dsn")
+	overlapping := flag.Bool("overlapping", false, "enable tasks overlapping")
 	flag.Parse()
 
 	var sentryDsn string
@@ -111,7 +112,7 @@ func main() {
 				"job.position": job.Position,
 			})
 
-			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger)
+			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping)
 		}
 
 		termChan := make(chan os.Signal, 1)

@@ -204,6 +204,10 @@ INFO[2017-07-11T12:24:32+02:00] job succeeded                                 it
 WARN[2017-07-11T12:24:32+02:00] job took too long to run: it should have started 1.014474099s ago  job.command="sleep 2" job.position=0 job.schedule="* * * * * * *"
 ```
 
+You can optionally disable this behavior and allow overlapping instances of
+your jobs by passing the `-overlapping` flag to Supercronic. Supercronic will
+still warn about jobs falling behind, but will run duplicate instances of them.
+
 
 ## Reload crontab
 

@@ -57,6 +57,11 @@ wait_for() {
   [[ "$n" -eq 2 ]]
 }
 
+@test "it runs overlapping jobs" {
+  n="$(SUPERCRONIC_ARGS="-overlapping" run_supercronic "${BATS_TEST_DIRNAME}/timeout.crontab" 5s | grep -iE "starting" | wc -l)"
+  [[ "$n" -ge 4 ]]
+}
+
 @test "it supports debug logging " {
   SUPERCRONIC_ARGS="-debug" run_supercronic "${BATS_TEST_DIRNAME}/hello.crontab" | grep -iE "debug"
 }
