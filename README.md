@@ -224,6 +224,17 @@ time="2019-01-12T19:34:57+09:00" level=info msg="read crontab: ./my-crontab"
 time="2019-01-12T19:35:00+09:00" level=info msg=starting iteration=0 job.command="echo \"hello from Supercronic\"" job.position=0 job.schedule="*/5 * * * * * *"
 time="2019-01-12T19:35:00+09:00" level=info msg="hello from Supercronic" channel=stdout iteration=0 job.command="echo \"hello from Supercronic\"" job.position=0 job.schedule="*/5 * * * * * *"
 time="2019-01-12T19:35:00+09:00" level=info msg="job succeeded" iteration=0 job.command="echo \"hello from Supercronic\"" job.position=0 job.schedule="*/5 * * * * * *"
+```
+
+## Integrations
+
+### Sentry
+
+Report errors to Sentry by passing a Sentry DSN:
+
+```
+$ ./supercronic -sentry-dsn DSN
+```
 
 
 ## Questions and Support ###
