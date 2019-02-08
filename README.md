@@ -204,6 +204,13 @@ WARN[2017-07-11T12:24:32+02:00] job took too long to run: it should have started
 ```
 
 
+## Testing your crontab
+
+Use the `-test` flag to prompt Supercronic to verify your crontab, but not
+execute it. This is useful as part of e.g. a build process to verify the syntax
+of your crontab.
+
+
 ## Questions and Support ###
 
 Please feel free to open an issue in this repository if you have any question
