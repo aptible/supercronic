@@ -65,20 +65,6 @@ func main() {
 	}
 
 	crontabFileName := flag.Args()[0]
-	logrus.Infof("read crontab: %s", crontabFileName)
-
-	tab, err := readCrontabAtPath(crontabFileName)
-
-	if err != nil {
-		logrus.Fatal(err)
-		return
-	}
-
-	if *test {
-		logrus.Info("crontab is valid")
-		os.Exit(0)
-		return
-	}
 
 	var sentryHook *logrus_sentry.SentryHook
 	if sentryDsn != "" {
@@ -100,31 +86,54 @@ func main() {
 		}
 	}
 
-	var wg sync.WaitGroup
-	exitCtx, notifyExit := context.WithCancel(context.Background())
+	for true {
+		logrus.Infof("read crontab: %s", crontabFileName)
+		tab, err := readCrontabAtPath(crontabFileName)
 
-	for _, job := range tab.Jobs {
-		cronLogger := logrus.WithFields(logrus.Fields{
-			"job.schedule": job.Schedule,
-			"job.command":  job.Command,
-			"job.position": job.Position,
-		})
+		if err != nil {
+			logrus.Fatal(err)
+			break
+		}
 
-		cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger)
+		if *test {
+			logrus.Info("crontab is valid")
+			os.Exit(0)
+			break
+		}
+
+		var wg sync.WaitGroup
+		exitCtx, notifyExit := context.WithCancel(context.Background())
+
+		for _, job := range tab.Jobs {
+			cronLogger := logrus.WithFields(logrus.Fields{
+				"job.schedule": job.Schedule,
+				"job.command":  job.Command,
+				"job.position": job.Position,
+			})
+
+			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger)
+		}
+
+		termChan := make(chan os.Signal, 1)
+		signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR2)
+
+		termSig := <-termChan
+
+		if termSig == syscall.SIGUSR2 {
+			logrus.Infof("received %s, reloading crontab", termSig)
+		} else {
+			logrus.Infof("received %s, shutting down", termSig)
+		}
+		notifyExit()
+
+		logrus.Info("waiting for jobs to finish")
+		wg.Wait()
+
+		if termSig != syscall.SIGUSR2 {
+			logrus.Info("exiting")
+			break
+		}
 	}
-
-	termChan := make(chan os.Signal, 1)
-	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)
-
-	termSig := <-termChan
-
-	logrus.Infof("received %s, shutting down", termSig)
-	notifyExit()
-
-	logrus.Info("waiting for jobs to finish")
-	wg.Wait()
-
-	logrus.Info("exiting")
 }
 
 func readCrontabAtPath(path string) (*crontab.Crontab, error) {

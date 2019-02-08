@@ -39,6 +39,7 @@ a container to behave:
 - `SIGTERM` triggers a graceful shutdown (and so does `SIGINT`, which you can
   deliver via CTRL+C when used interactively)
 - Job return codes and schedules are logged to `stdout` / `stderr`
+- `SIGUSR2` triggers a graceful shutdown and reloads the crontab configuration
 
 ## How does it work? ##
 
@@ -203,6 +204,18 @@ INFO[2017-07-11T12:24:32+02:00] job succeeded                                 it
 WARN[2017-07-11T12:24:32+02:00] job took too long to run: it should have started 1.014474099s ago  job.command="sleep 2" job.position=0 job.schedule="* * * * * * *"
 ```
 
+
+## Reload crontab
+
+Send `SIGUSR2` to Supercronic to reload the crontab:
+
+```bash
+# docker environment (Supercronic needs to be PID 1 in the container)
+docker kill --signal=USR2 <container id>
+
+# shell
+kill -USR2 <pid>
+```
 
 ## Testing your crontab
 

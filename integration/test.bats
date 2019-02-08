@@ -1,3 +1,5 @@
+#!/usr/bin/env bats
+
 function run_supercronic() {
   local crontab="$1"
   local timeout="${2:-1s}"
