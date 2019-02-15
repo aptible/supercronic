@@ -81,7 +81,7 @@ Then, fetch Supercronic, install its dependencies, then install it:
 ```
 go get -d github.com/aptible/supercronic
 cd "${GOPATH}/src/github.com/aptible/supercronic"
-dep ensure
+dep ensure -vendor-only
 go install
 ```
 
