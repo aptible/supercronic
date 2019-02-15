@@ -79,7 +79,7 @@ dep][dep] first.
 Then, fetch Supercronic, install its dependencies, then install it:
 
 ```
-go get github.com/aptible/supercronic
+go get -d github.com/aptible/supercronic
 cd "${GOPATH}/src/github.com/aptible/supercronic"
 dep ensure
 go install
