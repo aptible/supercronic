@@ -276,9 +276,7 @@ See [LICENSE.md](./LICENSE.md).
 
 ## Copyright ##
 
-Copyright (c) 2017 [Aptible][aptible]. All rights reserved.
-
-[<img src="https://s.gravatar.com/avatar/f532cf09084eb963bfc913867fff2258?s=60" style="border-radius: 50%;" alt="@krallin" />](https://github.com/krallin)
+Copyright (c) 2019 [Aptible][aptible]. All rights reserved.
 
   [aptible-logo]: https://raw.github.com/aptible/straptible/master/lib/straptible/rails/templates/public.api/icon-60px.png
   [blog-post]: https://www.aptible.com/blog/cron-for-containers-introduction-supercronic/
