@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/aptible/supercronic/crontab"
-	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"os/exec"
@@ -13,6 +11,11 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/aptible/supercronic/crontab"
+	"github.com/aptible/supercronic/prometheus_metrics"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -106,11 +109,11 @@ func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry) e
 	return nil
 }
 
-func monitorJob(ctx context.Context, expression crontab.Expression, t0 time.Time, jobLogger *logrus.Entry, overlapping bool) {
+func monitorJob(ctx context.Context, job *crontab.Job, t0 time.Time, jobLogger *logrus.Entry, overlapping bool, promMetrics *prometheus_metrics.PrometheusMetrics) {
 	t := t0
 
 	for {
-		t = expression.Next(t)
+		t = job.Expression.Next(t)
 
 		select {
 		case <-time.After(time.Until(t)):
@@ -120,6 +123,14 @@ func monitorJob(ctx context.Context, expression crontab.Expression, t0 time.Time
 			}
 
 			jobLogger.Warnf("%s: job is still running since %s (%s elapsed)", m, t0, t.Sub(t0))
+
+			if promMetrics != nil {
+				promMetrics.CronsDeadlineExceededCounter.With(prometheus.Labels{
+					"position": fmt.Sprintf("%d", job.Position),
+					"command":  job.Command,
+					"schedule": job.Schedule,
+				}).Inc()
+			}
 		case <-ctx.Done():
 			return
 		}
@@ -182,19 +193,70 @@ func startFunc(wg *sync.WaitGroup, exitCtx context.Context, logger *logrus.Entry
 	}()
 }
 
-func StartJob(wg *sync.WaitGroup, cronCtx *crontab.Context, job *crontab.Job, exitCtx context.Context, cronLogger *logrus.Entry, overlapping bool) {
+func StartJob(wg *sync.WaitGroup, cronCtx *crontab.Context, job *crontab.Job, exitCtx context.Context, cronLogger *logrus.Entry, overlapping bool, promMetrics *prometheus_metrics.PrometheusMetrics) {
 	runThisJob := func(t0 time.Time, jobLogger *logrus.Entry) {
+		if promMetrics != nil {
+			promMetrics.CronsCurrentlyRunningGauge.With(prometheus.Labels{
+				"position": fmt.Sprintf("%d", job.Position),
+				"command":  job.Command,
+				"schedule": job.Schedule,
+			}).Inc()
+		}
+		defer func() {
+			if promMetrics != nil {
+				promMetrics.CronsCurrentlyRunningGauge.With(prometheus.Labels{
+					"position": fmt.Sprintf("%d", job.Position),
+					"command":  job.Command,
+					"schedule": job.Schedule,
+				}).Dec()
+			}
+		}()
+
 		monitorCtx, cancelMonitor := context.WithCancel(context.Background())
 		defer cancelMonitor()
 
-		go monitorJob(monitorCtx, job.Expression, t0, jobLogger, overlapping)
+		go monitorJob(monitorCtx, job, t0, jobLogger, overlapping, promMetrics)
+
+		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+			promMetrics.CronsExecutionTimeHistogram.With(prometheus.Labels{
+				"position": fmt.Sprintf("%d", job.Position),
+				"command":  job.Command,
+				"schedule": job.Schedule,
+			}).Observe(v)
+		}))
+
+		defer timer.ObserveDuration()
 
 		err := runJob(cronCtx, job.Command, jobLogger)
 
+		if promMetrics != nil {
+			promMetrics.CronsExecCounter.With(prometheus.Labels{
+				"position": fmt.Sprintf("%d", job.Position),
+				"command":  job.Command,
+				"schedule": job.Schedule,
+			}).Inc()
+		}
+
 		if err == nil {
 			jobLogger.Info("job succeeded")
+
+			if promMetrics != nil {
+				promMetrics.CronsSuccessCounter.With(prometheus.Labels{
+					"position": fmt.Sprintf("%d", job.Position),
+					"command":  job.Command,
+					"schedule": job.Schedule,
+				}).Inc()
+			}
 		} else {
 			jobLogger.Error(err)
+
+			if promMetrics != nil {
+				promMetrics.CronsFailCounter.With(prometheus.Labels{
+					"position": fmt.Sprintf("%d", job.Position),
+					"command":  job.Command,
+					"schedule": job.Schedule,
+				}).Inc()
+			}
 		}
 	}
 
