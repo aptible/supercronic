@@ -195,7 +195,7 @@ func TestStartJobExitsOnRequest(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	StartJob(&wg, &basicContext, &job, ctx, logger, false)
+	StartJob(&wg, &basicContext, &job, ctx, logger, false, nil)
 
 	wg.Wait()
 }
@@ -215,7 +215,7 @@ func TestStartJobRunsJob(t *testing.T) {
 
 	logger, channel := newTestLogger()
 
-	StartJob(&wg, &basicContext, &job, ctx, logger, false)
+	StartJob(&wg, &basicContext, &job, ctx, logger, false, nil)
 
 	select {
 	case entry := <-channel:

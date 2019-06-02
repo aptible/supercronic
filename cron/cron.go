@@ -201,31 +201,32 @@ func StartJob(wg *sync.WaitGroup, cronCtx *crontab.Context, job *crontab.Job, ex
 				"command":  job.Command,
 				"schedule": job.Schedule,
 			}).Inc()
-		}
-		defer func() {
-			if promMetrics != nil {
+
+			defer func() {
 				promMetrics.CronsCurrentlyRunningGauge.With(prometheus.Labels{
 					"position": fmt.Sprintf("%d", job.Position),
 					"command":  job.Command,
 					"schedule": job.Schedule,
 				}).Dec()
-			}
-		}()
+			}()
+		}
 
 		monitorCtx, cancelMonitor := context.WithCancel(context.Background())
 		defer cancelMonitor()
 
 		go monitorJob(monitorCtx, job, t0, jobLogger, overlapping, promMetrics)
 
-		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
-			promMetrics.CronsExecutionTimeHistogram.With(prometheus.Labels{
-				"position": fmt.Sprintf("%d", job.Position),
-				"command":  job.Command,
-				"schedule": job.Schedule,
-			}).Observe(v)
-		}))
+		if promMetrics != nil {
+			timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+				promMetrics.CronsExecutionTimeHistogram.With(prometheus.Labels{
+					"position": fmt.Sprintf("%d", job.Position),
+					"command":  job.Command,
+					"schedule": job.Schedule,
+				}).Observe(v)
+			}))
 
-		defer timer.ObserveDuration()
+			defer timer.ObserveDuration()
+		}
 
 		err := runJob(cronCtx, job.Command, jobLogger)
 
