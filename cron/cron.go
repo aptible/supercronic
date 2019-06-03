@@ -124,13 +124,7 @@ func monitorJob(ctx context.Context, job *crontab.Job, t0 time.Time, jobLogger *
 
 			jobLogger.Warnf("%s: job is still running since %s (%s elapsed)", m, t0, t.Sub(t0))
 
-			if promMetrics != nil {
-				promMetrics.CronsDeadlineExceededCounter.With(prometheus.Labels{
-					"position": fmt.Sprintf("%d", job.Position),
-					"command":  job.Command,
-					"schedule": job.Schedule,
-				}).Inc()
-			}
+			promMetrics.CronsDeadlineExceededCounter.With(jobPromLabels(job)).Inc()
 		case <-ctx.Done():
 			return
 		}
@@ -195,71 +189,45 @@ func startFunc(wg *sync.WaitGroup, exitCtx context.Context, logger *logrus.Entry
 
 func StartJob(wg *sync.WaitGroup, cronCtx *crontab.Context, job *crontab.Job, exitCtx context.Context, cronLogger *logrus.Entry, overlapping bool, promMetrics *prometheus_metrics.PrometheusMetrics) {
 	runThisJob := func(t0 time.Time, jobLogger *logrus.Entry) {
-		if promMetrics != nil {
-			promMetrics.CronsCurrentlyRunningGauge.With(prometheus.Labels{
-				"position": fmt.Sprintf("%d", job.Position),
-				"command":  job.Command,
-				"schedule": job.Schedule,
-			}).Inc()
+		promMetrics.CronsCurrentlyRunningGauge.With(jobPromLabels(job)).Inc()
 
-			defer func() {
-				promMetrics.CronsCurrentlyRunningGauge.With(prometheus.Labels{
-					"position": fmt.Sprintf("%d", job.Position),
-					"command":  job.Command,
-					"schedule": job.Schedule,
-				}).Dec()
-			}()
-		}
+		defer func() {
+			promMetrics.CronsCurrentlyRunningGauge.With(jobPromLabels(job)).Dec()
+		}()
 
 		monitorCtx, cancelMonitor := context.WithCancel(context.Background())
 		defer cancelMonitor()
 
 		go monitorJob(monitorCtx, job, t0, jobLogger, overlapping, promMetrics)
 
-		if promMetrics != nil {
-			timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
-				promMetrics.CronsExecutionTimeHistogram.With(prometheus.Labels{
-					"position": fmt.Sprintf("%d", job.Position),
-					"command":  job.Command,
-					"schedule": job.Schedule,
-				}).Observe(v)
-			}))
+		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+			promMetrics.CronsExecutionTimeHistogram.With(jobPromLabels(job)).Observe(v)
+		}))
 
-			defer timer.ObserveDuration()
-		}
+		defer timer.ObserveDuration()
 
 		err := runJob(cronCtx, job.Command, jobLogger)
 
-		if promMetrics != nil {
-			promMetrics.CronsExecCounter.With(prometheus.Labels{
-				"position": fmt.Sprintf("%d", job.Position),
-				"command":  job.Command,
-				"schedule": job.Schedule,
-			}).Inc()
-		}
+		promMetrics.CronsExecCounter.With(jobPromLabels(job)).Inc()
 
 		if err == nil {
 			jobLogger.Info("job succeeded")
 
-			if promMetrics != nil {
-				promMetrics.CronsSuccessCounter.With(prometheus.Labels{
-					"position": fmt.Sprintf("%d", job.Position),
-					"command":  job.Command,
-					"schedule": job.Schedule,
-				}).Inc()
-			}
+			promMetrics.CronsSuccessCounter.With(jobPromLabels(job)).Inc()
 		} else {
 			jobLogger.Error(err)
 
-			if promMetrics != nil {
-				promMetrics.CronsFailCounter.With(prometheus.Labels{
-					"position": fmt.Sprintf("%d", job.Position),
-					"command":  job.Command,
-					"schedule": job.Schedule,
-				}).Inc()
-			}
+			promMetrics.CronsFailCounter.With(jobPromLabels(job)).Inc()
 		}
 	}
 
 	startFunc(wg, exitCtx, cronLogger, overlapping, job.Expression, runThisJob)
+}
+
+func jobPromLabels(job *crontab.Job) prometheus.Labels {
+	return prometheus.Labels{
+		"position": fmt.Sprintf("%d", job.Position),
+		"command":  job.Command,
+		"schedule": job.Schedule,
+	}
 }

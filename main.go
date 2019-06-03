@@ -89,28 +89,23 @@ func main() {
 		}
 	}
 
-	var prommetrics *prometheus_metrics.PrometheusMetrics
+	promMetrics := prometheus_metrics.NewPrometheusMetrics()
 
 	if *prometheusListen != "" {
-		prommetrics = prometheus_metrics.New(*prometheusListen)
-
-		go func() {
-			if err := prommetrics.InitHTTPServer(); err != nil {
-				logrus.Fatalf("prometheus http startup: %s", err.Error())
-			}
-		}()
+		promServerShutdownClosure, err := prometheus_metrics.InitHTTPServer(*prometheusListen, context.Background())
+		if err != nil {
+			logrus.Fatalf("prometheus http startup failed: %s", err.Error())
+		}
 
 		defer func() {
-			if err := prommetrics.ShutdownHTTPServer(context.Background()); err != nil {
-				logrus.Fatalf("prometheus http shutdown: %s", err.Error())
+			if err := promServerShutdownClosure(); err != nil {
+				logrus.Fatalf("prometheus http shutdown failed: %s", err.Error())
 			}
 		}()
 	}
 
 	for true {
-		if prommetrics != nil {
-			prommetrics.Reset()
-		}
+		promMetrics.Reset()
 
 		logrus.Infof("read crontab: %s", crontabFileName)
 		tab, err := readCrontabAtPath(crontabFileName)
@@ -136,7 +131,7 @@ func main() {
 				"job.position": job.Position,
 			})
 
-			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, prommetrics)
+			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, &promMetrics)
 		}
 
 		termChan := make(chan os.Signal, 1)

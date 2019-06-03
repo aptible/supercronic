@@ -14,10 +14,12 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/aptible/supercronic/crontab"
+	"github.com/aptible/supercronic/prometheus_metrics"
 )
 
 var (
 	TEST_CHANNEL_BUFFER_SIZE = 100
+	PROM_METRICS             = prometheus_metrics.NewPrometheusMetrics()
 )
 
 type testHook struct {
@@ -195,7 +197,7 @@ func TestStartJobExitsOnRequest(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	StartJob(&wg, &basicContext, &job, ctx, logger, false, nil)
+	StartJob(&wg, &basicContext, &job, ctx, logger, false, &PROM_METRICS)
 
 	wg.Wait()
 }
@@ -215,7 +217,7 @@ func TestStartJobRunsJob(t *testing.T) {
 
 	logger, channel := newTestLogger()
 
-	StartJob(&wg, &basicContext, &job, ctx, logger, false, nil)
+	StartJob(&wg, &basicContext, &job, ctx, logger, false, &PROM_METRICS)
 
 	select {
 	case entry := <-channel:
