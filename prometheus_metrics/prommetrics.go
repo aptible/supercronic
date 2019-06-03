@@ -123,9 +123,8 @@ func InitHTTPServer(listenAddr string, shutdownContext context.Context) (func() 
 		return shutdownClosure, err
 	}
 
-	server := &http.Server{}
 	go func() {
-		if err := server.Serve(listener); err != nil {
+		if err := promSrv.Serve(listener); err != nil {
 			logrus.Fatalf("prometheus http serve failed: %s", err.Error())
 		}
 	}()
