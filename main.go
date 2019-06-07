@@ -4,16 +4,18 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/aptible/supercronic/cron"
-	"github.com/aptible/supercronic/crontab"
-	"github.com/aptible/supercronic/log/hook"
-	"github.com/evalphobia/logrus_sentry"
-	"github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/aptible/supercronic/cron"
+	"github.com/aptible/supercronic/crontab"
+	"github.com/aptible/supercronic/log/hook"
+	"github.com/aptible/supercronic/prometheus_metrics"
+	"github.com/evalphobia/logrus_sentry"
+	"github.com/sirupsen/logrus"
 )
 
 var Usage = func() {
@@ -25,6 +27,7 @@ func main() {
 	debug := flag.Bool("debug", false, "enable debug logging")
 	json := flag.Bool("json", false, "enable JSON logging")
 	test := flag.Bool("test", false, "test crontab (does not run jobs)")
+	prometheusListen := flag.String("prometheus-listen-address", "", "give a valid ip:port address to expose Prometheus metrics at /metrics")
 	splitLogs := flag.Bool("split-logs", false, "split log output into stdout/stderr")
 	sentry := flag.String("sentry-dsn", "", "enable Sentry error logging, using provided DSN")
 	sentryAlias := flag.String("sentryDsn", "", "alias for sentry-dsn")
@@ -50,7 +53,6 @@ func main() {
 	} else {
 		logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
 	}
-
 	if *splitLogs {
 		hook.RegisterSplitLogger(
 			logrus.StandardLogger(),
@@ -87,7 +89,24 @@ func main() {
 		}
 	}
 
+	promMetrics := prometheus_metrics.NewPrometheusMetrics()
+
+	if *prometheusListen != "" {
+		promServerShutdownClosure, err := prometheus_metrics.InitHTTPServer(*prometheusListen, context.Background())
+		if err != nil {
+			logrus.Fatalf("prometheus http startup failed: %s", err.Error())
+		}
+
+		defer func() {
+			if err := promServerShutdownClosure(); err != nil {
+				logrus.Fatalf("prometheus http shutdown failed: %s", err.Error())
+			}
+		}()
+	}
+
 	for true {
+		promMetrics.Reset()
+
 		logrus.Infof("read crontab: %s", crontabFileName)
 		tab, err := readCrontabAtPath(crontabFileName)
 
@@ -112,7 +131,7 @@ func main() {
 				"job.position": job.Position,
 			})
 
-			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping)
+			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, &promMetrics)
 		}
 
 		termChan := make(chan os.Signal, 1)
