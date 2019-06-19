@@ -100,9 +100,16 @@ func ParseCrontab(reader io.Reader) (*Crontab, error) {
 			continue
 		}
 
-		jobLine, err := parseJobLine(line)
+		// replace start  with so the line will parse without errors
+		jobLine, err := parseJobLine(strings.Replace(line, StartExpressionValue, "0 0 0 1 1 * *", 1))
 		if err != nil {
 			return nil, err
+		}
+
+		// set custom expression for startup job
+		if strings.HasPrefix(line, StartExpressionValue) {
+			jobLine.Expression = StartExpr
+			jobLine.Schedule = StartExpressionValue
 		}
 
 		jobs = append(jobs, &Job{CrontabLine: *jobLine, Position: position})

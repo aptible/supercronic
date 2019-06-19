@@ -104,6 +104,8 @@ func main() {
 		}()
 	}
 
+	firstRun := true
+
 	for true {
 		promMetrics.Reset()
 
@@ -118,20 +120,41 @@ func main() {
 		if *test {
 			logrus.Info("crontab is valid")
 			os.Exit(0)
-			break
 		}
 
 		var wg sync.WaitGroup
 		exitCtx, notifyExit := context.WithCancel(context.Background())
 
-		for _, job := range tab.Jobs {
-			cronLogger := logrus.WithFields(logrus.Fields{
-				"job.schedule": job.Schedule,
-				"job.command":  job.Command,
-				"job.position": job.Position,
-			})
+		if firstRun {
+			logrus.Info("running start jobs")
+			for _, job := range tab.Jobs {
+				if job.Schedule == crontab.StartExpressionValue {
+					cronLogger := logrus.WithFields(logrus.Fields{
+						"job.schedule": job.Schedule,
+						"job.command":  job.Command,
+						"job.position": job.Position,
+					})
 
-			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, &promMetrics)
+					cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, &promMetrics)
+				}
+			}
+
+			firstRun = false
+			wg.Wait()
+
+			logrus.Info("start jobs finished")
+		}
+
+		for _, job := range tab.Jobs {
+			if job.Schedule != crontab.StartExpressionValue {
+				cronLogger := logrus.WithFields(logrus.Fields{
+					"job.schedule": job.Schedule,
+					"job.command":  job.Command,
+					"job.position": job.Position,
+				})
+
+				cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, &promMetrics)
+			}
 		}
 
 		termChan := make(chan os.Signal, 1)

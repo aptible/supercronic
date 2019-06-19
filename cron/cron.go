@@ -143,6 +143,11 @@ func startFunc(wg *sync.WaitGroup, exitCtx context.Context, logger *logrus.Entry
 		var cronIteration uint64
 		nextRun := time.Now()
 
+		if expression == crontab.StartExpr {
+			fn(nextRun, logger)
+			return
+		}
+
 		// NOTE: if overlapping is disabled (default), this does not run multiple
 		// instances of the job concurrently
 		for {
