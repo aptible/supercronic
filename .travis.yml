@@ -3,14 +3,7 @@ dist: trusty
 
 language: go
 
-go: "1.9"
-
-before_install:
-  - mkdir -p $HOME/gopath/src/github.com/aptible/supercronic
-  - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/aptible/supercronic/
-  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/aptible/supercronic
-  - cd $TRAVIS_BUILD_DIR
-  - go get -u github.com/golang/dep/cmd/dep
+go: "1.16"
 
 install:
   - make deps
