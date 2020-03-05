@@ -3,6 +3,7 @@ package cron
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -20,6 +21,11 @@ import (
 
 var (
 	READ_BUFFER_SIZE = 64 * 1024
+	// [!] Warning - these are globals, which are set in the main package
+	//     Could not find a quickier and better way to pass flags from pkg main without
+	//     refactoring and/or adding more params to existing functions
+	JsonEnabled      = false
+	ParseJsonEnabled = false
 )
 
 func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.ReadCloser) {
@@ -54,13 +60,40 @@ func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.
 				break
 			}
 
-			readerLogger.Info(string(line))
+			// Try to parse JSON. If no valid JSON here, just log as a string
+			if ParseJsonEnabled && JsonEnabled {
+				err = parseJsonOrPrintText(line, readerLogger)
+				if err != nil {
+					// [TODO]
+					readerLogger.Warn("error parsing JSON")
+				}
+			} else {
+				readerLogger.Info(string(line))
+			}
 
 			if isPrefix {
 				readerLogger.Warn("last line exceeded buffer size, continuing...")
 			}
 		}
 	}()
+}
+
+func parseJsonOrPrintText(line []byte, readerLogger *logrus.Entry) error {
+	if json.Valid(line) {
+		var someJson interface{}
+		err := json.Unmarshal(line, &someJson)
+		if err != nil {
+			return err
+		}
+
+		readerLogger.WithFields(logrus.Fields{
+			"log": someJson,
+		}).Info("json log data")
+	} else {
+		readerLogger.Info(string(line))
+	}
+
+	return nil
 }
 
 func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry) error {
@@ -122,7 +155,7 @@ func monitorJob(ctx context.Context, job *crontab.Job, t0 time.Time, jobLogger *
 				m = "overlapping jobs"
 			}
 
-			jobLogger.Warnf("%s: job is still running since %s (%s elapsed)", m, t0, t.Sub(t0))
+			jobLogger.Debugf("%s: job is still running since %s (%s elapsed)", m, t0, t.Sub(t0))
 
 			promMetrics.CronsDeadlineExceededCounter.With(jobPromLabels(job)).Inc()
 		case <-ctx.Done():
@@ -141,17 +174,19 @@ func startFunc(wg *sync.WaitGroup, exitCtx context.Context, logger *logrus.Entry
 		defer jobWg.Wait()
 
 		var cronIteration uint64
+
 		nextRun := time.Now()
 
-		// NOTE: if overlapping is disabled (default), this does not run multiple
+		// NOTE: if overlapping is disabled (default), this does t run multiple
 		// instances of the job concurrently
 		for {
 			nextRun = expression.Next(nextRun)
+
 			logger.Debugf("job will run next at %v", nextRun)
 
 			delay := nextRun.Sub(time.Now())
 			if delay < 0 {
-				logger.Warningf("job took too long to run: it should have started %v ago", -delay)
+				logger.Debugf("job took too long to run: it should have started %v ago", -delay)
 				nextRun = time.Now()
 				continue
 			}
@@ -166,7 +201,13 @@ func startFunc(wg *sync.WaitGroup, exitCtx context.Context, logger *logrus.Entry
 
 			jobWg.Add(1)
 
-			runThisJob := func(cronIteration uint64) {
+			// "nextRun" param added to avoid data race with overlapping jobs
+			// this could be written (to avoid addition of 2nd param) as:
+			//    megaNextRun := nextRun
+			// and then, in runThisJob := ... :
+			//    ...
+			//    fn(megaNextRun, jobLogger)
+			runThisJob := func(cronIteration uint64, nextRun time.Time) {
 				defer jobWg.Done()
 
 				jobLogger := logger.WithFields(logrus.Fields{
@@ -177,9 +218,9 @@ func startFunc(wg *sync.WaitGroup, exitCtx context.Context, logger *logrus.Entry
 			}
 
 			if overlapping {
-				go runThisJob(cronIteration)
+				go runThisJob(cronIteration, nextRun)
 			} else {
-				runThisJob(cronIteration)
+				runThisJob(cronIteration, nextRun)
 			}
 
 			cronIteration++

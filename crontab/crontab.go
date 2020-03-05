@@ -16,10 +16,10 @@ var (
 	envLineMatcher   = regexp.MustCompile(`^([^\s=]+)\s*=\s*(.*)$`)
 
 	parameterCounts = []int{
+		1, // shorthand (e.g. @hourly)
 		7, // POSIX + seconds + years
 		6, // POSIX + years
 		5, // POSIX
-		1, // shorthand (e.g. @hourly)
 	}
 )
 
@@ -37,7 +37,7 @@ func parseJobLine(line string) (*CrontabLine, error) {
 		// TODO: Should receive a logger?
 		logrus.Debugf("try parse(%d): %s[0:%d] = %s", count, line, scheduleEnds, line[0:scheduleEnds])
 
-		expr, err := cronexpr.ParseStrict(line[:scheduleEnds])
+		expr, err := cronexpr.Parse(line[:scheduleEnds])
 
 		if err != nil {
 			continue

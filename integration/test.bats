@@ -48,13 +48,17 @@ wait_for() {
   run_supercronic "${BATS_TEST_DIRNAME}/user.crontab" 1s | grep -iE "processes will not.*USER="
 }
 
-@test "it warns when a job is falling behind" {
-  run_supercronic "${BATS_TEST_DIRNAME}/timeout.crontab" 1s | grep -iE "job took too long to run"
+@test "it warns when a job is falling behind when debug option is set" {
+  SUPERCRONIC_ARGS="-debug" run_supercronic "${BATS_TEST_DIRNAME}/timeout.crontab" 1s | grep -iE "job took too long to run"
 }
 
-@test "it warns repeatedly when a job is still running" {
-  n="$(run_supercronic "${BATS_TEST_DIRNAME}/timeout.crontab" 1s | grep -iE "job is still running" | wc -l)"
+@test "it warns repeatedly when a job is still running when debug option is set" {
+  n="$(SUPERCRONIC_ARGS="-debug" run_supercronic "${BATS_TEST_DIRNAME}/timeout.crontab" 1s | grep -iE "job is still running" | wc -l)"
   [[ "$n" -eq 2 ]]
+}
+
+@test "it can parse JSON with -jsonparse option with JSON log output option" {
+  SUPERCRONIC_ARGS="-json -parsejson" run_supercronic "${BATS_TEST_DIRNAME}/json-output.crontab" 1s | grep -iE 'log":{"hello":"world"}'
 }
 
 @test "it runs overlapping jobs" {

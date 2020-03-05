@@ -26,6 +26,7 @@ var Usage = func() {
 func main() {
 	debug := flag.Bool("debug", false, "enable debug logging")
 	json := flag.Bool("json", false, "enable JSON logging")
+	parseJson := flag.Bool("parsejson", false, "try to parse log as JSON")
 	test := flag.Bool("test", false, "test crontab (does not run jobs)")
 	prometheusListen := flag.String("prometheus-listen-address", "", "give a valid ip:port address to expose Prometheus metrics at /metrics")
 	splitLogs := flag.Bool("split-logs", false, "split log output into stdout/stderr")
@@ -34,13 +35,17 @@ func main() {
 	overlapping := flag.Bool("overlapping", false, "enable tasks overlapping")
 	flag.Parse()
 
+	// [!] Warning! Global package variables set
+	cron.JsonEnabled = *json
+	cron.ParseJsonEnabled = *parseJson
+
 	var sentryDsn string
 
-	if *sentryAlias != "" {
+	if len(*sentryAlias) != 0 {
 		sentryDsn = *sentryAlias
 	}
 
-	if *sentry != "" {
+	if len(*sentry) != 0 {
 		sentryDsn = *sentry
 	}
 
@@ -69,29 +74,25 @@ func main() {
 
 	crontabFileName := flag.Args()[0]
 
-	var sentryHook *logrus_sentry.SentryHook
-	if sentryDsn != "" {
+	if len(sentryDsn) != 0 {
 		sentryLevels := []logrus.Level{
 			logrus.PanicLevel,
 			logrus.FatalLevel,
 			logrus.ErrorLevel,
 		}
+
 		sh, err := logrus_sentry.NewSentryHook(sentryDsn, sentryLevels)
 		if err != nil {
 			logrus.Fatalf("Could not init sentry logger: %s", err)
 		} else {
 			sh.Timeout = 5 * time.Second
-			sentryHook = sh
-		}
-
-		if sentryHook != nil {
-			logrus.StandardLogger().AddHook(sentryHook)
+			logrus.StandardLogger().AddHook(sh)
 		}
 	}
 
 	promMetrics := prometheus_metrics.NewPrometheusMetrics()
 
-	if *prometheusListen != "" {
+	if len(*prometheusListen) != 0 {
 		promServerShutdownClosure, err := prometheus_metrics.InitHTTPServer(*prometheusListen, context.Background())
 		if err != nil {
 			logrus.Fatalf("prometheus http startup failed: %s", err.Error())
@@ -104,7 +105,7 @@ func main() {
 		}()
 	}
 
-	for true {
+	for {
 		promMetrics.Reset()
 
 		logrus.Infof("read crontab: %s", crontabFileName)

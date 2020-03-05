@@ -3,7 +3,7 @@ SHELL=/bin/bash
 
 .PHONY: deps
 deps:
-	dep ensure -vendor-only
+	go mod vendor
 
 .PHONY: build
 build: $(GOFILES)
@@ -11,7 +11,7 @@ build: $(GOFILES)
 
 .PHONY: unit
 unit:
-	go test $$(go list ./... | grep -v /vendor/)
+	go test -v -race -failfast $$(go list ./... | grep -v /vendor/)
 	go vet $$(go list ./... | grep -v /vendor/)
 
 .PHONY: integration

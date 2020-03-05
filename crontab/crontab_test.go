@@ -248,6 +248,24 @@ var parseCrontabTestCases = []struct {
 		},
 	},
 
+	{
+		"* * * * * echo \" whitespaces   preservation    \"",
+		&Crontab{
+			Context: &Context{
+				Shell:   "/bin/sh",
+				Environ: map[string]string{},
+			},
+			Jobs: []*Job{
+				{
+					CrontabLine: CrontabLine{
+						Schedule: "* * * * *",
+						Command:  "echo \" whitespaces   preservation    \"",
+					},
+				},
+			},
+		},
+	},
+
 	// Failure cases
 	{"* foo \n", nil},
 	{"* some * * *  more\n", nil},
