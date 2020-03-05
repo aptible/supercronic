@@ -15,7 +15,7 @@ jobs:
     - stage: test
       script:
         - make fmt
-        - git diff --exit-code
+        - git diff --exit-code ':(exclude)go.mod' ':(exclude)go.sum'
         - make test
     - stage: build
       script:
