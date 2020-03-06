@@ -62,11 +62,7 @@ func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.
 
 			// Try to parse JSON. If no valid JSON here, just log as a string
 			if ParseJsonEnabled && JsonEnabled {
-				err = parseJsonOrPrintText(line, readerLogger)
-				if err != nil {
-					// [TODO]
-					readerLogger.Warn("error parsing JSON")
-				}
+				parseJsonOrPrintText(line, readerLogger)
 			} else {
 				readerLogger.Info(string(line))
 			}
@@ -78,22 +74,17 @@ func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.
 	}()
 }
 
-func parseJsonOrPrintText(line []byte, readerLogger *logrus.Entry) error {
-	if json.Valid(line) {
-		var someJson interface{}
-		err := json.Unmarshal(line, &someJson)
-		if err != nil {
-			return err
-		}
+func parseJsonOrPrintText(line []byte, readerLogger *logrus.Entry) {
+	var someJson interface{}
 
+	err := json.Unmarshal(line, &someJson)
+	if err != nil {
+		readerLogger.Info(string(line))
+	} else {
 		readerLogger.WithFields(logrus.Fields{
 			"log": someJson,
 		}).Info("json log data")
-	} else {
-		readerLogger.Info(string(line))
 	}
-
-	return nil
 }
 
 func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry) error {

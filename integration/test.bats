@@ -61,16 +61,20 @@ wait_for() {
   SUPERCRONIC_ARGS="-json -parsejson" run_supercronic "${BATS_TEST_DIRNAME}/json-output.crontab" 1s | grep -iE 'log":{"hello":"world"}'
 }
 
+@test "it prints text as usual if unable to parse JSON" {
+  SUPERCRONIC_ARGS="-json -parsejson" run_supercronic "${BATS_TEST_DIRNAME}/json-invalid-output.crontab" 1s | grep -iE '"msg":"{\\"hello\\": \\"world"'
+}
+
 @test "it runs overlapping jobs" {
   n="$(SUPERCRONIC_ARGS="-overlapping" run_supercronic "${BATS_TEST_DIRNAME}/timeout.crontab" 5s | grep -iE "starting" | wc -l)"
   [[ "$n" -ge 4 ]]
 }
 
-@test "it supports debug logging " {
+@test "it supports debug logging" {
   SUPERCRONIC_ARGS="-debug" run_supercronic "${BATS_TEST_DIRNAME}/hello.crontab" | grep -iE "debug"
 }
 
-@test "it supports JSON logging " {
+@test "it supports JSON logging" {
   SUPERCRONIC_ARGS="-json" run_supercronic "${BATS_TEST_DIRNAME}/noop.crontab" | grep -iE "^{"
 }
 
