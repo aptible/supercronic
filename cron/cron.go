@@ -184,7 +184,7 @@ func startFunc(wg *sync.WaitGroup, exitCtx context.Context, logger *logrus.Entry
 
 			logger.Debugf("job will run next at %v", nextRun)
 
-			delay := nextRun.Sub(time.Now())
+			delay := time.Until(nextRun)
 			if delay < 0 {
 				logger.Debugf("job took too long to run: it should have started %v ago", -delay)
 				nextRun = time.Now()
