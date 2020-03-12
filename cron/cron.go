@@ -166,7 +166,11 @@ func startFunc(wg *sync.WaitGroup, exitCtx context.Context, logger *logrus.Entry
 
 			jobWg.Add(1)
 
-			runThisJob := func(cronIteration uint64) {
+			// `nextRun` will be mutated by the next iteration of
+			// this loop, so we cannot simply capture it into the
+			// closure here. Instead, we make it a parameter so
+			// that it gets copied when `runThisJob` is called
+			runThisJob := func(cronIteration uint64, nextRun time.Time) {
 				defer jobWg.Done()
 
 				jobLogger := logger.WithFields(logrus.Fields{
@@ -177,9 +181,9 @@ func startFunc(wg *sync.WaitGroup, exitCtx context.Context, logger *logrus.Entry
 			}
 
 			if overlapping {
-				go runThisJob(cronIteration)
+				go runThisJob(cronIteration, nextRun)
 			} else {
-				runThisJob(cronIteration)
+				runThisJob(cronIteration, nextRun)
 			}
 
 			cronIteration++
