@@ -36,6 +36,8 @@ func main() {
 
 	var sentryDsn string
 
+	sentryDsn = os.Getenv("SENTRY_DSN")
+
 	if *sentryAlias != "" {
 		sentryDsn = *sentryAlias
 	}
