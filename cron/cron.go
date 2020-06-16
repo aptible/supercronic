@@ -3,6 +3,7 @@ package cron
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -22,6 +23,16 @@ var (
 	READ_BUFFER_SIZE = 64 * 1024
 )
 
+func parseJsonOrPrintText(line []byte, readerLogger *logrus.Entry) {
+	var someJson map[string]interface{}
+
+	err := json.Unmarshal(line, &someJson)
+	if err != nil {
+		readerLogger.Info(string(line))
+	} else {
+		readerLogger.WithFields(someJson).Info(string(line))
+	}
+}
 func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.ReadCloser) {
 	wg.Add(1)
 
@@ -54,8 +65,8 @@ func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.
 				break
 			}
 
-			readerLogger.Info(string(line))
 
+			parseJsonOrPrintText(line, readerLogger)
 			if isPrefix {
 				readerLogger.Warn("last line exceeded buffer size, continuing...")
 			}
