@@ -13,8 +13,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/aptible/supercronic/crontab"
-	"github.com/aptible/supercronic/prometheus_metrics"
+	"github.com/yayayahei/supercronic/crontab"
+	"github.com/yayayahei/supercronic/prometheus_metrics"
 )
 
 var (

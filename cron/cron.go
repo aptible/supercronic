@@ -13,10 +13,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aptible/supercronic/crontab"
-	"github.com/aptible/supercronic/prometheus_metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
+	"github.com/yayayahei/supercronic/crontab"
+	"github.com/yayayahei/supercronic/prometheus_metrics"
 )
 
 var (
@@ -64,7 +64,6 @@ func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.
 
 				break
 			}
-
 
 			parseJsonOrPrintText(line, readerLogger)
 			if isPrefix {

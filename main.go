@@ -10,12 +10,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aptible/supercronic/cron"
-	"github.com/aptible/supercronic/crontab"
-	"github.com/aptible/supercronic/log/hook"
-	"github.com/aptible/supercronic/prometheus_metrics"
 	"github.com/evalphobia/logrus_sentry"
 	"github.com/sirupsen/logrus"
+	"github.com/yayayahei/supercronic/cron"
+	"github.com/yayayahei/supercronic/crontab"
+	"github.com/yayayahei/supercronic/log/hook"
+	"github.com/yayayahei/supercronic/prometheus_metrics"
 )
 
 var Usage = func() {
