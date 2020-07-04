@@ -25,6 +25,7 @@ var Usage = func() {
 
 func main() {
 	debug := flag.Bool("debug", false, "enable debug logging")
+	quiet := flag.Bool("quiet", false, "do not log informational messages (takes precedence over debug)")
 	json := flag.Bool("json", false, "enable JSON logging")
 	test := flag.Bool("test", false, "test crontab (does not run jobs)")
 	prometheusListen := flag.String("prometheus-listen-address", "", "give a valid ip:port address to expose Prometheus metrics at /metrics")
@@ -47,6 +48,10 @@ func main() {
 
 	if *debug {
 		logrus.SetLevel(logrus.DebugLevel)
+	}
+
+	if *quiet {
+		logrus.SetLevel(logrus.WarnLevel)
 	}
 
 	if *json {
