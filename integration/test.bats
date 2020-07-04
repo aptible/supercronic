@@ -70,6 +70,10 @@ wait_for() {
   SUPERCRONIC_ARGS="-json" run_supercronic "${BATS_TEST_DIRNAME}/noop.crontab" | grep -iE "^{"
 }
 
+@test "it supports passing command logging through" {
+  SUPERCRONIC_ARGS="-passthrough-logs" run_supercronic "${BATS_TEST_DIRNAME}/hello.crontab" | grep -iE "^hello from crontab$"
+}
+
 @test "it waits for jobs to exit before terminating" {
   ready="will start"
   canary="all done"

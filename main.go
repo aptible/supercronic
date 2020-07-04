@@ -29,6 +29,7 @@ func main() {
 	test := flag.Bool("test", false, "test crontab (does not run jobs)")
 	prometheusListen := flag.String("prometheus-listen-address", "", "give a valid ip:port address to expose Prometheus metrics at /metrics")
 	splitLogs := flag.Bool("split-logs", false, "split log output into stdout/stderr")
+	passthroughLogs := flag.Bool("passthrough-logs", false, "passthrough logs from commands, do not wrap them in Supercronic logging")
 	sentry := flag.String("sentry-dsn", "", "enable Sentry error logging, using provided DSN")
 	sentryAlias := flag.String("sentryDsn", "", "alias for sentry-dsn")
 	overlapping := flag.Bool("overlapping", false, "enable tasks overlapping")
@@ -131,7 +132,7 @@ func main() {
 				"job.position": job.Position,
 			})
 
-			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, &promMetrics)
+			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, *passthroughLogs, &promMetrics)
 		}
 
 		termChan := make(chan os.Signal, 1)
