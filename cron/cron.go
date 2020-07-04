@@ -63,7 +63,7 @@ func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.
 	}()
 }
 
-func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry) error {
+func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry, passthroughLogs bool) error {
 	jobLogger.Info("starting")
 
 	cmd := exec.Command(cronCtx.Shell, "-c", command)
@@ -78,14 +78,23 @@ func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry) e
 	}
 	cmd.Env = env
 
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return err
-	}
+	var stdout io.ReadCloser = nil
+	var stderr io.ReadCloser = nil
+	var err error
 
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return err
+	if passthroughLogs {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+	} else {
+		stdout, err = cmd.StdoutPipe()
+		if err != nil {
+			return err
+		}
+
+		stderr, err = cmd.StderrPipe()
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := cmd.Start(); err != nil {
@@ -94,11 +103,15 @@ func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry) e
 
 	var wg sync.WaitGroup
 
-	stdoutLogger := jobLogger.WithFields(logrus.Fields{"channel": "stdout"})
-	startReaderDrain(&wg, stdoutLogger, stdout)
+	if stdout != nil {
+		stdoutLogger := jobLogger.WithFields(logrus.Fields{"channel": "stdout"})
+		startReaderDrain(&wg, stdoutLogger, stdout)
+	}
 
-	stderrLogger := jobLogger.WithFields(logrus.Fields{"channel": "stderr"})
-	startReaderDrain(&wg, stderrLogger, stderr)
+	if stderr != nil {
+		stderrLogger := jobLogger.WithFields(logrus.Fields{"channel": "stderr"})
+		startReaderDrain(&wg, stderrLogger, stderr)
+	}
 
 	wg.Wait()
 
@@ -191,7 +204,7 @@ func startFunc(wg *sync.WaitGroup, exitCtx context.Context, logger *logrus.Entry
 	}()
 }
 
-func StartJob(wg *sync.WaitGroup, cronCtx *crontab.Context, job *crontab.Job, exitCtx context.Context, cronLogger *logrus.Entry, overlapping bool, promMetrics *prometheus_metrics.PrometheusMetrics) {
+func StartJob(wg *sync.WaitGroup, cronCtx *crontab.Context, job *crontab.Job, exitCtx context.Context, cronLogger *logrus.Entry, overlapping bool, passthroughLogs bool, promMetrics *prometheus_metrics.PrometheusMetrics) {
 	runThisJob := func(t0 time.Time, jobLogger *logrus.Entry) {
 		promMetrics.CronsCurrentlyRunningGauge.With(jobPromLabels(job)).Inc()
 
@@ -210,7 +223,7 @@ func StartJob(wg *sync.WaitGroup, cronCtx *crontab.Context, job *crontab.Job, ex
 
 		defer timer.ObserveDuration()
 
-		err := runJob(cronCtx, job.Command, jobLogger)
+		err := runJob(cronCtx, job.Command, jobLogger, passthroughLogs)
 
 		promMetrics.CronsExecCounter.With(jobPromLabels(job)).Inc()
 
