@@ -139,7 +139,8 @@ variables to work!
 
 Supercronic uses your current timezone from `/etc/localtime` to schedule jobs.
 You can also override the timezone by setting the environment variable `TZ`
-when running Supercronic.
+(e.g. `TZ=Europe/Berlin`) when running Supercronic. You may need to install
+`tzdata` in order for Supercronic to find the supplied timezone.
 
 If you're unsure what timezone Supercronic is using, you can run it with the
 `-debug` flag to confirm.
