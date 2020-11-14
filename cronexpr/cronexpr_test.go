@@ -1,7 +1,7 @@
 /*!
  * Copyright 2013 Raymond Hill
  *
- * Project: github.com/gorhill/cronexpr
+ * Project: github.com/aptible/supercronic/cronexpr
  * File: cronexpr_test.go
  * Version: 1.0
  * License: pick the one which suits you best:

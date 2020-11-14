@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/krallin/cronexpr"
+	"github.com/aptible/supercronic/cronexpr"
 	"github.com/sirupsen/logrus"
 )
 

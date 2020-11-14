@@ -1,7 +1,7 @@
 /*!
  * Copyright 2013 Raymond Hill
  *
- * Project: github.com/gorhill/cronexpr
+ * Project: github.com/aptible/supercronic/cronexpr
  * File: main.go
  * Version: 1.0
  * License: GPL v3 see <https://www.gnu.org/licenses/gpl.html>
@@ -18,7 +18,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/krallin/cronexpr"
+	"github.com/aptible/supercronic/cronexpr"
 )
 
 /******************************************************************************/

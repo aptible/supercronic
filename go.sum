@@ -49,10 +49,6 @@ github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORN
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0 h1:45sCR5RtlFHMR4UwH9sdQ5TC8v0qDQCHnXt+kaKSTVE=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
-github.com/krallin/cronexpr v0.0.0-20180801141017-b648cc9a908c h1:YCO+ApTSaAknMmQAl81m/kwJxbQSbwcx6AX+urZtrg0=
-github.com/krallin/cronexpr v0.0.0-20180801141017-b648cc9a908c/go.mod h1:O6noZ1hsovtyM/h0UBv7rU5ps+Y11b+LN9lQ04gWdII=
-github.com/krallin/cronexpr v0.0.0-20201114145102-0373391ef0a2 h1:cKXKJnIBL1TmRj7gAcC7fVARLt6JCT97J4+Rjq5DybQ=
-github.com/krallin/cronexpr v0.0.0-20201114145102-0373391ef0a2/go.mod h1:3yrSVIYbnN5lC4MIuhQCKpnY02Z0FaHoNJ2E0YYM04g=
 github.com/matttproud/golang_protobuf_extensions v1.0.1 h1:4hp9jkHxhMHkqkrB3Ix0jegS5sx/RkqARlsWZ6pIwiU=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=

@@ -1,7 +1,7 @@
 /*!
  * Copyright 2013 Raymond Hill
  *
- * Project: github.com/gorhill/cronexpr
+ * Project: github.com/aptible/supercronic/cronexpr
  * File: cronexpr.go
  * Version: 1.0
  * License: pick the one which suits you :
@@ -24,7 +24,7 @@ import (
 /******************************************************************************/
 
 // A Expression represents a specific cron time expression as defined at
-// <https://github.com/gorhill/cronexpr#implementation>
+// <https://github.com/aptible/supercronic/cronexpr#implementation>
 type Expression struct {
 	expression             string
 	secondList             []int
@@ -48,7 +48,7 @@ type Expression struct {
 
 // MustParse returns a new Expression pointer. It expects a well-formed cron
 // expression. If a malformed cron expression is supplied, it will `panic`.
-// See <https://github.com/gorhill/cronexpr#implementation> for documentation
+// See <https://github.com/aptible/supercronic/cronexpr#implementation> for documentation
 // about what is a well-formed cron expression from this library's point of
 // view.
 func MustParse(cronLine string) *Expression {
@@ -65,7 +65,7 @@ func MustParse(cronLine string) *Expression {
 // cron expression is supplied. ParseStrict does the same thing, but unlike
 // Parse, it will return an error if the provided cron line has too many
 // tokens.
-// See <https://github.com/gorhill/cronexpr#implementation> for documentation
+// See <https://github.com/aptible/supercronic/cronexpr#implementation> for documentation
 // about what is a well-formed cron expression from this library's point of
 // view.
 

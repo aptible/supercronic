@@ -1,3 +1,6 @@
+NOTE: Cronexpr is maintained in-tree by Supercronic, but it's forked from
+github.com/gorhill/cronexpr. Its license applies to the underlying code.
+
 Golang Cron expression parser
 =============================
 Given a cron expression and a time stamp, you can get the next time stamp which satisfies the cron expression.
@@ -6,7 +9,7 @@ In another project, I decided to use cron expression syntax to encode scheduling
 
 The time-matching algorithm in this implementation is efficient, it avoids as much as possible to guess the next matching time stamp, a common technique seen in a number of implementations out there.
 
-There is also a companion command-line utility to evaluate cron time expressions: <https://github.com/gorhill/cronexpr/tree/master/cronexpr> (which of course uses this library).
+There is also a companion command-line utility to evaluate cron time expressions: <https://github.com/aptible/supercronic/cronexpr/tree/master/cronexpr> (which of course uses this library).
 
 Implementation
 --------------
@@ -72,13 +75,13 @@ Other details
 
 Install
 -------
-    go get github.com/gorhill/cronexpr
+    go get github.com/aptible/supercronic/cronexpr
 
 Usage
 -----
 Import the library:
 
-    import "github.com/gorhill/cronexpr"
+    import "github.com/aptible/supercronic/cronexpr"
     import "time"
 
 Simplest way:
@@ -122,7 +125,7 @@ returned.
 
 API
 ---
-<http://godoc.org/github.com/gorhill/cronexpr>
+<http://godoc.org/github.com/aptible/supercronic/cronexpr>
 
 License
 -------

@@ -3,12 +3,12 @@ cronexpr: command-line utility
 
 A command-line utility written in Go to evaluate cron time expressions.
 
-It is based on the standalone Go library <https://github.com/gorhill/cronexpr>.
+It is based on the standalone Go library <https://github.com/aptible/supercronic/cronexpr>.
 
 ## Install
 
-    go get github.com/gorhill/cronexpr
-    go install github.com/gorhill/cronexpr
+    go get github.com/aptible/supercronic/cronexpr
+    go install github.com/aptible/supercronic/cronexpr
 
 ## Usage
 
