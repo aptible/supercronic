@@ -1,3 +1,3 @@
-module github.com/gorhill/cronexpr
+module github.com/krallin/cronexpr
 
 go 1.14
