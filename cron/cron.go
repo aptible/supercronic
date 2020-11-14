@@ -144,7 +144,15 @@ func monitorJob(ctx context.Context, job *crontab.Job, t0 time.Time, jobLogger *
 	}
 }
 
-func startFunc(wg *sync.WaitGroup, exitCtx context.Context, logger *logrus.Entry, overlapping bool, expression crontab.Expression, fn func(time.Time, *logrus.Entry)) {
+func startFunc(
+	wg *sync.WaitGroup,
+	exitCtx context.Context,
+	logger *logrus.Entry,
+	overlapping bool,
+	expression crontab.Expression,
+	timezone *time.Location,
+	fn func(time.Time, *logrus.Entry),
+) {
 	wg.Add(1)
 
 	go func() {
@@ -154,7 +162,7 @@ func startFunc(wg *sync.WaitGroup, exitCtx context.Context, logger *logrus.Entry
 		defer jobWg.Wait()
 
 		var cronIteration uint64
-		nextRun := time.Now()
+		nextRun := time.Now().In(timezone)
 
 		// NOTE: if overlapping is disabled (default), this does not run multiple
 		// instances of the job concurrently
@@ -162,10 +170,12 @@ func startFunc(wg *sync.WaitGroup, exitCtx context.Context, logger *logrus.Entry
 			nextRun = expression.Next(nextRun)
 			logger.Debugf("job will run next at %v", nextRun)
 
-			delay := nextRun.Sub(time.Now())
+			now := time.Now().In(timezone)
+
+			delay := nextRun.Sub(now)
 			if delay < 0 {
 				logger.Warningf("job took too long to run: it should have started %v ago", -delay)
-				nextRun = time.Now()
+				nextRun = now
 				continue
 			}
 
@@ -204,7 +214,16 @@ func startFunc(wg *sync.WaitGroup, exitCtx context.Context, logger *logrus.Entry
 	}()
 }
 
-func StartJob(wg *sync.WaitGroup, cronCtx *crontab.Context, job *crontab.Job, exitCtx context.Context, cronLogger *logrus.Entry, overlapping bool, passthroughLogs bool, promMetrics *prometheus_metrics.PrometheusMetrics) {
+func StartJob(
+	wg *sync.WaitGroup,
+	cronCtx *crontab.Context,
+	job *crontab.Job,
+	exitCtx context.Context,
+	cronLogger *logrus.Entry,
+	overlapping bool,
+	passthroughLogs bool,
+	promMetrics *prometheus_metrics.PrometheusMetrics,
+) {
 	runThisJob := func(t0 time.Time, jobLogger *logrus.Entry) {
 		promMetrics.CronsCurrentlyRunningGauge.With(jobPromLabels(job)).Inc()
 
@@ -238,7 +257,15 @@ func StartJob(wg *sync.WaitGroup, cronCtx *crontab.Context, job *crontab.Job, ex
 		}
 	}
 
-	startFunc(wg, exitCtx, cronLogger, overlapping, job.Expression, runThisJob)
+	startFunc(
+		wg,
+		exitCtx,
+		cronLogger,
+		overlapping,
+		job.Expression,
+		cronCtx.Timezone,
+		runThisJob,
+	)
 }
 
 func jobPromLabels(job *crontab.Job) prometheus.Labels {

@@ -6,6 +6,7 @@ import (
 	"io"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/krallin/cronexpr"
 	"github.com/sirupsen/logrus"
@@ -63,9 +64,9 @@ func ParseCrontab(reader io.Reader) (*Crontab, error) {
 
 	jobs := make([]*Job, 0)
 
-	// TODO: CRON_TZ?
 	environ := make(map[string]string)
 	shell := "/bin/sh"
+	tz := time.Local
 
 	for scanner.Scan() {
 		line := strings.TrimLeft(scanner.Text(), " \t")
@@ -99,6 +100,15 @@ func ParseCrontab(reader io.Reader) (*Crontab, error) {
 				logrus.Warnf("processes will NOT be spawned as USER=%s", envVal)
 			}
 
+			if envKey == "CRON_TZ" {
+				var err error
+				tz, err = time.LoadLocation(envVal)
+				if err != nil {
+					return nil, err
+				}
+				logrus.Infof("processes will be spawned using TZ: %v", tz)
+			}
+
 			environ[envKey] = envVal
 
 			continue
@@ -120,8 +130,9 @@ func ParseCrontab(reader io.Reader) (*Crontab, error) {
 	return &Crontab{
 		Jobs: jobs,
 		Context: &Context{
-			Shell:   shell,
-			Environ: environ,
+			Shell:    shell,
+			Environ:  environ,
+			Timezone: tz,
 		},
 	}, nil
 }

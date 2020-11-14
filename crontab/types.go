@@ -20,8 +20,9 @@ type Job struct {
 }
 
 type Context struct {
-	Shell   string
-	Environ map[string]string
+	Shell    string
+	Environ  map[string]string
+	Timezone *time.Location
 }
 
 type Crontab struct {

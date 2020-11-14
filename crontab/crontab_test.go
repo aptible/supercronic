@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -17,8 +18,9 @@ var parseCrontabTestCases = []struct {
 		"",
 		&Crontab{
 			Context: &Context{
-				Shell:   "/bin/sh",
-				Environ: map[string]string{},
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{},
+				Timezone: time.Local,
 			},
 			Jobs: []*Job{},
 		},
@@ -28,8 +30,9 @@ var parseCrontabTestCases = []struct {
 		"\n",
 		&Crontab{
 			Context: &Context{
-				Shell:   "/bin/sh",
-				Environ: map[string]string{},
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{},
+				Timezone: time.Local,
 			},
 			Jobs: []*Job{},
 		},
@@ -39,8 +42,9 @@ var parseCrontabTestCases = []struct {
 		"FOO=bar\n",
 		&Crontab{
 			Context: &Context{
-				Shell:   "/bin/sh",
-				Environ: map[string]string{"FOO": "bar"},
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{"FOO": "bar"},
+				Timezone: time.Local,
 			},
 			Jobs: []*Job{},
 		},
@@ -50,8 +54,9 @@ var parseCrontabTestCases = []struct {
 		"FOO=bar",
 		&Crontab{
 			Context: &Context{
-				Shell:   "/bin/sh",
-				Environ: map[string]string{"FOO": "bar"},
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{"FOO": "bar"},
+				Timezone: time.Local,
 			},
 			Jobs: []*Job{},
 		},
@@ -61,8 +66,9 @@ var parseCrontabTestCases = []struct {
 		"FOO=\"bar\"",
 		&Crontab{
 			Context: &Context{
-				Shell:   "/bin/sh",
-				Environ: map[string]string{"FOO": "bar"},
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{"FOO": "bar"},
+				Timezone: time.Local,
 			},
 			Jobs: []*Job{},
 		},
@@ -72,8 +78,9 @@ var parseCrontabTestCases = []struct {
 		"FOO='bar'",
 		&Crontab{
 			Context: &Context{
-				Shell:   "/bin/sh",
-				Environ: map[string]string{"FOO": "bar"},
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{"FOO": "bar"},
+				Timezone: time.Local,
 			},
 			Jobs: []*Job{},
 		},
@@ -83,8 +90,9 @@ var parseCrontabTestCases = []struct {
 		"FOO='",
 		&Crontab{
 			Context: &Context{
-				Shell:   "/bin/sh",
-				Environ: map[string]string{"FOO": "'"},
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{"FOO": "'"},
+				Timezone: time.Local,
 			},
 			Jobs: []*Job{},
 		},
@@ -94,8 +102,21 @@ var parseCrontabTestCases = []struct {
 		"FOO=''",
 		&Crontab{
 			Context: &Context{
-				Shell:   "/bin/sh",
-				Environ: map[string]string{"FOO": ""},
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{"FOO": ""},
+				Timezone: time.Local,
+			},
+			Jobs: []*Job{},
+		},
+	},
+
+	{
+		"CRON_TZ=UTC",
+		&Crontab{
+			Context: &Context{
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{"CRON_TZ": "UTC"},
+				Timezone: time.UTC,
 			},
 			Jobs: []*Job{},
 		},
@@ -105,8 +126,9 @@ var parseCrontabTestCases = []struct {
 		"* * * * * foo some # qux",
 		&Crontab{
 			Context: &Context{
-				Shell:   "/bin/sh",
-				Environ: map[string]string{},
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{},
+				Timezone: time.Local,
 			},
 			Jobs: []*Job{
 				{
@@ -128,6 +150,7 @@ var parseCrontabTestCases = []struct {
 					"SHELL": "some",
 					"KEY":   "VAL",
 				},
+				Timezone: time.Local,
 			},
 			Jobs: []*Job{
 				{
@@ -150,8 +173,9 @@ var parseCrontabTestCases = []struct {
 		"* * * * * * with year\n* * * * * * * with seconds\n@daily with shorthand",
 		&Crontab{
 			Context: &Context{
-				Shell:   "/bin/sh",
-				Environ: map[string]string{},
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{},
+				Timezone: time.Local,
 			},
 			Jobs: []*Job{
 				{
@@ -180,8 +204,9 @@ var parseCrontabTestCases = []struct {
 		"# * * * * * * commented\n\n\n  # some\n\t\n\t# more\n  \t  */2 * * * * will run",
 		&Crontab{
 			Context: &Context{
-				Shell:   "/bin/sh",
-				Environ: map[string]string{},
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{},
+				Timezone: time.Local,
 			},
 			Jobs: []*Job{
 				{
@@ -198,8 +223,9 @@ var parseCrontabTestCases = []struct {
 		"* * * * *        \twith plenty of whitespace",
 		&Crontab{
 			Context: &Context{
-				Shell:   "/bin/sh",
-				Environ: map[string]string{},
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{},
+				Timezone: time.Local,
 			},
 			Jobs: []*Job{
 				{
@@ -216,8 +242,9 @@ var parseCrontabTestCases = []struct {
 		"*\t*\t*\t*\t*\ttabs everywhere\n",
 		&Crontab{
 			Context: &Context{
-				Shell:   "/bin/sh",
-				Environ: map[string]string{},
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{},
+				Timezone: time.Local,
 			},
 			Jobs: []*Job{
 				{
@@ -234,8 +261,9 @@ var parseCrontabTestCases = []struct {
 		"@hourly foo1 foo2 foo3 foo4 foo5 foo6",
 		&Crontab{
 			Context: &Context{
-				Shell:   "/bin/sh",
-				Environ: map[string]string{},
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{},
+				Timezone: time.Local,
 			},
 			Jobs: []*Job{
 				{
