@@ -34,12 +34,15 @@ func parseJobLine(line string) (*CrontabLine, error) {
 		scheduleEnds := indices[count-1][1]
 		commandStarts := indices[count][0]
 
-		// TODO: Should receive a logger?
-		logrus.Debugf("try parse(%d): %s[0:%d] = %s", count, line, scheduleEnds, line[0:scheduleEnds])
+		toParse := line[:scheduleEnds]
 
-		expr, err := cronexpr.ParseStrict(line[:scheduleEnds])
+		// TODO: Should receive a logger?
+		logrus.Debugf("try parse (%d fields): '%s'", count, toParse)
+
+		expr, err := cronexpr.ParseStrict(toParse)
 
 		if err != nil {
+			logrus.Debugf("failed to parse (%d fields): '%s': failed: %v", count, toParse, err)
 			continue
 		}
 
@@ -49,7 +52,8 @@ func parseJobLine(line string) (*CrontabLine, error) {
 			Command:    line[commandStarts:],
 		}, nil
 	}
-	return nil, fmt.Errorf("bad crontab line: %s", line)
+
+	return nil, fmt.Errorf("bad crontab line: '%s' (use -debug for details)", line)
 }
 
 func ParseCrontab(reader io.Reader) (*Crontab, error) {
