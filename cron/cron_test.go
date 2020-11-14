@@ -61,8 +61,9 @@ func (expr *testExpression) Next(t time.Time) time.Time {
 
 var (
 	basicContext = crontab.Context{
-		Shell:   "/bin/sh",
-		Environ: map[string]string{},
+		Shell:    "/bin/sh",
+		Environ:  map[string]string{},
+		Timezone: time.Local,
 	}
 
 	noData     logrus.Fields = logrus.Fields{}
@@ -285,7 +286,7 @@ func TestStartFuncWaitsForCompletion(t *testing.T) {
 		<-ctxStep2.Done()
 	}
 
-	startFunc(&wg, ctxStartFunc, logger, false, expr, testFn)
+	startFunc(&wg, ctxStartFunc, logger, false, expr, time.Local, testFn)
 	go func() {
 		wg.Wait()
 		allDone()
@@ -333,7 +334,7 @@ func TestStartFuncDoesNotRunOverlappingJobs(t *testing.T) {
 		<-ctxAllDone.Done()
 	}
 
-	startFunc(&wg, ctxStartFunc, logger, false, expr, testFn)
+	startFunc(&wg, ctxStartFunc, logger, false, expr, time.Local, testFn)
 
 	select {
 	case <-testChan:
@@ -372,7 +373,7 @@ func TestStartFuncRunsOverlappingJobs(t *testing.T) {
 		<-ctxAllDone.Done()
 	}
 
-	startFunc(&wg, ctxStartFunc, logger, true, expr, testFn)
+	startFunc(&wg, ctxStartFunc, logger, true, expr, time.Local, testFn)
 
 	for i := 0; i < 5; i++ {
 		select {
@@ -385,5 +386,53 @@ func TestStartFuncRunsOverlappingJobs(t *testing.T) {
 	cancelStartFunc()
 	allDone()
 
+	wg.Wait()
+}
+
+func TestStartFuncUsesTz(t *testing.T) {
+	// Run a few instances of the cron. Check that we consistently receive
+	// a time in the right TZ, which shows the time is in the right TZ
+	// initially and in further iterations.
+	loc := time.FixedZone("UTC+1", 1*60*60)
+
+	expr := &testExpression{10 * time.Millisecond}
+
+	testChan := make(chan *time.Location, TEST_CHANNEL_BUFFER_SIZE)
+
+	var wg sync.WaitGroup
+	logger, _ := newTestLogger()
+
+	ctxStartFunc, cancelStartFunc := context.WithCancel(context.Background())
+
+	it := 0
+
+	testFn := func(t0 time.Time, jobLogger *logrus.Entry) {
+		testChan <- t0.Location()
+		it += 1
+
+		if it == 1 {
+			return
+		}
+
+		if it == 2 {
+			// Force the next iteration to reset the iteration
+			// clock
+			time.Sleep(20 * time.Millisecond)
+			return
+		}
+	}
+
+	startFunc(&wg, ctxStartFunc, logger, false, expr, loc, testFn)
+
+	for i := 0; i < 5; i++ {
+		select {
+		case jobLoc := <-testChan:
+			assert.Equal(t, jobLoc, loc, "Timezone did not match")
+		case <-time.After(time.Second):
+			t.Fatalf("timeout")
+		}
+	}
+
+	cancelStartFunc()
 	wg.Wait()
 }
