@@ -252,6 +252,10 @@ Report errors to Sentry by passing a Sentry DSN:
 $ ./supercronic -sentry-dsn DSN
 ```
 
+You can also specify the DSN via the `SENTRY_DSN` environment variable.
+When a DSN is specified via both the environment variable and the command line parameter
+the parameter's DSN has priority.
+
 
 ## Questions and Support ###
 
