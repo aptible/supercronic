@@ -438,6 +438,9 @@ func genericFieldParse(s string, desc fieldDescriptor) ([]*cronDirective, error)
 			directive.first = desc.atoi(snormal[pairs[2]:pairs[3]])
 			directive.last = desc.atoi(snormal[pairs[4]:pairs[5]])
 			directive.step = 1
+			if directive.last < directive.first {
+				return nil, fmt.Errorf("invalid interval %s (normalized to %d-%d)", snormal, directive.first, directive.last)
+			}
 			directives = append(directives, &directive)
 			continue
 		}
