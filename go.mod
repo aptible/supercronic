@@ -8,7 +8,6 @@ require (
 	github.com/getsentry/raven-go v0.2.0 // indirect
 	github.com/golang/protobuf v1.4.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/krallin/cronexpr v0.0.0-20201114145102-0373391ef0a2
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.5.1
 	github.com/prometheus/procfs v0.0.11 // indirect
