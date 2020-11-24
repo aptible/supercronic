@@ -2,6 +2,7 @@ package prometheus_metrics
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 
@@ -11,7 +12,8 @@ import (
 )
 
 const (
-	namespace = "supercronic"
+	DefaultPort = "9746"
+	namespace   = "supercronic"
 )
 
 func genMetricName(name string) string {
@@ -99,7 +101,40 @@ func (p *PrometheusMetrics) Reset() {
 	p.CronsExecutionTimeHistogram.Reset()
 }
 
+func getAddr(listenAddr string) (string, error) {
+	if listenAddr == "" {
+		return "", fmt.Errorf("Not address provided")
+	}
+
+	// If the address is fine as-is, use it
+	_, _, err1 := net.SplitHostPort(listenAddr)
+	if err1 == nil {
+		return listenAddr, nil
+	}
+
+	// Otherwise, try to add the port
+	listenAddrWithPort := net.JoinHostPort(listenAddr, DefaultPort)
+	_, _, err2 := net.SplitHostPort(listenAddrWithPort)
+	if err2 == nil {
+		return listenAddrWithPort, nil
+	}
+
+	return "", fmt.Errorf(
+		"%s is not a valid address (%v), and neither is %s after adding the default port (%v)",
+		listenAddr,
+		err1,
+		listenAddrWithPort,
+		err2,
+	)
+
+}
+
 func InitHTTPServer(listenAddr string, shutdownContext context.Context) (func() error, error) {
+	addr, err := getAddr(listenAddr)
+	if err != nil {
+		return nil, err
+	}
+
 	promSrv := &http.Server{}
 
 	http.Handle("/metrics", promhttp.Handler())
@@ -118,7 +153,7 @@ func InitHTTPServer(listenAddr string, shutdownContext context.Context) (func() 
 		return promSrv.Shutdown(shutdownContext)
 	}
 
-	listener, err := net.Listen("tcp", listenAddr)
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return shutdownClosure, err
 	}
