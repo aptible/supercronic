@@ -120,7 +120,10 @@ func main() {
 		}()
 	}
 
-	for true {
+	termChan := make(chan os.Signal, 1)
+	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR2)
+
+	for {
 		promMetrics.Reset()
 
 		logrus.Infof("read crontab: %s", crontabFileName)
@@ -134,7 +137,6 @@ func main() {
 		if *test {
 			logrus.Info("crontab is valid")
 			os.Exit(0)
-			break
 		}
 
 		var wg sync.WaitGroup
@@ -150,9 +152,6 @@ func main() {
 			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, *passthroughLogs, &promMetrics)
 		}
 
-		termChan := make(chan os.Signal, 1)
-		signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR2)
-
 		termSig := <-termChan
 
 		if termSig == syscall.SIGUSR2 {
@@ -162,12 +161,14 @@ func main() {
 		}
 		notifyExit()
 
-		logrus.Info("waiting for jobs to finish")
-		wg.Wait()
-
 		if termSig != syscall.SIGUSR2 {
+			logrus.Info("waiting for jobs to finish")
+			wg.Wait()
 			logrus.Info("exiting")
 			break
+		} else if !*overlapping {
+			logrus.Info("waiting for jobs to finish")
+			wg.Wait()
 		}
 	}
 }
