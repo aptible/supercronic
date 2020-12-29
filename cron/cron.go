@@ -63,8 +63,11 @@ func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.
 	}()
 }
 
-func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry, passthroughLogs bool) error {
-	jobLogger.Info("starting")
+func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry, passthroughLogs bool, rawAppLog bool) error {
+
+	if !rawAppLog {
+		jobLogger.Info("starting")
+	}
 
 	cmd := exec.Command(cronCtx.Shell, "-c", command)
 
@@ -221,6 +224,7 @@ func StartJob(
 	exitCtx context.Context,
 	cronLogger *logrus.Entry,
 	overlapping bool,
+	rawAppLog bool,
 	passthroughLogs bool,
 	promMetrics *prometheus_metrics.PrometheusMetrics,
 ) {
@@ -242,12 +246,15 @@ func StartJob(
 
 		defer timer.ObserveDuration()
 
-		err := runJob(cronCtx, job.Command, jobLogger, passthroughLogs)
+		err := runJob(cronCtx, job.Command, jobLogger, passthroughLogs, rawAppLog)
 
 		promMetrics.CronsExecCounter.With(jobPromLabels(job)).Inc()
 
 		if err == nil {
-			jobLogger.Info("job succeeded")
+
+			if !rawAppLog {
+				jobLogger.Info("job succeeded")
+			}
 
 			promMetrics.CronsSuccessCounter.With(jobPromLabels(job)).Inc()
 		} else {

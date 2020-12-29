@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/aptible/supercronic/formater"
 	"os"
 	"os/signal"
 	"sync"
@@ -26,6 +27,7 @@ var Usage = func() {
 func main() {
 	debug := flag.Bool("debug", false, "enable debug logging")
 	quiet := flag.Bool("quiet", false, "do not log informational messages (takes precedence over debug)")
+	rawAppLog := flag.Bool("raw-app-log", false, "disable wrap self logging, only app log")
 	json := flag.Bool("json", false, "enable JSON logging")
 	test := flag.Bool("test", false, "test crontab (does not run jobs)")
 	prometheusListen := flag.String(
@@ -64,7 +66,9 @@ func main() {
 		logrus.SetLevel(logrus.WarnLevel)
 	}
 
-	if *json {
+	if *rawAppLog {
+		logrus.SetFormatter(&formater.RawAppFormatter{})
+	} else if *json {
 		logrus.SetFormatter(&logrus.JSONFormatter{})
 	} else {
 		logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
@@ -123,7 +127,9 @@ func main() {
 	for true {
 		promMetrics.Reset()
 
-		logrus.Infof("read crontab: %s", crontabFileName)
+		if !*rawAppLog {
+			logrus.Infof("read crontab: %s", crontabFileName)
+		}
 		tab, err := readCrontabAtPath(crontabFileName)
 
 		if err != nil {
@@ -147,7 +153,7 @@ func main() {
 				"job.position": job.Position,
 			})
 
-			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, *passthroughLogs, &promMetrics)
+			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, *rawAppLog, *passthroughLogs, &promMetrics)
 		}
 
 		termChan := make(chan os.Signal, 1)
