@@ -127,7 +127,9 @@ func main() {
 	for true {
 		promMetrics.Reset()
 
-		logrus.Infof("read crontab: %s", crontabFileName)
+		if !*rawAppLog {
+			logrus.Infof("read crontab: %s", crontabFileName)
+		}
 		tab, err := readCrontabAtPath(crontabFileName)
 
 		if err != nil {
@@ -151,7 +153,7 @@ func main() {
 				"job.position": job.Position,
 			})
 
-			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, *passthroughLogs, &promMetrics)
+			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, *rawAppLog, *passthroughLogs, &promMetrics)
 		}
 
 		termChan := make(chan os.Signal, 1)
