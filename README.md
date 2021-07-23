@@ -287,7 +287,7 @@ See [LICENSE.md](./LICENSE.md).
 Copyright (c) 2019 [Aptible][aptible]. All rights reserved.
 
   [aptible-logo]: https://raw.github.com/aptible/straptible/master/lib/straptible/rails/templates/public.api/icon-60px.png
-  [blog-post]: https://www.aptible.com/blog/introducing-supercronic-cron-for-containers
+  [blog-post]: https://www.aptible.com/blog/cron-for-containers-introduction-supercronic
   [cronexpr]: https://github.com/aptible/supercronic/tree/master/cronexpr
   [releases]: https://github.com/aptible/supercronic/releases
   [dep]: https://github.com/golang/dep
