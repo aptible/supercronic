@@ -149,6 +149,10 @@ func InitHTTPServer(listenAddr string, shutdownContext context.Context) (func() 
              </html>`))
 	})
 
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`OK`))
+	})
+
 	shutdownClosure := func() error {
 		return promSrv.Shutdown(shutdownContext)
 	}
