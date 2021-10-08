@@ -212,6 +212,8 @@ You can optionally disable this behavior and allow overlapping instances of
 your jobs by passing the `-overlapping` flag to Supercronic. Supercronic will
 still warn about jobs falling behind, but will run duplicate instances of them.
 
+If you pass `-replacing` flag and it's time for a new job iteration to run, 
+Supercronic will kill the previous job process if it hasn't finished yet.  
 
 ## Reload crontab
 

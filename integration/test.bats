@@ -62,6 +62,11 @@ wait_for() {
   [[ "$n" -ge 4 ]]
 }
 
+@test "it runs replacing jobs" {
+  n="$(SUPERCRONIC_ARGS="-replacing" run_supercronic "${BATS_TEST_DIRNAME}/timeout.crontab" 5s | grep -iE "killed" | wc -l)"
+  [[ "$n" -ge 3 ]]
+}
+
 @test "it supports debug logging " {
   SUPERCRONIC_ARGS="-debug" run_supercronic "${BATS_TEST_DIRNAME}/hello.crontab" | grep -iE "debug"
 }
