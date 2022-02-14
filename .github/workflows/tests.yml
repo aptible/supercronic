@@ -20,12 +20,3 @@ jobs: # Docs: <https://git.io/JvxXE>
           context: .
           file: Dockerfile
           push: false
-          tags: supercronic:ci
-
-      - run: docker save supercronic:ci > ./docker-image.tar
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: docker-image
-          path: ./docker-image.tar
-          retention-days: 1
