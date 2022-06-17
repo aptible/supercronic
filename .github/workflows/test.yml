@@ -21,9 +21,9 @@ jobs:
         go-version: ${{ matrix.go-version }}
 
     - name: install bats
-      uses: mig4/setup-bats@v1
-      with:
-        bats-version: 1.2.1
+      run: |
+        git clone https://github.com/sstephenson/bats.git --branch v0.4.0 --depth 1 "${HOME}/bats"
+        echo "${HOME}/bats/bin" >> $GITHUB_PATH
 
     - name: checkout code
       uses: actions/checkout@v2
