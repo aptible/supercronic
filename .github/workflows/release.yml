@@ -17,6 +17,9 @@ jobs:
     - name: checkout code
       uses: actions/checkout@v2
 
+    - name: build assets
+      run: make release
+
     - uses: AButler/upload-release-assets@v2.0
       with:
         files: 'dist/*'

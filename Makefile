@@ -26,4 +26,8 @@ test: unit integration
 fmt:
 	gofmt -l -w ${GOFILES_NOVENDOR}
 
+.PHONY: release
+release:
+	./build.sh
+
 .DEFAULT_GOAL := test
