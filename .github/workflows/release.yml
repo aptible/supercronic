@@ -20,7 +20,5 @@ jobs:
     - name: build assets
       run: make release
 
-    - uses: AButler/upload-release-assets@v2.0
-      with:
-        files: 'dist/*'
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: upload assets to release
+      run: gh release upload ${{ github.event.release.tag_name }} dist/*
