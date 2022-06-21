@@ -21,9 +21,7 @@ jobs:
       run: make release
 
     - name: gh login
-      run: gh auth login
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run:  echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
 
     - name: upload assets to release
       run: gh release upload ${{ github.event.release.tag_name }} dist/*
