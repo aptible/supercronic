@@ -1,0 +1,32 @@
+name: tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        go-version: [1.17.x, 1.18.x]
+
+    steps:
+    - name: install golang
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: install bats
+      run: |
+        git clone https://github.com/sstephenson/bats.git --branch v0.4.0 --depth 1 "${HOME}/bats"
+        echo "${HOME}/bats/bin" >> $GITHUB_PATH
+
+    - name: checkout code
+      uses: actions/checkout@v2
+
+    - name: run tests
+      run: make test
