@@ -25,5 +25,5 @@ require (
 	github.com/prometheus/procfs v0.0.11 // indirect
 	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
 	google.golang.org/protobuf v1.21.0 // indirect
-	gopkg.in/yaml.v2 v2.2.5 // indirect
+	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
