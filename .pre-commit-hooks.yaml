@@ -1,0 +1,7 @@
+- id: lint-crontab
+  name: Lint crontab files
+  description: Lint crontab files for scheduling syntax
+  language: golang
+  types: [file]
+  files: \.crontab$
+  entry: supercronic -test
