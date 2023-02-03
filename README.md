@@ -142,7 +142,7 @@ You can also override the timezone by setting the environment variable `TZ`
 (e.g. `TZ=Europe/Berlin`) when running Supercronic. You may need to install
 `tzdata` in order for Supercronic to find the supplied timezone.
 
-You can override `TZ  to use a different timezone, but if you need your cron
+You can override `TZ` to use a different timezone, but if you need your cron
 jobs to be scheduled in a timezone A and have them run in a timezone B, you can
 run with `/etc/localtime` or `TZ` set to `B` and add a `CRON_TZ=A` line to your
 crontab.
