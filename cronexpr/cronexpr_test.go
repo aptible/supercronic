@@ -194,6 +194,16 @@ var crontests = []crontest{
 		},
 	},
 
+	// Check that month is allowed a zero prefix (should correctly land in february in subsequent year)
+	{
+		"0 0 28 02 * *",
+		"Mon 2006-01-02 15:04",
+		[]crontimes{
+			{"2013-09-02 00:00:00", "Fri 2014-02-28 00:00"},
+			{"2014-08-15 00:00:00", "Sat 2015-02-28 00:00"},
+		},
+	},
+
 	// TODO: more tests
 }
 
@@ -230,7 +240,12 @@ func TestZero(t *testing.T) {
 
 	next = MustParse("* * * * * 2099").Next(time.Time{})
 	if next.IsZero() == false {
-		t.Error(`("* * * * * 2014").Next(time.Time{}).IsZero() returned 'true', expected 'false'`)
+		t.Error(`("* * * * * 2099").Next(time.Time{}).IsZero() returned 'true', expected 'false'`)
+	}
+
+	next = MustParse("11 1 31 2 * *").Next(time.Time{})
+	if next.IsZero() == false {
+		t.Error(`("11 1 31 2 * *").Next(time.Time{}).IsZero() returned 'true', expected 'false'`)
 	}
 }
 
