@@ -1,10 +1,13 @@
-# ![][aptible-logo] Supercronic #
+<br>
+<img src="https://user-images.githubusercontent.com/4295811/226700092-ffbd0c01-dba1-4880-8b77-a4d26e6228f0.svg"  width="64">
+
+# Supercronic #
 
 > Supercronic has an [announcement blog post over here][blog-post]!
 
 Supercronic is a crontab-compatible job runner, designed specifically to run in
 containers.
-
+ 
 
 ## Why Supercronic? ##
 
