@@ -1,4 +1,5 @@
-![Aptible_RGB_Primary-Lockup](https://user-images.githubusercontent.com/4295811/226693838-7b5aa202-4768-4f56-bcfd-1372155aa530.png)
+<img src="https://user-images.githubusercontent.com/4295811/226696507-217a0311-1f1c-46f8-825b-e5231cc5d462.svg"  width="300">
+
 # Supercronic #
 
 > Supercronic has an [announcement blog post over here][blog-post]!
