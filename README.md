@@ -54,7 +54,7 @@ a container to behave:
 ## Who is it for?
 
 We (Aptible) originally created Supercronic to make it easy for customers of our
-[Enclave container orchestration platform][aptible-enclave] to incorporate
+[No Infrastructure Platform][aptible-app] to incorporate
 periodic jobs in their apps, but it's more broadly applicable to **anyone
 running cron jobs in containers**.
 
@@ -270,7 +270,7 @@ the parameter's DSN has priority.
 Please feel free to open an issue in this repository if you have any question
 about Supercronic!
 
-Note that if you're trying to use Supercronic on Aptible Enclave, we have [a
+Note that if you're trying to use Supercronic on Aptible App, we have [a
 dedicated support article][how-to-run-scheduled-tasks].
 
 
@@ -295,5 +295,5 @@ Copyright (c) 2019 [Aptible][aptible]. All rights reserved.
   [releases]: https://github.com/aptible/supercronic/releases
   [dep]: https://github.com/golang/dep
   [aptible]: https://www.aptible.com
-  [aptible-enclave]: https://www.aptible.com/enclave
-  [how-to-run-scheduled-tasks]: https://www.aptible.com/support/topics/enclave/how-to-run-scheduled-tasks/
+  [aptible-app]: https://www.aptible.com/product
+  [how-to-run-scheduled-tasks]: https://www.aptible.com/docs/scheduled-tasks
