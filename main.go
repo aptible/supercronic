@@ -146,7 +146,7 @@ func main() {
 				"job.command":  job.Command,
 				"job.position": job.Position,
 			})
-
+			cron.InitJobPromMetrics(job, &promMetrics)
 			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, *passthroughLogs, &promMetrics)
 		}
 
