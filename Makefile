@@ -22,8 +22,8 @@ integration: build
 test: unit integration
 	true
 
-.PHONY: integration
-integration: vulncheck
+.PHONY: vulncheck
+vulncheck: build
 	govulncheck ./...
 
 .PHONY: fmt
