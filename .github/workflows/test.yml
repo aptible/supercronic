@@ -25,6 +25,10 @@ jobs:
         git clone https://github.com/sstephenson/bats.git --branch v0.4.0 --depth 1 "${HOME}/bats"
         echo "${HOME}/bats/bin" >> $GITHUB_PATH
 
+    - name: install govulncheck
+      run: |
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+
     - name: checkout code
       uses: actions/checkout@v2
 
