@@ -22,6 +22,10 @@ integration: build
 test: unit integration
 	true
 
+.PHONY: vulncheck
+vulncheck: build
+	govulncheck ./...
+
 .PHONY: fmt
 fmt:
 	gofmt -l -w ${GOFILES_NOVENDOR}
