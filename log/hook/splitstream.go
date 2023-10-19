@@ -3,7 +3,6 @@ package hook
 import (
 	"github.com/sirupsen/logrus"
 	"io"
-	"io/ioutil"
 )
 
 type writerHook struct {
@@ -25,7 +24,7 @@ func (h *writerHook) Fire(entry *logrus.Entry) error {
 }
 
 func RegisterSplitLogger(logger *logrus.Logger, outWriter io.Writer, errWriter io.Writer) {
-	logger.SetOutput(ioutil.Discard)
+	logger.SetOutput(io.Discard)
 
 	logger.AddHook(&writerHook{
 		writer: outWriter,
