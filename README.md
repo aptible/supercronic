@@ -254,8 +254,11 @@ time="2019-01-12T19:35:00+09:00" level=info msg="job succeeded" iteration=0 job.
 
 ### Sentry
 
-Report errors to Sentry by passing a Sentry DSN:
+Supercronic offers integration with Sentry for real-time error tracking and reporting. This feature helps in identifying, triaging, and fixing crashes in your cron jobs.
 
+#### Enabling Sentry
+
+To enable Sentry reporting, configure the Sentry Data Source Name (DSN) e.g. use the `-sentry-dsn` argument when starting Supercronic
 ```
 $ ./supercronic -sentry-dsn DSN
 ```
@@ -264,6 +267,22 @@ You can also specify the DSN via the `SENTRY_DSN` environment variable.
 When a DSN is specified via both the environment variable and the command line parameter
 the parameter's DSN has priority.
 
+
+#### Additional Sentry Configuration
+
+You can also specify the environment and release for Sentry to provide more context to the error reports:
+
+Environment: Use the `-sentry-environment` flag or the `SENTRY_ENVIRONMENT` environment variable to set the environment tag in Sentry.
+
+```
+$ ./supercronic -sentry-dsn YOUR_SENTRY_DSN -sentry-environment YOUR_ENVIRONMENT
+```
+
+Release: Use the `-sentry-release` flag or the `SENTRY_RELEASE` environment variable to set the release tag in Sentry.
+
+```
+$ ./supercronic -sentry-dsn YOUR_SENTRY_DSN -sentry-release YOUR_RELEASE
+```
 
 ## Questions and Support ###
 
