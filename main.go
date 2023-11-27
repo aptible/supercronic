@@ -40,13 +40,21 @@ func main() {
 	splitLogs := flag.Bool("split-logs", false, "split log output into stdout/stderr")
 	passthroughLogs := flag.Bool("passthrough-logs", false, "passthrough logs from commands, do not wrap them in Supercronic logging")
 	sentry := flag.String("sentry-dsn", "", "enable Sentry error logging, using provided DSN")
+	sentryEnvironmentFlag := flag.String("sentry-environment", "", "specify the application's environment for Sentry error reporting")
+	sentryReleaseFlag := flag.String("sentry-release", "", "specify the application's release version for Sentry error reporting")
 	sentryAlias := flag.String("sentryDsn", "", "alias for sentry-dsn")
 	overlapping := flag.Bool("overlapping", false, "enable tasks overlapping")
 	flag.Parse()
 
-	var sentryDsn string
+	var (
+		sentryDsn         string
+		sentryEnvironment string
+		sentryRelease     string
+	)
 
 	sentryDsn = os.Getenv("SENTRY_DSN")
+	sentryEnvironment = os.Getenv("SENTRY_ENVIRONMENT")
+	sentryRelease = os.Getenv("SENTRY_RELEASE")
 
 	if *sentryAlias != "" {
 		sentryDsn = *sentryAlias
@@ -54,6 +62,14 @@ func main() {
 
 	if *sentry != "" {
 		sentryDsn = *sentry
+	}
+
+	if *sentryEnvironmentFlag != "" {
+		sentryEnvironment = *sentryEnvironmentFlag
+	}
+
+	if *sentryReleaseFlag != "" {
+		sentryRelease = *sentryReleaseFlag
 	}
 
 	if *debug {
@@ -100,6 +116,14 @@ func main() {
 			sentryHook = sh
 		}
 
+		if sentryEnvironment != "" {
+			sh.SetEnvironment(sentryEnvironment)
+		}
+
+		if sentryRelease != "" {
+			sh.SetRelease(sentryRelease)
+		}
+
 		if sentryHook != nil {
 			logrus.StandardLogger().AddHook(sentryHook)
 		}
@@ -120,7 +144,7 @@ func main() {
 		}()
 	}
 
-	for true {
+	for {
 		promMetrics.Reset()
 
 		logrus.Infof("read crontab: %s", crontabFileName)
