@@ -175,7 +175,7 @@ func main() {
 		}
 
 		termChan := make(chan os.Signal, 1)
-		signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR2)
+		signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR2)
 
 		termSig := <-termChan
 
