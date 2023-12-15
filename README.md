@@ -21,7 +21,7 @@ implementations are ill-suited for container environments:
   email this output or simply discard it. In a containerized environment,
   logging task output and errors to `stdout` / `stderr` is often easier to work
   with.
-- They often don't respond gracefully to `SIGINT` / `SIGTERM`, and may leave
+- They often don't respond gracefully to `SIGINT` / `SIGTERM` / `SIGQUIT`, and may leave
   running jobs orphaned when signaled. Again, this makes sense in a server
   environment where `init` will handle the orphan jobs and Cron isn't restarted
   often anyway, but it's inappropriate in a container environment as it'll
@@ -43,6 +43,7 @@ a container to behave:
   deliver via CTRL+C when used interactively)
 - Job return codes and schedules are logged to `stdout` / `stderr`
 - `SIGUSR2` triggers a graceful shutdown and reloads the crontab configuration
+- `SIGQUIT` triggers a graceful shutdown
 
 ## How does it work? ##
 
