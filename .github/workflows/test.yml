@@ -12,11 +12,11 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [1.21.5]
+        go-version: [1.22.4]
 
     steps:
     - name: install golang
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
 
@@ -30,7 +30,7 @@ jobs:
         go install golang.org/x/vuln/cmd/govulncheck@latest
 
     - name: checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: run tests
       run: make test
