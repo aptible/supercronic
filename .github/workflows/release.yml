@@ -10,12 +10,12 @@ jobs:
 
     steps:
     - name: install golang
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v5
       with:
-        go-version: 1.21.5
+        go-version: 1.22.4
 
     - name: checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: build assets
       run: make release
