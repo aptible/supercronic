@@ -12,6 +12,7 @@ import (
 
 	"github.com/aptible/supercronic/cron"
 	"github.com/aptible/supercronic/crontab"
+	"github.com/aptible/supercronic/log/formatter"
 	"github.com/aptible/supercronic/log/hook"
 	"github.com/aptible/supercronic/prometheus_metrics"
 	"github.com/evalphobia/logrus_sentry"
@@ -37,6 +38,7 @@ func main() {
 			prometheus_metrics.DefaultPort,
 		),
 	)
+	customLogFormat := flag.String("log-format", "", "custom log format. Available fields are %level %time %message %job.command %job.schedule %job.position")
 	splitLogs := flag.Bool("split-logs", false, "split log output into stdout/stderr")
 	passthroughLogs := flag.Bool("passthrough-logs", false, "passthrough logs from commands, do not wrap them in Supercronic logging")
 	sentry := flag.String("sentry-dsn", "", "enable Sentry error logging, using provided DSN")
@@ -80,11 +82,16 @@ func main() {
 		logrus.SetLevel(logrus.WarnLevel)
 	}
 
-	if *json {
+	if *customLogFormat != "" {
+		customFormatter := new(formatter.CustomFieldFormatter)
+		customFormatter.LogFormat = *customLogFormat
+		logrus.SetFormatter(customFormatter)
+	} else if *json {
 		logrus.SetFormatter(&logrus.JSONFormatter{})
 	} else {
 		logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
 	}
+
 	if *splitLogs {
 		hook.RegisterSplitLogger(
 			logrus.StandardLogger(),
