@@ -5,6 +5,7 @@ go 1.22.4
 require (
 	github.com/evalphobia/logrus_sentry v0.8.2
 	github.com/prometheus/client_golang v1.19.1
+	github.com/ramr/go-reaper v0.2.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.0
 )
