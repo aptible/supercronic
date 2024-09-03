@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [1.22.4]
+        go-version: [1.23.0]
 
     steps:
     - name: install golang
@@ -22,7 +22,7 @@ jobs:
 
     - name: install bats
       run: |
-        git clone https://github.com/sstephenson/bats.git --branch v0.4.0 --depth 1 "${HOME}/bats"
+        git clone https://github.com/bats-core/bats-core.git --branch v1.11.0 --depth 1 "${HOME}/bats"
         echo "${HOME}/bats/bin" >> $GITHUB_PATH
 
     - name: install govulncheck

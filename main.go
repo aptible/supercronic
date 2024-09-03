@@ -15,6 +15,7 @@ import (
 	"github.com/aptible/supercronic/log/hook"
 	"github.com/aptible/supercronic/prometheus_metrics"
 	"github.com/evalphobia/logrus_sentry"
+	reaper "github.com/ramr/go-reaper"
 	"github.com/sirupsen/logrus"
 )
 
@@ -143,6 +144,10 @@ func main() {
 			}
 		}()
 	}
+
+	//  Start background reaping of orphaned child processes.
+	go reaper.Reap()
+	// _ = reaper.Reap
 
 	for {
 		promMetrics.Reset()

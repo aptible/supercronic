@@ -101,3 +101,15 @@ wait_for() {
 @test "it errors on an invalid crontab" {
   ! run_supercronic -test "${BATS_TEST_DIRNAME}/invalid.crontab"
 }
+
+@test "reap zombie process" {
+  # run in new process namespace
+  sudo timeout 10s unshare --fork --pid --mount-proc \
+     ${BATS_TEST_DIRNAME}/../supercronic "${BATS_TEST_DIRNAME}/zombie.crontab" &
+  local pid=$!
+  sleep 1.5
+  run bash -c "ps axo pid=,stat=|grep Z"
+  kill -TERM ${pid}
+  
+  [[ "$status" -eq 1 ]]
+}
