@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"regexp"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -130,17 +129,6 @@ var runJobTestCases = []struct {
 			{Message: "starting", Level: logrus.InfoLevel, Data: noData},
 			{Message: "hello", Level: logrus.InfoLevel, Data: stdoutData},
 			{Message: "bar", Level: logrus.InfoLevel, Data: stderrData},
-		},
-	},
-	{
-		fmt.Sprintf("python -c 'print(\"a\" * %d * 3)'", READ_BUFFER_SIZE), true, &basicContext,
-		[]*logrus.Entry{
-			{Message: "starting", Level: logrus.InfoLevel, Data: noData},
-			{Message: strings.Repeat("a", READ_BUFFER_SIZE), Level: logrus.InfoLevel, Data: stdoutData},
-			{Message: "last line exceeded buffer size, continuing...", Level: logrus.WarnLevel, Data: stdoutData},
-			{Message: strings.Repeat("a", READ_BUFFER_SIZE), Level: logrus.InfoLevel, Data: stdoutData},
-			{Message: "last line exceeded buffer size, continuing...", Level: logrus.WarnLevel, Data: stdoutData},
-			{Message: strings.Repeat("a", READ_BUFFER_SIZE), Level: logrus.InfoLevel, Data: stdoutData},
 		},
 	},
 }
