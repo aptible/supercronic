@@ -7,7 +7,7 @@ deps:
 
 .PHONY: build
 build: $(GOFILES)
-	go build
+	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -ldflags="-w -s"
 
 .PHONY: unit
 unit:

@@ -115,6 +115,7 @@ func main() {
 		}
 		defer watcher.Close()
 
+		logrus.Infof("adding file watch for '%s'", crontabFileName)
 		if err := watcher.Add(crontabFileName); err != nil {
 			logrus.Fatal(err)
 			return
@@ -179,10 +180,27 @@ func main() {
 					if !ok {
 						return
 					}
-					if event.Has(fsnotify.Write) {
+					logrus.Debugf("event: %v, watch-list: %v", event, watcher.WatchList())
+
+					switch event.Op {
+					case event.Op & fsnotify.Write:
+						logrus.Debug("watched file changed")
 						termChan <- syscall.SIGUSR2
-						logrus.Info("crontab file changed, reloading")
+
+					// workaround for k8s configmap and secret mounts
+					case event.Op & fsnotify.Remove:
+						logrus.Debug("watched file changed")
+						/*if err := watcher.Remove(event.Name); err != nil {
+							logrus.Fatal(err)
+							return
+						}*/
+						if err := watcher.Add(event.Name); err != nil {
+							logrus.Fatal(err)
+							return
+						}
+						termChan <- syscall.SIGUSR2
 					}
+
 				case err, ok := <-watcher.Errors:
 					if !ok {
 						return
