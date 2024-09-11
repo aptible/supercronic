@@ -1,0 +1,19 @@
+include:
+  - template: 'Workflows/MergeRequest-Pipelines.gitlab-ci.yml'
+  - project: 'asylum/gereedschappen/gedeelde-bibliotheek'
+    ref: master
+    file: '/ci/common.yaml'
+  - project: 'asylum/gereedschappen/gedeelde-bibliotheek'
+    ref: master
+    file: '/ci/go-lint.yaml'
+  - project: 'asylum/gereedschappen/gedeelde-bibliotheek'
+    ref: master
+    file: '/ci/go-test.yaml'
+
+stages:
+  - test
+
+variables:
+  CHECK_CRDS: "true"
+  GO_VERSION: "1.23"
+  GOLANG_CI_LINT_VERSION: "v1.57.2"
