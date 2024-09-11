@@ -15,6 +15,7 @@ import (
 	"github.com/aptible/supercronic/log/hook"
 	"github.com/aptible/supercronic/prometheus_metrics"
 	"github.com/evalphobia/logrus_sentry"
+	"github.com/fsnotify/fsnotify"
 	reaper "github.com/ramr/go-reaper"
 	"github.com/sirupsen/logrus"
 )
@@ -29,6 +30,7 @@ func main() {
 	quiet := flag.Bool("quiet", false, "do not log informational messages (takes precedence over debug)")
 	json := flag.Bool("json", false, "enable JSON logging")
 	test := flag.Bool("test", false, "test crontab (does not run jobs)")
+	inotify := flag.Bool("inotify", false, "use inotify to detect crontab file changes")
 	prometheusListen := flag.String(
 		"prometheus-listen-address",
 		"",
@@ -102,6 +104,23 @@ func main() {
 
 	crontabFileName := flag.Args()[0]
 
+	var watcher *fsnotify.Watcher
+	if *inotify {
+		logrus.Info("using inotify to detect crontab file changes")
+		var err error
+		watcher, err = fsnotify.NewWatcher()
+		if err != nil {
+			logrus.Fatal(err)
+			return
+		}
+		defer watcher.Close()
+
+		if err := watcher.Add(crontabFileName); err != nil {
+			logrus.Fatal(err)
+			return
+		}
+	}
+
 	var sentryHook *logrus_sentry.SentryHook
 	if sentryDsn != "" {
 		sentryLevels := []logrus.Level{
@@ -149,6 +168,31 @@ func main() {
 	go reaper.Reap()
 	// _ = reaper.Reap
 
+	termChan := make(chan os.Signal, 1)
+	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR2)
+
+	if *inotify {
+		go func() {
+			for {
+				select {
+				case event, ok := <-watcher.Events:
+					if !ok {
+						return
+					}
+					if event.Has(fsnotify.Write) {
+						termChan <- syscall.SIGUSR2
+						logrus.Info("crontab file changed, reloading")
+					}
+				case err, ok := <-watcher.Errors:
+					if !ok {
+						return
+					}
+					logrus.Error("error:", err)
+				}
+			}
+		}()
+	}
+
 	for {
 		promMetrics.Reset()
 
@@ -178,9 +222,6 @@ func main() {
 
 			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, *passthroughLogs, &promMetrics)
 		}
-
-		termChan := make(chan os.Signal, 1)
-		signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR2)
 
 		termSig := <-termChan
 

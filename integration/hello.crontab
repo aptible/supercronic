@@ -1,1 +1,1 @@
-* * * * * * * echo "hello from crontab"
+* * * * * * curl https://google.com
