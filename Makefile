@@ -9,6 +9,11 @@ deps:
 build: $(GOFILES)
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -ldflags="-w -s"
 
+.PHONY: docker-build
+docker-build:
+	docker build -f Dockerfile \
+ 		 -t supercronic:latest .
+
 .PHONY: unit
 unit:
 	go test -v -race $$(go list ./... | grep -v /vendor/)
