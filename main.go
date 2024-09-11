@@ -190,7 +190,7 @@ func main() {
 					// workaround for k8s configmap and secret mounts
 					case event.Op & fsnotify.Remove:
 						logrus.Debug("watched file changed")
-						if err := watcher.Add(event.Name); err != nil {
+						if err := watcher.Add(crontabFileName); err != nil {
 							logrus.Fatal(err)
 							return
 						}
