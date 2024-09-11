@@ -229,6 +229,27 @@ docker kill --signal=USR2 <container id>
 kill -USR2 <pid>
 ```
 
+If you are running Supercronic in an environment were sending `SIGUSR2` is a bit of a hassle, or you expect frequent updates to your crontab file, you may opt to run Supercronic with the `-inotify` flag. This will start a watch on the crontab file, reloading it on changes. An example use case would be a kubernetes pod runnning Supercronic that mounts its crontab file from a configMap. With the `-inotify` flag, any update to this configmap, provided it is not immutable, will trigger a reload in Supercropnic, without you having to figure out a mechanism to send the `SIGUSR2` signal to the pod. The watch on the crontab file triggers on `Write` and `Remove` events, the latter ensures detection of kubernetes' atomic writes.
+
+```
+$ ./supercronic -inotify ./my-crontab
+...
+time="2024-09-11T09:23:18+02:00" level=debug msg="event: CHMOD         \"./my-crontab\", watch-list: []"
+time="2024-09-11T09:23:18+02:00" level=debug msg="event: REMOVE        \"./my-crontab\", watch-list: []"
+time="2024-09-11T09:23:18+02:00" level=debug msg="watched file changed"
+time="2024-09-11T09:23:18+02:00" level=info msg="received user defined signal 2, reloading crontab"
+time="2024-09-11T09:23:18+02:00" level=info msg="waiting for jobs to finish"
+time="2024-09-11T09:23:18+02:00" level=debug msg="shutting down" job.command="sleep 2" job.position=0 job.schedule="* * * * *"
+time="2024-09-11T09:23:18+02:00" level=info msg="read crontab: ./my-crontab"
+time="2024-09-11T09:23:18+02:00" level=debug msg="try parse (7 fields): '* * * * * sleep 5'"
+time="2024-09-11T09:23:18+02:00" level=debug msg="failed to parse (7 fields): '* * * * * sleep 5': failed: syntax error in day-of-week field: 'sleep'"
+time="2024-09-11T09:23:18+02:00" level=debug msg="try parse (6 fields): '* * * * * sleep'"
+time="2024-09-11T09:23:18+02:00" level=debug msg="failed to parse (6 fields): '* * * * * sleep': failed: syntax error in year field: 'sleep'"
+time="2024-09-11T09:23:18+02:00" level=debug msg="try parse (5 fields): '* * * * *'"
+time="2024-09-11T09:23:18+02:00" level=debug msg="job will run next at 2024-09-11 09:24:00 +0200 CEST" job.command="sleep 5" job.position=0 job.schedule="* * * * *"
+
+```
+
 ## Testing your crontab
 
 Use the `-test` flag to prompt Supercronic to verify your crontab, but not
