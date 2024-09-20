@@ -16,7 +16,6 @@ import (
 	"github.com/aptible/supercronic/prometheus_metrics"
 	"github.com/evalphobia/logrus_sentry"
 	"github.com/fsnotify/fsnotify"
-	reaper "github.com/ramr/go-reaper"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,6 +25,16 @@ var Usage = func() {
 }
 
 func main() {
+	if os.Getpid() == 1 {
+		// Clean up zombie processes caused by incorrect crontab commands
+		// Use forkExec to avoid random waitid errors
+		// https://github.com/aptible/supercronic/issues/88
+		// https://github.com/aptible/supercronic/issues/171
+		logrus.Info("will cleaning up zombie processes")
+		forkExec()
+		return
+	}
+
 	debug := flag.Bool("debug", false, "enable debug logging")
 	quiet := flag.Bool("quiet", false, "do not log informational messages (takes precedence over debug)")
 	json := flag.Bool("json", false, "enable JSON logging")
@@ -164,10 +173,6 @@ func main() {
 			}
 		}()
 	}
-
-	//  Start background reaping of orphaned child processes.
-	go reaper.Reap()
-	// _ = reaper.Reap
 
 	termChan := make(chan os.Signal, 1)
 	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR2)

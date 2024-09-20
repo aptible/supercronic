@@ -113,3 +113,25 @@ wait_for() {
   
   [[ "$status" -eq 1 ]]
 }
+
+
+@test "normal crontab no error" {
+  out="${WORK_DIR}/normal-crontab-out"
+
+  sudo unshare --fork --pid --mount-proc \
+  "${BATS_TEST_DIRNAME}/../supercronic" "${BATS_TEST_DIRNAME}/normal.crontab" >"$out" 2>&1 &
+  # https://github.com/aptible/supercronic/issues/171
+  local pid=$!
+  local foundErr
+
+  # sleep 30 seconds occur found bug
+  for i in $(seq 0 300); do
+    grep "waitid: no child processes" "$out" && foundErr=1
+    if [[ $foundErr == 1 ]] ; then
+      break
+    fi
+    sleep 0.1
+  done
+  kill -TERM ${pid}
+  [[ $foundErr != 1 ]]
+}
