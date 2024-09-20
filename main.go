@@ -25,6 +25,24 @@ var Usage = func() {
 	flag.PrintDefaults()
 }
 
+func testCrontabFiles(fileNames []string) int {
+	exitCode := 0
+
+	for _, fileName := range fileNames {
+		logrus.Infof("read crontab: %s", fileName)
+		_, err := readCrontabAtPath(fileName)
+
+		if err != nil {
+			logrus.Error(err)
+			exitCode = 1
+		} else {
+			logrus.Infof("crontab is valid: %s", fileName)
+		}
+	}
+
+	return exitCode
+}
+
 func main() {
 	debug := flag.Bool("debug", false, "enable debug logging")
 	quiet := flag.Bool("quiet", false, "do not log informational messages (takes precedence over debug)")
@@ -96,9 +114,17 @@ func main() {
 		)
 	}
 
-	if flag.NArg() != 1 {
+	// Allow FILE... for test flag to use with linting
+	validArgs := flag.NArg() == 1 || (*test && flag.NArg() > 1)
+	if !validArgs {
 		Usage()
 		os.Exit(2)
+		return
+	}
+
+	if *test {
+		fileNames := flag.Args()
+		os.Exit(testCrontabFiles(fileNames))
 		return
 	}
 
@@ -215,12 +241,6 @@ func main() {
 
 		if err != nil {
 			logrus.Fatal(err)
-			break
-		}
-
-		if *test {
-			logrus.Info("crontab is valid")
-			os.Exit(0)
 			break
 		}
 
