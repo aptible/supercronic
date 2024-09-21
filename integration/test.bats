@@ -102,29 +102,32 @@ wait_for() {
   ! run_supercronic -test "${BATS_TEST_DIRNAME}/invalid.crontab"
 }
 
-@test "reap zombie process" {
+@test "it run as pid 1 and reap zombie process" {
+  out="${WORK_DIR}/zombie-crontab-out"
+
   # run in new process namespace
   sudo timeout 10s unshare --fork --pid --mount-proc \
-     ${BATS_TEST_DIRNAME}/../supercronic "${BATS_TEST_DIRNAME}/zombie.crontab" &
+     ${BATS_TEST_DIRNAME}/../supercronic -reap "${BATS_TEST_DIRNAME}/zombie.crontab"  >"$out" 2>&1 &
   local pid=$!
-  sleep 1.5
-  run bash -c "ps axo pid=,stat=|grep Z"
+  sleep 3
+
   kill -TERM ${pid}
-  
-  [[ "$status" -eq 1 ]]
+  # todo: use other method to detect zombie cleanup
+  wait_for grep "reaper cleanup: pid=" "$out"  
 }
 
 
-@test "normal crontab no error" {
+@test "it run as pid 1 and normal crontab no error" {
   out="${WORK_DIR}/normal-crontab-out"
 
   sudo unshare --fork --pid --mount-proc \
-  "${BATS_TEST_DIRNAME}/../supercronic" "${BATS_TEST_DIRNAME}/normal.crontab" >"$out" 2>&1 &
+  "${BATS_TEST_DIRNAME}/../supercronic" -reap "${BATS_TEST_DIRNAME}/normal.crontab" >"$out" 2>&1 &
   # https://github.com/aptible/supercronic/issues/171
   local pid=$!
   local foundErr
 
   # sleep 30 seconds occur found bug
+  # FIXME: other way to detect
   for i in $(seq 0 300); do
     grep "waitid: no child processes" "$out" && foundErr=1
     if [[ $foundErr == 1 ]] ; then

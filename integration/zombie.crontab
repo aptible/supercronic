@@ -1,1 +1,1 @@
-* * * * * * * /bin/sleep 1 & exec /bin/sleep 0
+* * * * * * * /bin/sleep 0.1 & exec /bin/sleep 0

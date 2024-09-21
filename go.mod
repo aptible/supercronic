@@ -6,7 +6,6 @@ require (
 	github.com/evalphobia/logrus_sentry v0.8.2
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/prometheus/client_golang v1.20.2
-	github.com/ramr/go-reaper v0.2.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
 )

@@ -25,21 +25,12 @@ var Usage = func() {
 }
 
 func main() {
-	if os.Getpid() == 1 {
-		// Clean up zombie processes caused by incorrect crontab commands
-		// Use forkExec to avoid random waitid errors
-		// https://github.com/aptible/supercronic/issues/88
-		// https://github.com/aptible/supercronic/issues/171
-		logrus.Info("will cleaning up zombie processes")
-		forkExec()
-		return
-	}
-
 	debug := flag.Bool("debug", false, "enable debug logging")
 	quiet := flag.Bool("quiet", false, "do not log informational messages (takes precedence over debug)")
 	json := flag.Bool("json", false, "enable JSON logging")
 	test := flag.Bool("test", false, "test crontab (does not run jobs)")
 	inotify := flag.Bool("inotify", false, "use inotify to detect crontab file changes")
+	enableReap := flag.Bool("reap", false, "enable reaping of zombie processes, need pid 1")
 	prometheusListen := flag.String(
 		"prometheus-listen-address",
 		"",
@@ -110,7 +101,17 @@ func main() {
 		os.Exit(2)
 		return
 	}
-
+	if *enableReap {
+		if os.Getpid() == 1 {
+			// Clean up zombie processes caused by incorrect crontab commands
+			// Use forkExec to avoid random waitid errors
+			// https://github.com/aptible/supercronic/issues/88
+			// https://github.com/aptible/supercronic/issues/171
+			logrus.Info("will cleaning up zombie processes")
+			forkExec()
+			return
+		}
+	}
 	crontabFileName := flag.Args()[0]
 
 	var watcher *fsnotify.Watcher
