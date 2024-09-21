@@ -46,11 +46,13 @@ func signalToFork(pid int) {
 		logrus.Fatalf("Failed findProcess supercronic pid:%d,%s", pid, err.Error())
 	}
 	termChan := make(chan os.Signal, 1)
-	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR2)
+	signal.Notify(termChan, siginalList...)
 	go func() {
-		s := <-termChan
-		if err := p.Signal(s); err != nil {
-			logrus.Errorf("Failed to send signal to supercronic: %s", err.Error())
+		for {
+			s := <-termChan
+			if err := p.Signal(s); err != nil {
+				logrus.Errorf("Failed to send signal to supercronic: %s", err.Error())
+			}
 		}
 	}()
 }

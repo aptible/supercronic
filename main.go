@@ -176,7 +176,7 @@ func main() {
 	}
 
 	termChan := make(chan os.Signal, 1)
-	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR2)
+	signal.Notify(termChan, siginalList...)
 
 	if *inotify {
 		go func() {
@@ -271,4 +271,8 @@ func readCrontabAtPath(path string) (*crontab.Crontab, error) {
 	defer file.Close()
 
 	return crontab.ParseCrontab(file)
+}
+
+var siginalList = []os.Signal{
+	syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR2,
 }
