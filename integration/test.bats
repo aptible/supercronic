@@ -120,21 +120,16 @@ wait_for() {
 @test "it run as pid 1 and normal crontab no error" {
   out="${WORK_DIR}/normal-crontab-out"
 
-  sudo unshare --fork --pid --mount-proc \
+  # sleep 30 seconds occur found bug
+  # FIXME: other way to detect
+  sudo timeout 30s unshare --fork --pid --mount-proc \
   "${BATS_TEST_DIRNAME}/../supercronic" -reap "${BATS_TEST_DIRNAME}/normal.crontab" >"$out" 2>&1 &
   # https://github.com/aptible/supercronic/issues/171
   local pid=$!
   local foundErr
-
-  # sleep 30 seconds occur found bug
-  # FIXME: other way to detect
-  for i in $(seq 0 300); do
-    grep "waitid: no child processes" "$out" && foundErr=1
-    if [[ $foundErr == 1 ]] ; then
-      break
-    fi
-    sleep 0.1
-  done
+ 
+  sleep 30
+  grep "waitid: no child processes" "$out" && foundErr=1
   kill -TERM ${pid}
   [[ $foundErr != 1 ]]
 }
