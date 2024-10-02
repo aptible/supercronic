@@ -47,7 +47,7 @@ func signalToFork(pid int) {
 		logrus.Fatalf("Failed findProcess supercronic pid:%d,%s", pid, err.Error())
 	}
 	termChan := make(chan os.Signal, 1)
-	signal.Notify(termChan, siginalList...)
+	signal.Notify(termChan, signalList...)
 	go func() {
 		for {
 			s := <-termChan
