@@ -123,13 +123,13 @@ wait_for() {
   # sleep 30 seconds occur found bug
   # FIXME: other way to detect
   sudo timeout 30s unshare --fork --pid --mount-proc \
-  "${BATS_TEST_DIRNAME}/../supercronic" -reap "${BATS_TEST_DIRNAME}/normal.crontab" >"$out" 2>&1 &
+  "${BATS_TEST_DIRNAME}/../supercronic" "${BATS_TEST_DIRNAME}/normal.crontab" >"$out" 2>&1 &
   # https://github.com/aptible/supercronic/issues/171
   local pid=$!
   local foundErr
  
-  sleep 30
-  grep "waitid: no child processes" "$out" && foundErr=1
+  sleep 29.5
   kill -TERM ${pid}
+  grep "waitid: no child processes" "$out" && foundErr=1
   [[ $foundErr != 1 ]]
 }
