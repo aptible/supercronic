@@ -26,8 +26,11 @@ func forkExec() {
 			uintptr(syscall.Stderr),
 		},
 	}
+	args := make([]string, 0, len(os.Args)+1)
+	// disable reaping for supercronic, avoid no sense warning
+	args = append(args, os.Args[0], "-no-reap")
+	args = append(args, os.Args[1:]...)
 
-	args := append(os.Args, "-no-reap")
 	pid, err := syscall.ForkExec(args[0], args, pattrs)
 	if err != nil {
 		logrus.Fatalf("Failed to fork exec: %s", err.Error())
