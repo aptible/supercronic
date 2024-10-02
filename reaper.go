@@ -88,9 +88,6 @@ func reapChildren(superCrondPid int) syscall.WaitStatus {
 				break
 			}
 
-			// when supercronic exit, may left some process
-			// expamle like "supercronic" -> B -> C
-			//            B exit, C may exist
 			if superCrondPid == pid {
 				logrus.Debugf("supercronic exit, pid=%d, wstatus=%+v, err=%+v\n", pid, wstatus, err)
 				return wstatus
