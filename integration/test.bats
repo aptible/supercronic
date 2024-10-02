@@ -107,7 +107,7 @@ wait_for() {
 
   # run in new process namespace
   sudo timeout 10s unshare --fork --pid --mount-proc \
-     ${BATS_TEST_DIRNAME}/../supercronic -reap "${BATS_TEST_DIRNAME}/zombie.crontab"  >"$out" 2>&1 &
+     ${BATS_TEST_DIRNAME}/../supercronic "${BATS_TEST_DIRNAME}/zombie.crontab"  >"$out" 2>&1 &
   local pid=$!
   sleep 3
 

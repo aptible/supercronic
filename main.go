@@ -30,7 +30,8 @@ func main() {
 	json := flag.Bool("json", false, "enable JSON logging")
 	test := flag.Bool("test", false, "test crontab (does not run jobs)")
 	inotify := flag.Bool("inotify", false, "use inotify to detect crontab file changes")
-	enableReap := flag.Bool("reap", false, "enable reaping of zombie processes, need pid 1")
+	// If this flag changes, update forkExec to disable reaping in the child process
+	disableReap := flag.Bool("no-reap", false, "disable reaping of dead processes, note: reaping requires pid 1")
 	prometheusListen := flag.String(
 		"prometheus-listen-address",
 		"",
@@ -101,16 +102,18 @@ func main() {
 		os.Exit(2)
 		return
 	}
-	if *enableReap {
+	if !*disableReap {
 		if os.Getpid() == 1 {
 			// Clean up zombie processes caused by incorrect crontab commands
 			// Use forkExec to avoid random waitid errors
 			// https://github.com/aptible/supercronic/issues/88
 			// https://github.com/aptible/supercronic/issues/171
-			logrus.Info("will cleaning up zombie processes")
+			logrus.Info("reaping dead processes")
 			forkExec()
 			return
 		}
+		
+		logrus.Warn("process reaping disabled, not pid 1")
 	}
 	crontabFileName := flag.Args()[0]
 

@@ -27,7 +27,8 @@ func forkExec() {
 		},
 	}
 
-	pid, err := syscall.ForkExec(os.Args[0], os.Args, pattrs)
+	args := append(os.Args, "-no-reap")
+	pid, err := syscall.ForkExec(args[0], args, pattrs)
 	if err != nil {
 		logrus.Fatalf("Failed to fork exec: %s", err.Error())
 		return
@@ -68,14 +69,14 @@ func reapChildren(superCrondPid int) syscall.WaitStatus {
 	go sigChildHandler(notifications)
 
 	// all child
-	const pid = -1
+	const rpid = -1
 	var wstatus syscall.WaitStatus
 
 	for {
 		var sig = <-notifications
 		logrus.Debugf("reaper received signal %v\n", sig)
 		for {
-			pid, err := syscall.Wait4(pid, &wstatus, 0, nil)
+			pid, err := syscall.Wait4(rpid, &wstatus, 0, nil)
 			for syscall.EINTR == err {
 				pid, err = syscall.Wait4(pid, &wstatus, 0, nil)
 			}
