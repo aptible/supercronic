@@ -27,6 +27,11 @@ wait_for() {
   return 1
 }
 
+@test "it prints the version" {
+    run "${BATS_TEST_DIRNAME}/../supercronic" -version
+    [[ "$output" =~ ^v1337$ ]]
+}
+
 @test "it starts" {
   run_supercronic "${BATS_TEST_DIRNAME}/noop.crontab"
 }
