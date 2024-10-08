@@ -18,7 +18,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: build assets
-      run: make release
+      run: make release VERSION=${{ github.event.release.tag_name }}
 
     - name: gh login
       run:  echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
