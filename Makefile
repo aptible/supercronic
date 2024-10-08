@@ -1,5 +1,6 @@
 GOFILES_NOVENDOR = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 SHELL=/bin/bash
+VERSION=$(shell git describe --tags --always --dirty)
 
 .PHONY: deps
 deps:
@@ -7,7 +8,7 @@ deps:
 
 .PHONY: build
 build: $(GOFILES)
-	go build
+	go build -ldflags "-X main.Version=${VERSION}"
 
 .PHONY: unit
 unit:
@@ -15,6 +16,7 @@ unit:
 	go vet $$(go list ./... | grep -v /vendor/)
 
 .PHONY: integration
+integration: VERSION=v1337
 integration: build
 	bats integration
 
@@ -32,6 +34,6 @@ fmt:
 
 .PHONY: release
 release:
-	./build.sh
+	./build.sh ${VERSION}
 
 .DEFAULT_GOAL := test
