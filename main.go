@@ -16,7 +16,6 @@ import (
 	"github.com/aptible/supercronic/prometheus_metrics"
 	"github.com/evalphobia/logrus_sentry"
 	"github.com/fsnotify/fsnotify"
-	reaper "github.com/ramr/go-reaper"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,6 +30,8 @@ func main() {
 	json := flag.Bool("json", false, "enable JSON logging")
 	test := flag.Bool("test", false, "test crontab (does not run jobs)")
 	inotify := flag.Bool("inotify", false, "use inotify to detect crontab file changes")
+	// If this flag changes, update forkExec to disable reaping in the child process
+	disableReap := flag.Bool("no-reap", false, "disable reaping of dead processes, note: reaping requires pid 1")
 	prometheusListen := flag.String(
 		"prometheus-listen-address",
 		"",
@@ -101,7 +102,19 @@ func main() {
 		os.Exit(2)
 		return
 	}
-
+	if !*disableReap {
+		if os.Getpid() == 1 {
+			// Clean up zombie processes caused by incorrect crontab commands
+			// Use forkExec to avoid random waitid errors
+			// https://github.com/aptible/supercronic/issues/88
+			// https://github.com/aptible/supercronic/issues/171
+			logrus.Info("reaping dead processes")
+			forkExec()
+			return
+		}
+		
+		logrus.Warn("process reaping disabled, not pid 1")
+	}
 	crontabFileName := flag.Args()[0]
 
 	var watcher *fsnotify.Watcher
@@ -165,12 +178,8 @@ func main() {
 		}()
 	}
 
-	//  Start background reaping of orphaned child processes.
-	go reaper.Reap()
-	// _ = reaper.Reap
-
 	termChan := make(chan os.Signal, 1)
-	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR2)
+	signal.Notify(termChan, signalList...)
 
 	if *inotify {
 		go func() {
@@ -265,4 +274,8 @@ func readCrontabAtPath(path string) (*crontab.Crontab, error) {
 	defer file.Close()
 
 	return crontab.ParseCrontab(file)
+}
+
+var signalList = []os.Signal{
+	syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR2,
 }

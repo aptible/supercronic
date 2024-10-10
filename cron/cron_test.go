@@ -3,7 +3,7 @@ package cron
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"regexp"
 	"strings"
 	"sync"
@@ -41,7 +41,7 @@ func (hook *testHook) Levels() []logrus.Level {
 
 func newTestLogger() (*logrus.Entry, chan *logrus.Entry) {
 	logger := logrus.New()
-	logger.Out = ioutil.Discard
+	logger.Out = io.Discard
 	logger.Level = logrus.DebugLevel
 
 	channel := make(chan *logrus.Entry, TEST_CHANNEL_BUFFER_SIZE)
