@@ -19,6 +19,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	Version = "<unset>"
+)
+
 var Usage = func() {
 	fmt.Fprintf(os.Stderr, "Usage: %s [OPTIONS] CRONTAB\n\nAvailable options:\n", os.Args[0])
 	flag.PrintDefaults()
@@ -28,6 +32,7 @@ func main() {
 	debug := flag.Bool("debug", false, "enable debug logging")
 	quiet := flag.Bool("quiet", false, "do not log informational messages (takes precedence over debug)")
 	json := flag.Bool("json", false, "enable JSON logging")
+	printVersion := flag.Bool("version", false, "print version and exit")
 	test := flag.Bool("test", false, "test crontab (does not run jobs)")
 	inotify := flag.Bool("inotify", false, "use inotify to detect crontab file changes")
 	// If this flag changes, update forkExec to disable reaping in the child process
@@ -95,6 +100,12 @@ func main() {
 			os.Stdout,
 			os.Stderr,
 		)
+	}
+
+	if *printVersion {
+		fmt.Println(Version)
+		os.Exit(0)
+		return
 	}
 
 	if flag.NArg() != 1 {
