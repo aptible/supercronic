@@ -189,6 +189,7 @@ func (expr *Expression) nextSecond(t time.Time) time.Time {
 
 func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 	actualDaysOfMonthMap := make(map[int]bool)
+	actualDaysOfWeekMap := make(map[int]bool)
 	firstDayOfMonth := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
 	lastDayOfMonth := firstDayOfMonth.AddDate(0, 1, -1)
 
@@ -239,12 +240,12 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		//  target : 1 + (7 * week_of_month) + (offset + day_of_week) % 7
 		for v := range expr.daysOfWeek {
 			w := dowNormalizedOffsets[(offset+v)%7]
-			actualDaysOfMonthMap[w[0]] = true
-			actualDaysOfMonthMap[w[1]] = true
-			actualDaysOfMonthMap[w[2]] = true
-			actualDaysOfMonthMap[w[3]] = true
+			actualDaysOfWeekMap[w[0]] = true
+			actualDaysOfWeekMap[w[1]] = true
+			actualDaysOfWeekMap[w[2]] = true
+			actualDaysOfWeekMap[w[3]] = true
 			if len(w) > 4 && w[4] <= lastDayOfMonth.Day() {
-				actualDaysOfMonthMap[w[4]] = true
+				actualDaysOfWeekMap[w[4]] = true
 			}
 		}
 		// days of week of specific week in the month
@@ -253,7 +254,7 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		for v := range expr.specificWeekDaysOfWeek {
 			v = 1 + 7*(v/7) + (offset+v)%7
 			if v <= lastDayOfMonth.Day() {
-				actualDaysOfMonthMap[v] = true
+				actualDaysOfWeekMap[v] = true
 			}
 		}
 		// Last days of week of the month
@@ -262,12 +263,26 @@ func (expr *Expression) calculateActualDaysOfMonth(year, month int) []int {
 		for v := range expr.lastWeekDaysOfWeek {
 			v = lastWeekOrigin.Day() + (offset+v)%7
 			if v <= lastDayOfMonth.Day() {
-				actualDaysOfMonthMap[v] = true
+				actualDaysOfWeekMap[v] = true
 			}
 		}
+		if expr.daysOfMonthRestricted == false {
+			return toList(actualDaysOfWeekMap)
+		}
+	} else {
+		return toList(actualDaysOfMonthMap)
 	}
 
-	return toList(actualDaysOfMonthMap)
+	// Both daysOfMonth and daysOfWeek are defined
+	// return the days, where both matched
+	result := []int{}
+	for k := range actualDaysOfMonthMap {
+		if actualDaysOfWeekMap[k] {
+			result = append(result, k)
+		}
+	}
+	sort.Ints(result)
+	return result
 }
 
 func workdayOfMonth(targetDom, lastDom time.Time) int {
