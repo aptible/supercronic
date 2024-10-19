@@ -14,6 +14,8 @@ setup() {
   export BATS_LIB_PATH=${BATS_LIB_PATH:-"/usr/lib"}
   bats_load_library bats-assert
   bats_load_library bats-support
+  # mock version
+  export VERSION=v1337
 }
 
 teardown() {
@@ -33,7 +35,7 @@ wait_for() {
 
 @test "it prints the version" {
   run "${BATS_TEST_DIRNAME}/../supercronic" -version
-  assert_output 'v1337'
+  assert_output $VERSION
 }
 
 @test "it starts" {
@@ -112,48 +114,31 @@ wait_for() {
 }
 
 @test "it run as pid 1 and reap zombie process" {
-  out="${WORK_DIR}/zombie-crontab-out"
+  run timeout 5s docker run \
+    -v "${BATS_TEST_DIRNAME}/zombie.crontab":/test.crontab \
+    --rm supercronic:${VERSION} /test.crontab
 
-  # run in new process namespace
-  timeout 10s unshare --fork --pid --mount-proc \
-    ${BATS_TEST_DIRNAME}/../supercronic "${BATS_TEST_DIRNAME}/zombie.crontab" >"$out" 2>&1 &
-  sleep 3
+  assert_equal $status 124 # timeout exit code
 
   # todo: use other method to detect zombie cleanup
-  run cat $out
-  refute_line --partial 'unshare'
-  wait_for grep "reaper cleanup: pid=" "$out"
+  assert_line --partial 'reaping dead processes'
+  assert_line --partial "reaper cleanup: pid="
 }
 
 @test "it run as pid 1 and normal crontab no error" {
-  out="${WORK_DIR}/normal-crontab-out"
-
   # sleep 30 seconds occur found bug
   # FIXME: other way to detect
-  timeout 30s unshare --fork --pid --mount-proc \
-    "${BATS_TEST_DIRNAME}/../supercronic" "${BATS_TEST_DIRNAME}/normal.crontab" >"$out" 2>&1 &
   # https://github.com/aptible/supercronic/issues/171
+  run timeout 30s docker run \
+    -v "${BATS_TEST_DIRNAME}/normal.crontab":/normal.crontab \
+    --rm supercronic:${VERSION} /normal.crontab
 
-  sleep 30
-  run cat $out
+  assert_equal $status 124 # timeout exit code
 
-  refute_line --partial 'unshare'
   refute_line --partial 'waitid: no child processes'
-}
-
-@test "it run as pid 1 and no not found error" {
-  out="${WORK_DIR}/normal-crontab-out2"
-  export PATH="${BATS_TEST_DIRNAME}/../:$PATH"
-  (
-    cd /
-    timeout 1s unshare --fork --pid --mount-proc \
-      "supercronic" "${BATS_TEST_DIRNAME}/normal.crontab" >"$out" 2>&1 &
-    # https://github.com/aptible/supercronic/issues/177
-  )
-  sleep 1
-  run cat $out
-
-  refute_line --partial 'unshare'
+  assert_line --partial 'reaping dead processes'
+  assert_line --partial 'msg=1' # normal output
   refute_line --partial 'failed'
+  # https://github.com/aptible/supercronic/issues/177
   refute_line --partial 'no such file or directory'
 }

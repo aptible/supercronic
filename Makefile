@@ -7,8 +7,12 @@ deps:
 	go mod vendor
 
 .PHONY: build
-build: $(GOFILES)
+build:
 	go build -ldflags "-X main.Version=${VERSION}"
+
+.PHONY: docker-build
+docker-build:
+	docker build -t supercronic:${VERSION} --build-arg VERSION=${VERSION} .
 
 .PHONY: unit
 unit:
@@ -17,8 +21,8 @@ unit:
 
 .PHONY: integration
 integration: VERSION=v1337
-integration: build
-	sudo bats integration
+integration: build docker-build
+	bats integration
 
 .PHONY: test
 test: unit integration

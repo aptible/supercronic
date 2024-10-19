@@ -22,10 +22,14 @@ jobs:
 
       - name: Setup Bats and bats libs
         id: setup-bats
-        uses: bats-core/bats-action@3
+        uses: bats-core/bats-action@3.0.0
+
       - name: install govulncheck
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: checkout code
         uses: actions/checkout@v4
@@ -33,6 +37,6 @@ jobs:
       - name: run tests
         run: make test
         env:
-          -BATS_LIB_PATH: ${{ steps.setup-bats.outputs.lib-path }}
+          BATS_LIB_PATH: ${{ steps.setup-bats.outputs.lib-path }}
       - name: run vuln check
         run: make vulncheck
