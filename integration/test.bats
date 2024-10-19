@@ -7,7 +7,7 @@ function run_supercronic() {
     "${BATS_TEST_DIRNAME}/../supercronic" ${SUPERCRONIC_ARGS:-} "$crontab" 2>&1
 }
 
-setup () {
+setup() {
   WORK_DIR="$(mktemp -d)"
   export WORK_DIR
 }
@@ -18,7 +18,7 @@ teardown() {
 
 wait_for() {
   for i in $(seq 0 50); do
-    if "$@" > /dev/null 2>&1; then
+    if "$@" >/dev/null 2>&1; then
       return 0
     fi
     sleep 0.1
@@ -28,8 +28,8 @@ wait_for() {
 }
 
 @test "it prints the version" {
-    run "${BATS_TEST_DIRNAME}/../supercronic" -version
-    [[ "$output" =~ ^v1337$ ]]
+  run "${BATS_TEST_DIRNAME}/../supercronic" -version
+  [[ "$output" =~ ^v1337$ ]]
 }
 
 @test "it starts" {
@@ -111,30 +111,44 @@ wait_for() {
   out="${WORK_DIR}/zombie-crontab-out"
 
   # run in new process namespace
-  sudo timeout 10s unshare --fork --pid --mount-proc \
-     ${BATS_TEST_DIRNAME}/../supercronic "${BATS_TEST_DIRNAME}/zombie.crontab"  >"$out" 2>&1 &
-  local pid=$!
+  timeout 10s unshare --fork --pid --mount-proc \
+    ${BATS_TEST_DIRNAME}/../supercronic "${BATS_TEST_DIRNAME}/zombie.crontab" >"$out" 2>&1 &
   sleep 3
 
-  kill -TERM ${pid}
   # todo: use other method to detect zombie cleanup
-  wait_for grep "reaper cleanup: pid=" "$out"  
+  !(grep --ignore-case "unshare" "$out")
+  wait_for grep "reaper cleanup: pid=" "$out"
 }
-
 
 @test "it run as pid 1 and normal crontab no error" {
   out="${WORK_DIR}/normal-crontab-out"
 
   # sleep 30 seconds occur found bug
   # FIXME: other way to detect
-  sudo timeout 30s unshare --fork --pid --mount-proc \
-  "${BATS_TEST_DIRNAME}/../supercronic" "${BATS_TEST_DIRNAME}/normal.crontab" >"$out" 2>&1 &
+  timeout 30s unshare --fork --pid --mount-proc \
+    "${BATS_TEST_DIRNAME}/../supercronic" "${BATS_TEST_DIRNAME}/normal.crontab" >"$out" 2>&1 &
   # https://github.com/aptible/supercronic/issues/171
-  local pid=$!
   local foundErr
- 
-  sleep 29.5
-  kill -TERM ${pid}
-  grep "waitid: no child processes" "$out" && foundErr=1
+
+  sleep 30
+  !(grep --ignore-case "unshare" "$out")
+  !(grep --ignore-case "waitid: no child processes" "$out")
+}
+
+@test "it run as pid 1 and no not found error" {
+  out="${WORK_DIR}/normal-crontab-out2"
+  export PATH="${BATS_TEST_DIRNAME}/../:$PATH"
+  (
+    cd /
+    timeout 1s unshare --fork --pid --mount-proc \
+      "supercronic" "${BATS_TEST_DIRNAME}/normal.crontab" >"$out" 2>&1 &
+    # https://github.com/aptible/supercronic/issues/177
+    local foundErr
+  )
+
+  sleep 1
+  !(grep --ignore-case "unshare" "$out")
+  !(grep --ignore-case "failed" "$out")
+  !(grep --ignore-case "no such file or directory" "$out")
   [[ $foundErr != 1 ]]
 }

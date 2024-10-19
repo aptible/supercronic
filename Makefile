@@ -18,7 +18,7 @@ unit:
 .PHONY: integration
 integration: VERSION=v1337
 integration: build
-	bats integration
+	sudo bats integration
 
 .PHONY: test
 test: unit integration
