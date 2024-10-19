@@ -2,6 +2,7 @@ package prometheus_metrics
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -55,7 +56,7 @@ func NewPrometheusMetrics() PrometheusMetrics {
 	pm.CronsSuccessCounter = *prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: genMetricName("successful_executions"),
-			Help: "count of successul cron executions",
+			Help: "count of successful cron executions",
 		},
 		cronLabels,
 	)
@@ -140,17 +141,23 @@ func InitHTTPServer(listenAddr string, shutdownContext context.Context) (func() 
 	http.Handle("/metrics", promhttp.Handler())
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`<html>
+		_, err := w.Write([]byte(`<html>
              <head><title>Supercronic</title></head>
              <body>
              <h1>Supercronic</h1>
              <p><a href='/metrics'>Metrics</a></p>
              </body>
              </html>`))
+		if err != nil {
+			logrus.Warnf("failed to write response on '/': %s", err.Error())
+		}
 	})
 
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`OK`))
+		_, err := w.Write([]byte(`OK`))
+		if err != nil {
+			logrus.Warnf("failed to write response on '/health': %s", err.Error())
+		}
 	})
 
 	shutdownClosure := func() error {
@@ -164,7 +171,9 @@ func InitHTTPServer(listenAddr string, shutdownContext context.Context) (func() 
 
 	go func() {
 		if err := promSrv.Serve(listener); err != nil {
-			logrus.Fatalf("prometheus http serve failed: %s", err.Error())
+			if !errors.Is(err, http.ErrServerClosed) {
+				logrus.Fatalf("prometheus http serve failed: %s", err.Error())
+			}
 		}
 	}()
 

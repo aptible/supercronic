@@ -123,7 +123,7 @@ func main() {
 			forkExec()
 			return
 		}
-		
+
 		logrus.Warn("process reaping disabled, not pid 1")
 	}
 	crontabFileName := flag.Args()[0]
@@ -184,7 +184,7 @@ func main() {
 
 		defer func() {
 			if err := promServerShutdownClosure(); err != nil {
-				logrus.Fatalf("prometheus http shutdown failed: %s", err.Error())
+				logrus.Errorf("prometheus http shutdown failed: %s", err.Error())
 			}
 		}()
 	}
