@@ -15,25 +15,24 @@ jobs:
         go-version: [1.23.1]
 
     steps:
-    - name: install golang
-      uses: actions/setup-go@v5
-      with:
-        go-version: ${{ matrix.go-version }}
+      - name: install golang
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
 
-    - name: install bats
-      run: |
-        git clone https://github.com/bats-core/bats-core.git --branch v1.11.0 --depth 1 "${HOME}/bats"
-        echo "${HOME}/bats/bin" >> $GITHUB_PATH
+      - name: Setup Bats and bats libs
+        id: setup-bats
+        uses: bats-core/bats-action@3
+      - name: install govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
 
-    - name: install govulncheck
-      run: |
-        go install golang.org/x/vuln/cmd/govulncheck@latest
+      - name: checkout code
+        uses: actions/checkout@v4
 
-    - name: checkout code
-      uses: actions/checkout@v4
-
-    - name: run tests
-      run: make test
-
-    - name: run vuln check
-      run: make vulncheck
+      - name: run tests
+        run: make test
+        env:
+          -BATS_LIB_PATH: ${{ steps.setup-bats.outputs.lib-path }}
+      - name: run vuln check
+        run: make vulncheck

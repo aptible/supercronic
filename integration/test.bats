@@ -10,6 +10,10 @@ function run_supercronic() {
 setup() {
   WORK_DIR="$(mktemp -d)"
   export WORK_DIR
+
+  export BATS_LIB_PATH=${BATS_LIB_PATH:-"/usr/lib"}
+  bats_load_library bats-assert
+  bats_load_library bats-support
 }
 
 teardown() {
@@ -29,7 +33,7 @@ wait_for() {
 
 @test "it prints the version" {
   run "${BATS_TEST_DIRNAME}/../supercronic" -version
-  [[ "$output" =~ ^v1337$ ]]
+  assert_output 'v1337'
 }
 
 @test "it starts" {
@@ -116,7 +120,8 @@ wait_for() {
   sleep 3
 
   # todo: use other method to detect zombie cleanup
-  !(grep --ignore-case "unshare" "$out")
+  run cat $out
+  refute_line --partial 'unshare'
   wait_for grep "reaper cleanup: pid=" "$out"
 }
 
@@ -128,11 +133,12 @@ wait_for() {
   timeout 30s unshare --fork --pid --mount-proc \
     "${BATS_TEST_DIRNAME}/../supercronic" "${BATS_TEST_DIRNAME}/normal.crontab" >"$out" 2>&1 &
   # https://github.com/aptible/supercronic/issues/171
-  local foundErr
 
   sleep 30
-  !(grep --ignore-case "unshare" "$out")
-  !(grep --ignore-case "waitid: no child processes" "$out")
+  run cat $out
+
+  refute_line --partial 'unshare'
+  refute_line --partial 'waitid: no child processes'
 }
 
 @test "it run as pid 1 and no not found error" {
@@ -143,12 +149,11 @@ wait_for() {
     timeout 1s unshare --fork --pid --mount-proc \
       "supercronic" "${BATS_TEST_DIRNAME}/normal.crontab" >"$out" 2>&1 &
     # https://github.com/aptible/supercronic/issues/177
-    local foundErr
   )
-
   sleep 1
-  !(grep --ignore-case "unshare" "$out")
-  !(grep --ignore-case "failed" "$out")
-  !(grep --ignore-case "no such file or directory" "$out")
-  [[ $foundErr != 1 ]]
+  run cat $out
+
+  refute_line --partial 'unshare'
+  refute_line --partial 'failed'
+  refute_line --partial 'no such file or directory'
 }
