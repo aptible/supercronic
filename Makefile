@@ -16,7 +16,6 @@ unit:
 	go vet $$(go list ./... | grep -v /vendor/)
 
 .PHONY: integration
-integration: VERSION=v1337
 integration: build
 	bats integration
 

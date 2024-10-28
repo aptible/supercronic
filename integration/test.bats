@@ -29,7 +29,7 @@ wait_for() {
 
 @test "it prints the version" {
     run "${BATS_TEST_DIRNAME}/../supercronic" -version
-    [[ "$output" =~ ^v1337$ ]]
+    [[ "$output" != "<unset> ]]
 }
 
 @test "it starts" {
