@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+project_name: supercronic
+
+builds:
+  - env: [CGO_ENABLED=0]
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+archives:
+  - format: binary
+kos:
+  - repository: ghcr.io/aptible/supercronic
+    tags:
+      - "{{.Version}}"
+      - latest
+    bare: true
+    preserve_import_paths: false
+    platforms:
+      - linux/amd64
+      - linux/arm64

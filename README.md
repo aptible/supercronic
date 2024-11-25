@@ -7,7 +7,7 @@
 
 Supercronic is a crontab-compatible job runner, designed specifically to run in
 containers.
- 
+
 
 ## Why Supercronic? ##
 
@@ -63,7 +63,30 @@ running cron jobs in containers**.
 
 ### Download
 
-The easiest way to install Supercronic is to download a pre-built binary.
+#### Run in Docker
+
+To run supersonic as a Docker container, you can use the following command:
+
+```bash
+docker run -v /path/to/crontab:/etc/crontab -it ghcr.io/aptible/supercronic /etc/crontab
+```
+
+#### Include in Dockerfile
+
+To include Supercronic in your Dockerfile, you can use the following:
+
+```Dockerfile
+FROM ubuntu:latest
+
+COPY --from=ghcr.io/aptible/supercronic:latest /ko-app/supercronic /usr/local/bin/supercronic
+
+COPY ./path/to/crontab /etc/custom-crontab
+
+ENTRYPOINT ["/usr/local/bin/supercronic", "/etc/custom-crontab"]
+```
+
+#### Download the latest release
+You can as well download a pre-built binary.
 
 Navigate to [the releases page][releases], and grab the build that suits your
 system. The releases include example `Dockerfile` stanzas to install
@@ -71,7 +94,8 @@ Supercronic that you can easily include in your own `Dockerfile` or adjust as
 needed.
 
 Note: If you are unsure which binary is right for you, try
-`supercronic-linux-amd64`.
+`supercronic_{{vesion}}_linux_amd64`.
+
 
 ### Build
 
