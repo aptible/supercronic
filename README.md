@@ -30,6 +30,7 @@ implementations are ill-suited for container environments:
 - They often try to send their logs to syslog. This conveniently provides
   centralized logging when a syslog server is running, but with containers,
   simply logging to `stdout` or `stderr` is preferred.
+- Automate reaping [zombie processes](https://en.wikipedia.org/wiki/Zombie_process) when running as PID 1, which may cause them to accumulate in the process table, consuming system resources.
 
 Finally, they are often quiet, making these issues difficult to understand and
 debug!
