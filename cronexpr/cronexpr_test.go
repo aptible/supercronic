@@ -23,6 +23,8 @@ import (
 
 var (
 	PST8PDT, _ = time.LoadLocation("PST8PDT")
+	Anchorage, _ = time.LoadLocation("America/Anchorage")
+	Adelaide, _ = time.LoadLocation("Australia/Adelaide")
 )
 
 type crontimes struct {
@@ -224,6 +226,24 @@ var crontests = []crontest{
 	},
 
 	// Daylight savings time
+	{
+		"*/30 * * * * * *",
+		"Mon 2006-01-02 15:04:05",
+		[]crontimes{
+			{"Sun 2021-04-04 01:59:31", "Sun 2021-04-04 02:00:00"},
+			{"Sun 2021-10-03 01:59:31", "Sun 2021-10-03 03:00:00"},
+		},
+		Adelaide,
+	},
+	{
+		"*/30 * * * * * *",
+		"Mon 2006-01-02 15:04:05",
+		[]crontimes{
+			{"Sun 2024-03-10 01:59:45", "Sun 2024-03-10 03:00:00"},
+			{"Sun 2024-11-03 01:59:45", "Sun 2024-11-03 01:00:00"},
+		},
+		Anchorage,
+	},
 	{
 		"*/30 * * * * * *",
 		"Mon 2006-01-02 15:04:05",
