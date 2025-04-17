@@ -53,6 +53,7 @@ func main() {
 	sentryReleaseFlag := flag.String("sentry-release", "", "specify the application's release version for Sentry error reporting")
 	sentryAlias := flag.String("sentryDsn", "", "alias for sentry-dsn")
 	overlapping := flag.Bool("overlapping", false, "enable tasks overlapping")
+	nanoTimestamps := flag.Bool("nano-timestamps", false, "include nanoseconds in log timestamps")
 	flag.Parse()
 
 	var (
@@ -92,7 +93,11 @@ func main() {
 	if *json {
 		logrus.SetFormatter(&logrus.JSONFormatter{})
 	} else {
-		logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+		textFormatter := &logrus.TextFormatter{FullTimestamp: true}
+		if *nanoTimestamps {
+			textFormatter.TimestampFormat = time.RFC3339Nano
+		}
+		logrus.SetFormatter(textFormatter)
 	}
 	if *splitLogs {
 		hook.RegisterSplitLogger(
@@ -123,7 +128,7 @@ func main() {
 			forkExec()
 			return
 		}
-		
+
 		logrus.Warn("process reaping disabled, not pid 1")
 	}
 	crontabFileName := flag.Args()[0]
