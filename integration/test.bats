@@ -7,9 +7,15 @@ function run_supercronic() {
     "${BATS_TEST_DIRNAME}/../supercronic" ${SUPERCRONIC_ARGS:-} "$crontab" 2>&1
 }
 
-setup () {
+setup() {
   WORK_DIR="$(mktemp -d)"
   export WORK_DIR
+
+  export BATS_LIB_PATH=${BATS_LIB_PATH:-"/usr/lib"}
+  bats_load_library bats-assert
+  bats_load_library bats-support
+  # mock version
+  export VERSION=v1337
 }
 
 teardown() {
@@ -18,7 +24,7 @@ teardown() {
 
 wait_for() {
   for i in $(seq 0 50); do
-    if "$@" > /dev/null 2>&1; then
+    if "$@" >/dev/null 2>&1; then
       return 0
     fi
     sleep 0.1
@@ -28,8 +34,8 @@ wait_for() {
 }
 
 @test "it prints the version" {
-    run "${BATS_TEST_DIRNAME}/../supercronic" -version
-    [[ "$output" =~ ^v1337$ ]]
+  run "${BATS_TEST_DIRNAME}/../supercronic" -version
+  assert_output $VERSION
 }
 
 @test "it starts" {
@@ -108,33 +114,31 @@ wait_for() {
 }
 
 @test "it run as pid 1 and reap zombie process" {
-  out="${WORK_DIR}/zombie-crontab-out"
+  run timeout 5s docker run \
+    -v "${BATS_TEST_DIRNAME}/zombie.crontab":/test.crontab \
+    --rm supercronic:${VERSION} /test.crontab
 
-  # run in new process namespace
-  sudo timeout 10s unshare --fork --pid --mount-proc \
-     ${BATS_TEST_DIRNAME}/../supercronic "${BATS_TEST_DIRNAME}/zombie.crontab"  >"$out" 2>&1 &
-  local pid=$!
-  sleep 3
+  assert_equal $status 124 # timeout exit code
 
-  kill -TERM ${pid}
   # todo: use other method to detect zombie cleanup
-  wait_for grep "reaper cleanup: pid=" "$out"  
+  assert_line --partial 'reaping dead processes'
+  assert_line --partial "reaper cleanup: pid="
 }
 
-
 @test "it run as pid 1 and normal crontab no error" {
-  out="${WORK_DIR}/normal-crontab-out"
-
   # sleep 30 seconds occur found bug
   # FIXME: other way to detect
-  sudo timeout 30s unshare --fork --pid --mount-proc \
-  "${BATS_TEST_DIRNAME}/../supercronic" "${BATS_TEST_DIRNAME}/normal.crontab" >"$out" 2>&1 &
   # https://github.com/aptible/supercronic/issues/171
-  local pid=$!
-  local foundErr
- 
-  sleep 29.5
-  kill -TERM ${pid}
-  grep "waitid: no child processes" "$out" && foundErr=1
-  [[ $foundErr != 1 ]]
+  run timeout 30s docker run \
+    -v "${BATS_TEST_DIRNAME}/normal.crontab":/normal.crontab \
+    --rm supercronic:${VERSION} /normal.crontab
+
+  assert_equal $status 124 # timeout exit code
+
+  refute_line --partial 'waitid: no child processes'
+  assert_line --partial 'reaping dead processes'
+  assert_line --partial 'msg=1' # normal output
+  refute_line --partial 'failed'
+  # https://github.com/aptible/supercronic/issues/177
+  refute_line --partial 'no such file or directory'
 }
