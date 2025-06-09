@@ -32,8 +32,4 @@ vulncheck: build
 fmt:
 	gofmt -l -w ${GOFILES_NOVENDOR}
 
-.PHONY: release
-release:
-	./build.sh ${VERSION}
-
 .DEFAULT_GOAL := test
