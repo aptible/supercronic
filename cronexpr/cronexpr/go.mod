@@ -1,6 +1,6 @@
 module github.com/aptible/supercronic/cronexpr/cronexpr
 
-go 1.23.5
+go 1.24.4
 
 replace github.com/aptible/supercronic => ../../
 
