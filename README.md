@@ -230,7 +230,7 @@ docker kill --signal=USR2 <container id>
 kill -USR2 <pid>
 ```
 
-If you are running Supercronic in an environment were sending `SIGUSR2` is a bit of a hassle, or you expect frequent updates to your crontab file, you may opt to run Supercronic with the `-inotify` flag. This will start a watch on the crontab file, reloading it on changes. An example use case would be a kubernetes pod runnning Supercronic that mounts its crontab file from a configMap. With the `-inotify` flag, any update to this configmap, provided it is not immutable, will trigger a reload in Supercronic, without you having to figure out a mechanism to send the `SIGUSR2` signal to the pod. The watch on the crontab file triggers on `Write` and `Remove` events, the latter ensures detection of kubernetes' atomic writes.
+If you are running Supercronic in an environment were sending `SIGUSR2` is a bit of a hassle, or you expect frequent updates to your crontab file, you may opt to run Supercronic with the `-inotify` flag. This will start a watch on the crontab file, reloading it on changes. An example use case would be a kubernetes pod running Supercronic that mounts its crontab file from a configMap. With the `-inotify` flag, any update to this configmap, provided it is not immutable, will trigger a reload in Supercronic, without you having to figure out a mechanism to send the `SIGUSR2` signal to the pod. The watch on the crontab file triggers on `Write` and `Remove` events, the latter ensures detection of kubernetes' atomic writes.
 
 ```
 $ ./supercronic -inotify ./my-crontab

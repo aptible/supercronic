@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [1.23.5]
+        go-version: [1.24.4]
 
     steps:
       - name: install golang
