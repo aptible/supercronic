@@ -25,3 +25,4 @@ jobs:
 
     - name: upload assets to release
       run: gh release upload ${{ github.event.release.tag_name }} dist/*
+
