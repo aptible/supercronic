@@ -123,8 +123,9 @@ func main() {
 			forkExec()
 			return
 		}
-		
-		logrus.Warn("process reaping disabled, not pid 1")
+		// warning may confuse user
+		// https://github.com/aptible/supercronic/issues/183
+		logrus.Info("process reaping disabled, not pid 1.It's safe to ignore")
 	}
 	crontabFileName := flag.Args()[0]
 
@@ -184,7 +185,7 @@ func main() {
 
 		defer func() {
 			if err := promServerShutdownClosure(); err != nil {
-				logrus.Fatalf("prometheus http shutdown failed: %s", err.Error())
+				logrus.Errorf("prometheus http shutdown failed: %s", err.Error())
 			}
 		}()
 	}
