@@ -123,7 +123,7 @@ func main() {
 			forkExec()
 			return
 		}
-		
+
 		logrus.Warn("process reaping disabled, not pid 1")
 	}
 	crontabFileName := flag.Args()[0]
