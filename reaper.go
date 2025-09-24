@@ -17,6 +17,11 @@ func forkExec() {
 		return
 	}
 
+	exe, err := os.Executable()
+	if err != nil {
+		logrus.Fatalf("Failed to get executable %s", err.Error())
+	}
+
 	pattrs := &syscall.ProcAttr{
 		Dir: pwd,
 		Env: os.Environ(),
@@ -28,7 +33,7 @@ func forkExec() {
 	}
 	args := make([]string, 0, len(os.Args)+1)
 	// disable reaping for supercronic, avoid no sense warning
-	args = append(args, os.Args[0], "-no-reap")
+	args = append(args, exe, "-no-reap")
 	args = append(args, os.Args[1:]...)
 
 	pid, err := syscall.ForkExec(args[0], args, pattrs)
