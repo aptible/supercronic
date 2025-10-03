@@ -1,6 +1,6 @@
 module github.com/aptible/supercronic
 
-go 1.24.6
+go 1.25.1
 
 require (
 	github.com/evalphobia/logrus_sentry v0.8.2
@@ -26,6 +26,6 @@ require (
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	golang.org/x/sys v0.36.0 // indirect
-	google.golang.org/protobuf v1.36.9 // indirect
+	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
