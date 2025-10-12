@@ -306,6 +306,13 @@ Release: Use the `-sentry-release` flag or the `SENTRY_RELEASE` environment vari
 $ ./supercronic -sentry-dsn YOUR_SENTRY_DSN -sentry-release YOUR_RELEASE
 ```
 
+Extra-trace: Use the `-sentry-extra-trace` flag to include the stdout and stderr output of failed jobs in the Sentry event’s extra data.
+This provides additional context in Sentry without altering normal logging behavior.
+
+```
+$ ./supercronic -sentry-dsn YOUR_SENTRY_DSN -sentry-extra-trace true
+```
+
 ## Questions and Support ###
 
 Please feel free to open an issue in this repository if you have any question

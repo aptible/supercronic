@@ -1,8 +1,6 @@
 module github.com/aptible/supercronic/cronexpr/cronexpr
 
-go 1.24.6
-
-toolchain go1.24.7
+go 1.25.2
 
 replace github.com/aptible/supercronic => ../../
 
