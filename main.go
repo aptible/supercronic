@@ -51,6 +51,7 @@ func main() {
 	sentry := flag.String("sentry-dsn", "", "enable Sentry error logging, using provided DSN")
 	sentryEnvironmentFlag := flag.String("sentry-environment", "", "specify the application's environment for Sentry error reporting")
 	sentryReleaseFlag := flag.String("sentry-release", "", "specify the application's release version for Sentry error reporting")
+	sentryExtraTrace := flag.Bool("sentry-extra-trace", false, "log extra trace information to Sentry (e.g. stdout/stderr) default: false")
 	sentryAlias := flag.String("sentryDsn", "", "alias for sentry-dsn")
 	overlapping := flag.Bool("overlapping", false, "enable tasks overlapping")
 	flag.Parse()
@@ -254,7 +255,7 @@ func main() {
 				"job.position": job.Position,
 			})
 
-			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, *passthroughLogs, &promMetrics)
+			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, *passthroughLogs, *sentryExtraTrace, &promMetrics)
 		}
 
 		termSig := <-termChan

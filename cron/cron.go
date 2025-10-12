@@ -3,6 +3,7 @@ package cron
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -20,9 +21,51 @@ import (
 
 var (
 	READ_BUFFER_SIZE = 64 * 1024
+	TAIL_BUFFER_SIZE = 64 * 1024
 )
 
-func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.ReadCloser) {
+// ringBuffer garde les N derniers octets écrits (tail).
+type ringBuffer struct {
+	mu  sync.Mutex
+	buf []byte
+	max int
+}
+
+func newRingBuffer(max int) *ringBuffer {
+	return &ringBuffer{max: max}
+}
+
+func (r *ringBuffer) Write(p []byte) (int, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.max <= 0 {
+		return len(p), nil
+	}
+	if len(r.buf)+len(p) <= r.max {
+		r.buf = append(r.buf, p...)
+		return len(p), nil
+	}
+	needDrop := len(r.buf) + len(p) - r.max
+	if needDrop >= len(r.buf) {
+		if len(p) >= r.max {
+			r.buf = append([]byte{}, p[len(p)-r.max:]...)
+		} else {
+			r.buf = make([]byte, 0, r.max)
+			r.buf = append(r.buf, p...)
+		}
+		return len(p), nil
+	}
+	r.buf = append(r.buf[needDrop:], p...)
+	return len(p), nil
+}
+
+func (r *ringBuffer) String() string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return string(r.buf)
+}
+
+func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.ReadCloser, tail *ringBuffer) {
 	wg.Add(1)
 
 	go func() {
@@ -55,6 +98,9 @@ func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.
 			}
 
 			readerLogger.Info(string(line))
+			if tail != nil {
+				_, _ = tail.Write(append(line, '\n'))
+			}
 
 			if isPrefix {
 				readerLogger.Warn("last line exceeded buffer size, continuing...")
@@ -63,7 +109,31 @@ func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.
 	}()
 }
 
-func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry, passthroughLogs bool) error {
+func handleExecError(err error) (exitCode int, wrappedErr error) {
+	if err == nil {
+		return 0, nil
+	}
+
+	exitCode = 1
+	wrappedErr = fmt.Errorf("error running command: %v", err)
+
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		if ws, ok := ee.Sys().(syscall.WaitStatus); ok {
+			exitCode = ws.ExitStatus()
+		}
+	}
+
+	return exitCode, wrappedErr
+}
+
+func runJob(
+	cronCtx *crontab.Context,
+	command string,
+	jobLogger *logrus.Entry,
+	passthroughLogs bool,
+) (err error, stdoutTailStr string, stderrTailStr string, exitCode int, duration time.Duration) {
+
 	jobLogger.Info("starting")
 
 	cmd := exec.Command(cronCtx.Shell, "-c", command)
@@ -80,46 +150,62 @@ func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry, p
 
 	var stdout io.ReadCloser = nil
 	var stderr io.ReadCloser = nil
-	var err error
+	exitCode = 0
+
+	var stdoutTail, stderrTail *ringBuffer
 
 	if passthroughLogs {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 	} else {
-		stdout, err = cmd.StdoutPipe()
-		if err != nil {
-			return err
+		var e error
+		stdout, e = cmd.StdoutPipe()
+		if e != nil {
+			err = e
+			return
 		}
-
-		stderr, err = cmd.StderrPipe()
-		if err != nil {
-			return err
+		stderr, e = cmd.StderrPipe()
+		if e != nil {
+			err = e
+			return
 		}
+		stdoutTail = newRingBuffer(TAIL_BUFFER_SIZE)
+		stderrTail = newRingBuffer(TAIL_BUFFER_SIZE)
 	}
 
-	if err := cmd.Start(); err != nil {
-		return err
+	start := time.Now()
+	startErr := cmd.Start()
+	exitCode, err = handleExecError(startErr)
+	if exitCode != 0 {
+		return
 	}
 
 	var wg sync.WaitGroup
 
 	if stdout != nil {
 		stdoutLogger := jobLogger.WithFields(logrus.Fields{"channel": "stdout"})
-		startReaderDrain(&wg, stdoutLogger, stdout)
+		startReaderDrain(&wg, stdoutLogger, stdout, stdoutTail)
 	}
 
 	if stderr != nil {
 		stderrLogger := jobLogger.WithFields(logrus.Fields{"channel": "stderr"})
-		startReaderDrain(&wg, stderrLogger, stderr)
+		startReaderDrain(&wg, stderrLogger, stderr, stderrTail)
 	}
 
 	wg.Wait()
 
-	if err := cmd.Wait(); err != nil {
-		return fmt.Errorf("error running command: %v", err)
+	waitErr := cmd.Wait()
+	duration = time.Since(start)
+
+	if stdoutTail != nil {
+		stdoutTailStr = stdoutTail.String()
+	}
+	if stderrTail != nil {
+		stderrTailStr = stderrTail.String()
 	}
 
-	return nil
+	exitCode, err = handleExecError(waitErr)
+	return
 }
 
 func monitorJob(ctx context.Context, job *crontab.Job, t0 time.Time, jobLogger *logrus.Entry, overlapping bool, promMetrics *prometheus_metrics.PrometheusMetrics) {
@@ -222,6 +308,7 @@ func StartJob(
 	cronLogger *logrus.Entry,
 	overlapping bool,
 	passthroughLogs bool,
+	sentryExtraTrace bool,
 	promMetrics *prometheus_metrics.PrometheusMetrics,
 ) {
 	runThisJob := func(t0 time.Time, jobLogger *logrus.Entry) {
@@ -242,7 +329,7 @@ func StartJob(
 
 		defer timer.ObserveDuration()
 
-		err := runJob(cronCtx, job.Command, jobLogger, passthroughLogs)
+		err, stdout, stderr, exitCode, duration := runJob(cronCtx, job.Command, jobLogger, passthroughLogs)
 
 		promMetrics.CronsExecCounter.With(jobPromLabels(job)).Inc()
 
@@ -251,7 +338,16 @@ func StartJob(
 
 			promMetrics.CronsSuccessCounter.With(jobPromLabels(job)).Inc()
 		} else {
-			jobLogger.Error(err)
+			fields := logrus.Fields{
+				"job.exit_code": exitCode,
+				"job.duration":  duration,
+			}
+			if sentryExtraTrace == true {
+				fields["job.stdout"] = stdout
+				fields["job.stderr"] = stderr
+			}
+
+			jobLogger.WithFields(fields).Error(err)
 
 			promMetrics.CronsFailCounter.With(jobPromLabels(job)).Inc()
 		}

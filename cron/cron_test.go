@@ -150,7 +150,7 @@ func TestRunJob(t *testing.T) {
 		label := fmt.Sprintf("RunJob(%q)", tt.command)
 		logger, channel := newTestLogger()
 
-		err := runJob(tt.context, tt.command, logger, false)
+		err, _, _, _, _ := runJob(tt.context, tt.command, logger, false)
 		if tt.success {
 			assert.Nil(t, err, label)
 		} else {
@@ -198,7 +198,7 @@ func TestStartJobExitsOnRequest(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	StartJob(&wg, &basicContext, &job, ctx, logger, false, false, &PROM_METRICS)
+	StartJob(&wg, &basicContext, &job, ctx, logger, false, false, false, &PROM_METRICS)
 
 	wg.Wait()
 }
@@ -218,7 +218,7 @@ func TestStartJobRunsJob(t *testing.T) {
 
 	logger, channel := newTestLogger()
 
-	StartJob(&wg, &basicContext, &job, ctx, logger, false, false, &PROM_METRICS)
+	StartJob(&wg, &basicContext, &job, ctx, logger, false, false, false, &PROM_METRICS)
 
 	select {
 	case entry := <-channel:
