@@ -1,12 +1,12 @@
 module github.com/aptible/supercronic
 
-go 1.25.5
+go 1.25.6
 
 require (
 	github.com/evalphobia/logrus_sentry v0.8.2
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/prometheus/client_golang v1.23.2
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 )
 
@@ -21,11 +21,11 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.67.4 // indirect
+	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
-	golang.org/x/sys v0.38.0 // indirect
-	google.golang.org/protobuf v1.36.10 // indirect
+	golang.org/x/sys v0.40.0 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
