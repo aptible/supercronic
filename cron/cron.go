@@ -268,6 +268,17 @@ func StartJob(
 	)
 }
 
+func InitJobPromMetrics(
+	job *crontab.Job,
+	promMetrics *prometheus_metrics.PrometheusMetrics,
+) {
+	promMetrics.CronsCurrentlyRunningGauge.With(jobPromLabels(job)).Add(0)
+	promMetrics.CronsExecCounter.With(jobPromLabels(job)).Add(0)
+	promMetrics.CronsSuccessCounter.With(jobPromLabels(job)).Add(0)
+	promMetrics.CronsFailCounter.With(jobPromLabels(job)).Add(0)
+	promMetrics.CronsDeadlineExceededCounter.With(jobPromLabels(job)).Add(0)
+}
+
 func jobPromLabels(job *crontab.Job) prometheus.Labels {
 	return prometheus.Labels{
 		"position": fmt.Sprintf("%d", job.Position),
