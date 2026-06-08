@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/aptible/supercronic/cron"
@@ -205,7 +204,7 @@ func main() {
 					switch event.Op {
 					case event.Op & fsnotify.Write:
 						logrus.Debug("watched file changed")
-						termChan <- syscall.SIGUSR2
+						termChan <- reloadSignal
 
 					// workaround for k8s configmap and secret mounts
 					case event.Op & fsnotify.Remove:
@@ -214,7 +213,7 @@ func main() {
 							logrus.Fatal(err)
 							return
 						}
-						termChan <- syscall.SIGUSR2
+						termChan <- reloadSignal
 					}
 
 				case err, ok := <-watcher.Errors:
@@ -259,7 +258,7 @@ func main() {
 
 		termSig := <-termChan
 
-		if termSig == syscall.SIGUSR2 {
+		if termSig == reloadSignal {
 			logrus.Infof("received %s, reloading crontab", termSig)
 		} else {
 			logrus.Infof("received %s, shutting down", termSig)
@@ -269,7 +268,7 @@ func main() {
 		logrus.Info("waiting for jobs to finish")
 		wg.Wait()
 
-		if termSig != syscall.SIGUSR2 {
+		if termSig != reloadSignal {
 			logrus.Info("exiting")
 			break
 		}
@@ -287,6 +286,4 @@ func readCrontabAtPath(path string) (*crontab.Crontab, error) {
 	return crontab.ParseCrontab(file)
 }
 
-var signalList = []os.Signal{
-	syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR2,
-}
+
