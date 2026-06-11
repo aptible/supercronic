@@ -111,6 +111,18 @@ var parseCrontabTestCases = []struct {
 	},
 
 	{
+		"FOO=",
+		&Crontab{
+			Context: &Context{
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{"FOO": ""},
+				Timezone: time.Local,
+			},
+			Jobs: []*Job{},
+		},
+	},
+
+	{
 		"CRON_TZ=UTC",
 		&Crontab{
 			Context: &Context{

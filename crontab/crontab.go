@@ -85,7 +85,7 @@ func ParseCrontab(reader io.Reader) (*Crontab, error) {
 			envVal := r[0][2]
 
 			// Remove quotes (this emulates what Vixie cron does)
-			if envVal[0] == '"' || envVal[0] == '\'' {
+			if len(envVal) > 0 && (envVal[0] == '"' || envVal[0] == '\'') {
 				if len(envVal) > 1 && envVal[0] == envVal[len(envVal)-1] {
 					envVal = envVal[1 : len(envVal)-1]
 				}
