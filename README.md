@@ -174,6 +174,28 @@ INFO[2017-07-10T19:40:55+02:00] hello from Supercronic                        ch
 INFO[2017-07-10T19:40:55+02:00] job succeeded                                 iteration=1 job.command="echo "hello from Supercronic"" job.position=0 job.schedule="*/5 * * * * * *"
 ```
 
+## Timestamp Precision ##
+
+By default, Supercronic logs use standard timestamp format with second-level precision (RFC3339). If you need more precise timing information in your logs, you can enable nanosecond precision using the `-nano-timestamps` flag:
+
+```
+$ ./supercronic -nano-timestamps ./my-crontab
+```
+
+With this option enabled, timestamps in log entries will include nanoseconds:
+
+```
+time="2023-04-17T12:30:45.123456+02:00" level=info msg="starting" job.command="echo hello" job.position=0 job.schedule="* * * * *"
+```
+
+Rather than the default format:
+
+```
+time="2023-04-17T12:30:45+02:00" level=info msg="starting" job.command="echo hello" job.position=0 job.schedule="* * * * *"
+```
+
+This can be useful for debugging timing-sensitive operations or when you need to precisely measure the execution time of your cron jobs.
+
 
 ## Debugging ##
 
