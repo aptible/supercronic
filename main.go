@@ -202,19 +202,34 @@ func main() {
 					}
 					logrus.Debugf("event: %v, watch-list: %v", event, watcher.WatchList())
 
-					switch event.Op {
-					case event.Op & fsnotify.Write:
-						logrus.Debug("watched file changed")
+					// Handle any file modification event (Write, Create, Remove, Rename)
+					// Many editors use atomic writes that generate Rename or Create events
+					if event.Op&fsnotify.Write != 0 {
+						logrus.Debug("watched file changed (write)")
 						termChan <- syscall.SIGUSR2
-
-					// workaround for k8s configmap and secret mounts
-					case event.Op & fsnotify.Remove:
-						logrus.Debug("watched file changed")
+						// workaround for k8s configmap and secret mounts
+					} else if event.Op&fsnotify.Create != 0 {
+						logrus.Debug("watched file changed (create)")
+						termChan <- syscall.SIGUSR2
+					} else if event.Op&fsnotify.Rename != 0 {
+						logrus.Debug("watched file changed (rename)")
+						// Re-add watch after rename (file might have been replaced)
 						if err := watcher.Add(crontabFileName); err != nil {
+							logrus.Errorf("failed to re-add watch after rename: %s", err)
 							logrus.Fatal(err)
 							return
+						} else {
+							termChan <- syscall.SIGUSR2
 						}
-						termChan <- syscall.SIGUSR2
+					} else if event.Op&fsnotify.Remove != 0 {
+						// workaround for k8s configmap and secret mounts
+						logrus.Debug("watched file changed (remove)")
+						if err := watcher.Add(crontabFileName); err != nil {
+							logrus.Errorf("failed to re-add watch: %s", err)
+							// Don't return/fatal here - just log and continue
+						} else {
+							termChan <- syscall.SIGUSR2
+						}
 					}
 
 				case err, ok := <-watcher.Errors:
