@@ -87,6 +87,12 @@ go mod vendor
 go install
 ```
 
+To cross-compile for Windows:
+
+```
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o supercronic.exe .
+```
+
 
 ## Crontab format ##
 
@@ -249,6 +255,17 @@ time="2024-09-11T09:23:18+02:00" level=debug msg="try parse (5 fields): '* * * *
 time="2024-09-11T09:23:18+02:00" level=debug msg="job will run next at 2024-09-11 09:24:00 +0200 CEST" job.command="sleep 5" job.position=0 job.schedule="* * * * *"
 
 ```
+
+## Windows
+
+Supercronic runs on Windows. A few platform differences to be aware of:
+
+- The default shell is `cmd.exe` with the `/C` flag. Set `SHELL=powershell.exe`
+  in your crontab to use PowerShell instead.
+- `SIGUSR2`-based crontab reloads are not supported on Windows. Use the
+  `-inotify` flag instead -- supercronic uses `ReadDirectoryChangesW` under
+  the hood, so file-watch-based reloads work correctly on Windows.
+- Process reaping (PID 1 mode) is not applicable on Windows.
 
 ## Testing your crontab
 
