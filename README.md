@@ -117,6 +117,17 @@ Here's an example crontab:
 @hourly echo "$SOME_HOURLY_JOB"
 ```
 
+Long entries can be split across several lines by ending a line with a
+backslash, just like in a shell. The lines are joined back together before the
+job runs:
+
+```
+# These three lines are a single job
+*/10 * * * * echo 'a' && \
+             echo 'b' && \
+             echo 'c'
+```
+
 
 ## Environment variables ##
 
