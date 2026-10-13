@@ -1,6 +1,6 @@
 module github.com/aptible/supercronic
 
-go 1.26.6
+go 1.26.9
 
 require (
 	github.com/evalphobia/logrus_sentry v0.8.2
