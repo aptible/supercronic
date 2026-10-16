@@ -129,6 +129,8 @@ func (expr *Expression) nextHour(t time.Time) time.Time {
 		return expr.nextDayOfMonth(t)
 	}
 
+	name, offset := t.Zone()
+	zone := time.FixedZone(name, offset)
 	return time.Date(
 		t.Year(),
 		t.Month(),
@@ -137,7 +139,8 @@ func (expr *Expression) nextHour(t time.Time) time.Time {
 		expr.minuteList[0],
 		expr.secondList[0],
 		0,
-		t.Location())
+		zone,
+	).In(t.Location())
 }
 
 /******************************************************************************/
