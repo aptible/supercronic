@@ -49,6 +49,17 @@ wait_for() {
   VAR="hello from foo" run_supercronic "${BATS_TEST_DIRNAME}/override.crontab" | grep -iE "hello from bar.*channel=stdout"
 }
 
+@test "it tests a crontab with empty environment values" {
+  printf 'MAILTO=\n* * * * * true\n' > "${WORK_DIR}/empty.crontab"
+  run timeout 1s "${BATS_TEST_DIRNAME}/../supercronic" -test "${WORK_DIR}/empty.crontab"
+  [[ "$status" -eq 0 ]]
+}
+
+@test "it clears an inherited environment value" {
+  printf 'VAR=\n* * * * * * * [ -z "$VAR" ] && echo "empty inherited value"\n' > "${WORK_DIR}/empty.crontab"
+  VAR="inherited" run_supercronic "${WORK_DIR}/empty.crontab" 2s | grep -iE "empty inherited value.*channel=stdout"
+}
+
 @test "it warns when USER is set" {
   run_supercronic "${BATS_TEST_DIRNAME}/user.crontab" 1s | grep -iE "processes will not.*USER="
 }
