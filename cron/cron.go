@@ -2,6 +2,7 @@ package cron
 
 import (
 	"bufio"
+	"runtime"
 	"context"
 	"fmt"
 	"io"
@@ -9,7 +10,6 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/aptible/supercronic/crontab"
@@ -66,11 +66,15 @@ func startReaderDrain(wg *sync.WaitGroup, readerLogger *logrus.Entry, reader io.
 func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry, passthroughLogs bool) error {
 	jobLogger.Info("starting")
 
-	cmd := exec.Command(cronCtx.Shell, "-c", command)
+	args := []string{"-c", command}
+	if runtime.GOOS == "windows" {
+		args[0] = "-Command"
+	}
+	cmd := exec.Command(cronCtx.Shell, args...)
 
 	// Run in a separate process group so that in interactive usage, CTRL+C
 	// stops supercronic, not the children threads.
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.SysProcAttr = sysProcAttr()
 
 	env := os.Environ()
 	for k, v := range cronCtx.Environ {

@@ -1,3 +1,5 @@
+//go:build !windows
+
 package main
 
 import (
@@ -7,6 +9,13 @@ import (
 
 	"github.com/sirupsen/logrus"
 )
+
+// reloadSignal is the signal used to trigger a live crontab reload.
+var reloadSignal os.Signal = syscall.SIGUSR2
+
+var signalList = []os.Signal{
+	syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR2,
+}
 
 func forkExec() {
 

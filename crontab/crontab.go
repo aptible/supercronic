@@ -2,6 +2,7 @@ package crontab
 
 import (
 	"bufio"
+	"runtime"
 	"fmt"
 	"io"
 	"regexp"
@@ -66,6 +67,9 @@ func ParseCrontab(reader io.Reader) (*Crontab, error) {
 
 	environ := make(map[string]string)
 	shell := "/bin/sh"
+	if runtime.GOOS == "windows" {
+		shell = "powershell.exe"
+	}
 	tz := time.Local
 
 	for scanner.Scan() {
