@@ -276,6 +276,100 @@ var parseCrontabTestCases = []struct {
 		},
 	},
 
+	// Line continuation: a trailing backslash joins the next physical line.
+	{
+		"* * * * * echo 'a' && \\\necho 'b'",
+		&Crontab{
+			Context: &Context{
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{},
+				Timezone: time.Local,
+			},
+			Jobs: []*Job{
+				{
+					CrontabLine: CrontabLine{
+						Schedule: "* * * * *",
+						Command:  "echo 'a' && echo 'b'",
+					},
+				},
+			},
+		},
+	},
+
+	// Line continuation across several lines.
+	{
+		"*/10 * * * * echo 'a' && \\\necho 'b' && \\\necho 'c'",
+		&Crontab{
+			Context: &Context{
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{},
+				Timezone: time.Local,
+			},
+			Jobs: []*Job{
+				{
+					CrontabLine: CrontabLine{
+						Schedule: "*/10 * * * *",
+						Command:  "echo 'a' && echo 'b' && echo 'c'",
+					},
+				},
+			},
+		},
+	},
+
+	// Environment definitions can be continued too.
+	{
+		"FOO=bar\\\nbaz",
+		&Crontab{
+			Context: &Context{
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{"FOO": "barbaz"},
+				Timezone: time.Local,
+			},
+			Jobs: []*Job{},
+		},
+	},
+
+	// An escaped (doubled) trailing backslash does not continue the line, so the
+	// following line stays a separate entry.
+	{
+		"* * * * * echo done\\\\\nFOO=bar",
+		&Crontab{
+			Context: &Context{
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{"FOO": "bar"},
+				Timezone: time.Local,
+			},
+			Jobs: []*Job{
+				{
+					CrontabLine: CrontabLine{
+						Schedule: "* * * * *",
+						Command:  "echo done\\\\",
+					},
+				},
+			},
+		},
+	},
+
+	// A commented line ending in a backslash must not swallow the next job.
+	{
+		"# a comment \\\n* * * * * real job",
+		&Crontab{
+			Context: &Context{
+				Shell:    "/bin/sh",
+				Environ:  map[string]string{},
+				Timezone: time.Local,
+			},
+			Jobs: []*Job{
+				{
+					CrontabLine: CrontabLine{
+						Schedule: "* * * * *",
+						Command:  "real job",
+					},
+				},
+			},
+		},
+	},
+
 	// Failure cases
 	{"* foo \n", nil},
 	{"* some * * *  more\n", nil},

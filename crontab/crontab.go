@@ -57,6 +57,18 @@ func parseJobLine(line string) (*CrontabLine, error) {
 	return nil, fmt.Errorf("bad crontab line: '%s' (use -debug for details)", line)
 }
 
+// hasLineContinuation reports whether line ends with an unescaped backslash,
+// meaning the next physical line should be joined onto it. A trailing backslash
+// that is itself escaped (an even number of trailing backslashes) does not
+// continue the line.
+func hasLineContinuation(line string) bool {
+	backslashes := 0
+	for i := len(line) - 1; i >= 0 && line[i] == '\\'; i-- {
+		backslashes++
+	}
+	return backslashes%2 == 1
+}
+
 func ParseCrontab(reader io.Reader) (*Crontab, error) {
 	scanner := bufio.NewScanner(reader)
 
@@ -77,6 +89,12 @@ func ParseCrontab(reader io.Reader) (*Crontab, error) {
 
 		if line[0] == '#' {
 			continue
+		}
+
+		// Join lines that end with a backslash, like a shell does, so a single
+		// job or environment definition can span several physical lines.
+		for hasLineContinuation(line) && scanner.Scan() {
+			line = line[:len(line)-1] + scanner.Text()
 		}
 
 		r := envLineMatcher.FindAllStringSubmatch(line, -1)
