@@ -2,6 +2,7 @@ package prometheus_metrics
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -163,7 +164,9 @@ func InitHTTPServer(listenAddr string, shutdownContext context.Context) (func() 
 	}
 
 	go func() {
-		if err := promSrv.Serve(listener); err != nil {
+		// Serve returns ErrServerClosed when the shutdown closure is called, which is
+		// how supercronic exits: it is the expected end of the server, not a failure.
+		if err := promSrv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logrus.Fatalf("prometheus http serve failed: %s", err.Error())
 		}
 	}()
