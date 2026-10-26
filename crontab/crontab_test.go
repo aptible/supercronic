@@ -310,3 +310,35 @@ func TestParseCrontab(t *testing.T) {
 		}
 	}
 }
+
+func TestParseCrontabEmptyEnvironmentValues(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		crontab string
+		key     string
+		jobs    int
+	}{
+		{"unterminated", "FOO=", "FOO", 0},
+		{"terminated", "FOO=\n", "FOO", 0},
+		{"whitespace", " FOO = \t\n", "FOO", 0},
+		{"before job", "MAILTO=\n* * * * * true\n", "MAILTO", 1},
+		{"after job", "* * * * * true\nFOO=\n", "FOO", 1},
+		{"override", "FOO=first\nFOO=\n", "FOO", 0},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var crontab *Crontab
+			var err error
+			if !assert.NotPanics(t, func() {
+				crontab, err = ParseCrontab(bytes.NewBufferString(tt.crontab))
+			}) {
+				return
+			}
+			if assert.NoError(t, err) && assert.NotNil(t, crontab) {
+				assert.Equal(t, map[string]string{tt.key: ""}, crontab.Context.Environ)
+				if assert.Len(t, crontab.Jobs, tt.jobs) && tt.jobs > 0 {
+					assert.Equal(t, "true", crontab.Jobs[0].Command)
+				}
+			}
+		})
+	}
+}
