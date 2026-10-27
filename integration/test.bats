@@ -79,6 +79,17 @@ wait_for() {
   SUPERCRONIC_ARGS="-passthrough-logs" run_supercronic "${BATS_TEST_DIRNAME}/hello.crontab" | grep -iE "^hello from crontab$"
 }
 
+@test "it supports nanosecond timestamp precision in logs" {
+  output=$(SUPERCRONIC_ARGS="-nano-timestamps" run_supercronic "${BATS_TEST_DIRNAME}/hello.crontab")
+  echo "$output" | grep -E "time=\"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}[+-][0-9]{2}:[0-9]{2}\""
+}
+
+@test "it uses standard timestamp format by default" {
+  output=$(run_supercronic "${BATS_TEST_DIRNAME}/hello.crontab" 1s)
+  echo "$output" | grep -E "time=\"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2}\""
+  ! echo "$output" | grep -E "time=\"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}[+-][0-9]{2}:[0-9]{2}\""
+}
+
 @test "it waits for jobs to exit before terminating" {
   ready="will start"
   canary="all done"
