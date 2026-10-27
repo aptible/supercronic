@@ -85,3 +85,40 @@ grep_test_file() {
   kill -s TERM "$PID"
   wait
 }
+
+@test "if inotify is enabled it handles RENAME events (vim-style atomic writes)" {
+  echo '* * * * * * * echo a > "$TEST_FILE"' > "$CRONTAB_FILE"
+
+  "${BATS_TEST_DIRNAME}/../supercronic" -inotify "$CRONTAB_FILE" 3>&- &
+  PID="$!"
+
+  wait_for grep_test_file a
+
+  # Simulate vim-style atomic write: create temp file, write to it, rename over original
+  TEMP_FILE="${CRONTAB_FILE}.tmp"
+  echo '* * * * * * * echo b > "$TEST_FILE"' > "$TEMP_FILE"
+  mv "$TEMP_FILE" "$CRONTAB_FILE"
+
+  wait_for grep_test_file b
+
+  kill -s TERM "$PID"
+  wait
+}
+
+@test "if inotify is enabled it handles CREATE events (file recreation)" {
+  echo '* * * * * * * echo a > "$TEST_FILE"' > "$CRONTAB_FILE"
+
+  "${BATS_TEST_DIRNAME}/../supercronic" -inotify "$CRONTAB_FILE" 3>&- &
+  PID="$!"
+
+  wait_for grep_test_file a
+
+  # Simulate Create event: remove file, then create new one at same path
+  rm "$CRONTAB_FILE"
+  echo '* * * * * * * echo b > "$TEST_FILE"' > "$CRONTAB_FILE"
+
+  wait_for grep_test_file b
+
+  kill -s TERM "$PID"
+  wait
+}
