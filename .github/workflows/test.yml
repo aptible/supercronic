@@ -6,17 +6,21 @@ on:
   pull_request:
     branches: [main]
 
+permissions: {}
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     strategy:
       matrix:
-        go-version: [1.27.3]
+        go-version: [1.27.4]
 
     steps:
     - name: install golang
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
       with:
         go-version: ${{ matrix.go-version }}
 
@@ -27,10 +31,12 @@ jobs:
 
     - name: install govulncheck
       run: |
-        go install golang.org/x/vuln/cmd/govulncheck@latest
+        go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
 
     - name: checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
 
     - name: run tests
       run: make test
