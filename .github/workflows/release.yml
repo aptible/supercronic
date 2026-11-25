@@ -4,24 +4,38 @@ on:
   release:
     types: [published]
 
+permissions: {}
+
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
     - name: install golang
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
       with:
-        go-version: 1.27.3
+        go-version: 1.27.4
+        cache: false
 
     - name: checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
 
     - name: build assets
-      run: make release VERSION=${{ github.event.release.tag_name }}
+      env:
+        VERSION: ${{ github.event.release.tag_name }}
+      run: make release VERSION="$VERSION"
 
     - name: gh login
-      run:  echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: echo "$GITHUB_TOKEN" | gh auth login --with-token
 
     - name: upload assets to release
-      run: gh release upload ${{ github.event.release.tag_name }} dist/*
+      env:
+        TAG_NAME: ${{ github.event.release.tag_name }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: gh release upload "$TAG_NAME" dist/*
